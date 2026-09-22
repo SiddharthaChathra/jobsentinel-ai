@@ -1,9 +1,12 @@
+import 'dotenv/config';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 
-describe('health (e2e)', () => {
+const describeIf = process.env.DATABASE_URL ? describe : describe.skip;
+
+describeIf('health (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {

@@ -2,6 +2,19 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 2] Auth + profile + resume — 2026-09-22
+
+- Supabase project (ap-south-1) created; migration 0000 applied: , , , , , , with RLS owner policies and an FK to (Drizzle schema + drizzle-kit migrations).
+- Auth: verifying ES256 tokens offline via the project JWKS (), first-login user bootstrap with the gate, , , .
+- Common: Drizzle (transaction pooler, ), + (error envelope), , , request-id middleware, throttling, DB readiness check.
+- Users API: , (PUT upserts skills into the dictionary, bumps , completes onboarding), , (role-family classification), .
+- Resumes API: multipart upload with magic-byte checks → private Supabase Storage bucket (auto-created) → PDF () / DOCX () text extraction → AI analysis with PII redaction → draft → activate / download (signed URL) / delete; deterministic fallback (skill dictionary + graduation-year regex) when AI is unavailable.
+- : (cache → budget → provider chain → JSON repair → Zod → repair retry), fetch-based (JSON mode, schema sanitizer) and (forced tool use), prompt v1, provider factory from env.
+- : role-family taxonomy, 120-entry skill dictionary. : , , .
+- Web: React Query provider, / clients, onboarding gate in the app layout, three-step onboarding (upload → review draft → preferences), dashboard shows the confirmed profile.
+- Tests: 60 unit (packages + api + web) and 11 e2e against the live Supabase project (real auth user + JWKS, storage, PDF parsing); live-AI variant behind . Browser walkthrough verified with Playwright.
+- Decisions D30–D34 recorded (jose 5, e2e VM-modules flag, Gemini schema subset, no thinking config on Lite models, default model).
+
 ## [Phase 1] Project setup — 2026-09-22
 
 - pnpm workspace monorepo: `apps/web`, `apps/api`, `packages/{types,validation,ai,config}`.

@@ -123,7 +123,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 
 - Jest for `packages/*` and `apps/api` (+ Supertest e2e), Vitest + Testing Library for `apps/web`, Playwright for browser e2e.
 - New business logic ⇒ unit tests in the same commit. Pipeline stages ⇒ fake-based service tests. DB code ⇒ integration tests against local Postgres.
-- No live network or AI calls in CI (fixtures/recordings; `AI_LIVE_TESTS=1` for manual runs).
+- No live network or AI calls in CI (fixtures/recordings; `AI_LIVE_TESTS=1` for manual runs). API e2e suites need Supabase env (they skip themselves without it) and run under `--experimental-vm-modules` (`pnpm --filter @jobsentinel/api test:e2e`). E2E creates throwaway `*@jobsentinel.test` auth users and deletes them (plus their storage objects) in `afterAll`.
 - Before ending a phase: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build` must pass.
 
 ## 14. Git conventions
@@ -135,7 +135,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 
 ## 15. Environment variables
 
-Declared in `packages/config/src/env.ts` (Zod, defaults, per-process requirements) and documented in `.env.example`. Add a variable in three places: schema, `.env.example`, `docs/architecture/12-folder-structure-and-env.md`. Web variables must be `NEXT_PUBLIC_*` and public-safe.
+Declared in `packages/config/src/env.ts` (Zod, defaults, per-process requirements) and documented in `.env.example`. Add a variable in three places: schema, `.env.example`, `docs/architecture/12-folder-structure-and-env.md`. Web variables must be `NEXT_PUBLIC_*` and public-safe. The root `.env` is the single source of truth; `pnpm env:sync` copies it to `apps/api/.env` and only public vars to `apps/web/.env.local`.
 
 ## 16. Deployment notes (docs/architecture/14-deployment-and-free-first.md)
 

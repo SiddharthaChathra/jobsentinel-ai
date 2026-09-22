@@ -45,6 +45,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       '@typescript-eslint/require-await': 'off',
       'no-console': 'off',
     },

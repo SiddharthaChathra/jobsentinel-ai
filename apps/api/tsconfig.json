@@ -8,8 +8,8 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "declaration": false,
-    "types": ["jest", "node"]
+    "types": ["jest", "node", "multer"]
   },
-  "include": ["src", "test", "jest.config.ts"],
+  "include": ["src", "test", "jest.config.ts", "drizzle.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

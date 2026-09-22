@@ -187,7 +187,7 @@ export function loadEnv(source: Record<string, string | undefined> = process.env
 export function assertEnv<K extends EnvKey>(
   env: Env,
   keys: readonly K[],
-): asserts env is Env & Required<Pick<Env, K>> {
+): asserts env is Env & { [P in K]-?: NonNullable<Env[P]> } {
   const missing = keys.filter((k) => env[k] === undefined || env[k] === null);
   if (missing.length > 0) {
     throw new EnvError(

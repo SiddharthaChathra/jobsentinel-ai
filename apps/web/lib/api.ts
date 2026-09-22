@@ -73,7 +73,34 @@ export function createApiClient(opts: ApiClientOptions) {
     return json;
   }
 
+  /** multipart upload (resumes). Content-Type is set by the browser from the FormData boundary. */
+  async function upload<T>(path: string, form: FormData): Promise<ApiSuccess<T>> {
+    const token = await opts.getToken();
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetchImpl(`${baseUrl}/api/v1${path}`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    const json = (await res.json().catch(() => null)) as ApiSuccess<T> | ApiErrorBody | null;
+    if (!res.ok) {
+      const err = json && 'error' in json ? json.error : undefined;
+      throw new ApiError(
+        res.status,
+        err?.code ?? 'HTTP_ERROR',
+        err?.message ?? res.statusText,
+        err?.details,
+        err?.requestId,
+      );
+    }
+    if (!json || !('data' in json))
+      throw new ApiError(res.status, 'MALFORMED_RESPONSE', 'Missing data envelope');
+    return json;
+  }
+
   return {
+    upload,
     get: <T>(path: string, query?: RequestOptions['query'], signal?: AbortSignal) =>
       request<T>(path, { query, signal }),
     post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
