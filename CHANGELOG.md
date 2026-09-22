@@ -4,16 +4,16 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
 ## [Phase 2] Auth + profile + resume — 2026-09-22
 
-- Supabase project (ap-south-1) created; migration 0000 applied: , , , , , , with RLS owner policies and an FK to (Drizzle schema + drizzle-kit migrations).
-- Auth: verifying ES256 tokens offline via the project JWKS (), first-login user bootstrap with the gate, , , .
-- Common: Drizzle (transaction pooler, ), + (error envelope), , , request-id middleware, throttling, DB readiness check.
-- Users API: , (PUT upserts skills into the dictionary, bumps , completes onboarding), , (role-family classification), .
-- Resumes API: multipart upload with magic-byte checks → private Supabase Storage bucket (auto-created) → PDF () / DOCX () text extraction → AI analysis with PII redaction → draft → activate / download (signed URL) / delete; deterministic fallback (skill dictionary + graduation-year regex) when AI is unavailable.
-- : (cache → budget → provider chain → JSON repair → Zod → repair retry), fetch-based (JSON mode, schema sanitizer) and (forced tool use), prompt v1, provider factory from env.
-- : role-family taxonomy, 120-entry skill dictionary. : , , .
-- Web: React Query provider, / clients, onboarding gate in the app layout, three-step onboarding (upload → review draft → preferences), dashboard shows the confirmed profile.
-- Tests: 60 unit (packages + api + web) and 11 e2e against the live Supabase project (real auth user + JWKS, storage, PDF parsing); live-AI variant behind . Browser walkthrough verified with Playwright.
-- Decisions D30–D34 recorded (jose 5, e2e VM-modules flag, Gemini schema subset, no thinking config on Lite models, default model).
+- Supabase project `jobsentinel-ai` (ap-south-1) created; migration 0000 applied: `users`, `profiles`, `skills`, `profile_skills`, `preferred_roles`, `preferences`, `resumes` with RLS owner policies and an FK to `auth.users` (Drizzle schema + drizzle-kit migrations).
+- Auth: `SupabaseJwtGuard` verifying ES256 tokens offline via the project JWKS (`jose`), first-login user bootstrap with the `ALLOWED_SIGNUP_EMAILS` gate, `AdminGuard`, `@CurrentUser()`, `@Public()`.
+- Common: Drizzle `DbModule` (transaction pooler, `prepare: false`), `AppError` + `HttpExceptionFilter` (error envelope), `EnvelopeInterceptor`, `ZodValidationPipe`, request-id middleware, throttling, DB readiness check.
+- Users API: `/me`, `/profile` (PUT upserts skills into the dictionary, bumps `profile_version`, completes onboarding), `/preferences`, `/preferred-roles` (role-family classification), `/skills/search`.
+- Resumes API: multipart upload with magic-byte checks → private Supabase Storage bucket (auto-created) → PDF (`unpdf`) / DOCX (`mammoth`) text extraction → AI analysis with PII redaction → draft → activate / download (signed URL) / delete; deterministic fallback (skill dictionary + graduation-year regex) when AI is unavailable.
+- `@jobsentinel/ai`: `AIService` (cache → budget → provider chain → JSON repair → Zod → repair retry), fetch-based `GeminiAdapter` (JSON mode, schema sanitizer) and `ClaudeAdapter` (forced tool use), `RESUME_PROFILE` prompt v1, provider factory from env.
+- `@jobsentinel/config`: role-family taxonomy, 120-entry skill dictionary. `@jobsentinel/validation`: `classifyRoleFamily`, `extractSkills`, `extractGraduationYear`.
+- Web: React Query provider, `useApi` / `serverApi` clients, onboarding gate in the app layout, three-step onboarding (upload → review draft → preferences), dashboard shows the confirmed profile.
+- Tests: 60 unit (packages + api + web) and 11 e2e against the live Supabase project (real auth user + JWKS, storage, PDF parsing); live-AI variant behind `AI_LIVE_TESTS=1`. Browser walkthrough verified with Playwright.
+- Decisions D30–D35 recorded (jose 5, e2e VM-modules flag, Gemini schema subset, no thinking config on Lite models, REST adapters, storage cleanup on user deletion).
 
 ## [Phase 1] Project setup — 2026-09-22
 
