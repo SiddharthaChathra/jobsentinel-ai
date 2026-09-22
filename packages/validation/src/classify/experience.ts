@@ -115,6 +115,12 @@ export function classifyExperience(input: ExperienceInput): ExperienceClassifica
 
   // 1. A parsed requirement of 3+ years is decisive regardless of the title.
   if (min !== null && min >= 3) return done('EXPERIENCED', 0.95);
+  // 1b. A stated minimum of exactly 2 years is still beyond a final-year student, so it is never
+  //     fresher-eligible. Fresher wording alongside it contradicts the stated requirement, so ask
+  //     rather than believe the phrase over the number (D59).
+  if (min !== null && min >= 2) {
+    return positives.length > 0 ? done('UNKNOWN', 0.4, true) : done('EXPERIENCED', 0.9);
+  }
   // 2. An internship outranks every seniority word in the title ("Product Management Intern").
   if (isInternship) return done('FRESHER', 0.9);
   // 3. A senior title next to fresher signals is contradictory — never guess, ask the AI.
@@ -135,8 +141,6 @@ export function classifyExperience(input: ExperienceInput): ExperienceClassifica
     return done('FRESHER', fresherTitle ? 0.85 : 0.75);
   // 6. 1–3 years, or a junior-ish signal with mild experience → ENTRY_LEVEL.
   if (min !== null && min <= 1 && (max === null || max <= 3)) return done('ENTRY_LEVEL', 0.75);
-  if (min !== null && min === 2)
-    return done(negatives.length > 1 ? 'EXPERIENCED' : 'ENTRY_LEVEL', 0.65);
   // 7. Experience demanded in the body without a parsed range.
   if (negatives.length > 0 && positives.length === 0) return done('EXPERIENCED', 0.7);
   // 8. Conflicting or absent signals — ask the AI, keep the job visible meanwhile.
