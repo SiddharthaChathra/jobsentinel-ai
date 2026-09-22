@@ -2,6 +2,7 @@ import pino from 'pino';
 import type { Env } from '@jobsentinel/config';
 import { loadEnv } from '@jobsentinel/config';
 import type { ClassificationService } from '../jobs/classification.service';
+import type { MatchingService } from '../matching/matching.service';
 import type { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import type { AuditLogger } from '../system/audit-logger';
 import type { HousekeepingService } from './housekeeping.service';
@@ -35,12 +36,16 @@ describe('WorkerLoop', () => {
       validatePending: jest.fn().mockResolvedValue({ processed: 0 }),
       recheckDue: jest.fn().mockResolvedValue({ checked: 0, expired: 0 }),
     } as unknown as ValidationOrchestrator;
+    const matching = {
+      matchPending: jest.fn().mockResolvedValue({ scored: 0 }),
+    } as unknown as MatchingService;
     return {
       loop: new WorkerLoop(
         env,
         scheduler,
         classification,
         validation,
+        matching,
         recovery,
         housekeeping,
         audit,
@@ -48,13 +53,15 @@ describe('WorkerLoop', () => {
       scheduler,
       classification,
       validation,
+      matching,
       recovery,
       housekeeping,
     };
   }
 
   it('runs every stage exactly once in --once mode', async () => {
-    const { loop, scheduler, recovery, housekeeping, classification, validation } = build();
+    const { loop, scheduler, recovery, housekeeping, classification, validation, matching } =
+      build();
     await loop.run({ once: true, logger });
     expect(scheduler.runDueScans).toHaveBeenCalledTimes(1);
     expect(recovery.sweep).toHaveBeenCalledTimes(1);
@@ -62,6 +69,7 @@ describe('WorkerLoop', () => {
     expect(classification.classifyPending).toHaveBeenCalledTimes(1);
     expect(validation.validatePending).toHaveBeenCalledTimes(1);
     expect(validation.recheckDue).toHaveBeenCalledTimes(1);
+    expect(matching.matchPending).toHaveBeenCalledTimes(1);
   });
 
   it('a failing stage does not stop later stages or reject the loop', async () => {

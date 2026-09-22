@@ -6,4 +6,6 @@ export * from './adapters/claude.adapter';
 export * from './prompts/resume-profile.v1';
 export * from './prompts/fresher-classify.v1';
 export * from './prompts/suspicion.v1';
+export * from './prompts/job-requirements.v1';
+export * from './prompts/match.v1';
 export * from './factory';

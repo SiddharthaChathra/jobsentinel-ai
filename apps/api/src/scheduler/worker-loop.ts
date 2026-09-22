@@ -4,6 +4,7 @@ import type { Logger } from 'pino';
 import { ENV } from '../common/config/config.module';
 import { ClassificationService } from '../jobs/classification.service';
 import { AuditLogger } from '../system/audit-logger';
+import { MatchingService } from '../matching/matching.service';
 import { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import { HousekeepingService } from './housekeeping.service';
 import { RecoveryService } from './recovery.service';
@@ -34,6 +35,7 @@ export class WorkerLoop {
     private readonly scheduler: SchedulerService,
     private readonly classification: ClassificationService,
     private readonly validation: ValidationOrchestrator,
+    private readonly matching: MatchingService,
     private readonly recovery: RecoveryService,
     private readonly housekeeping: HousekeepingService,
     private readonly audit: AuditLogger,
@@ -103,7 +105,11 @@ export class WorkerLoop {
           ),
       },
       { name: 'recheck', run: () => this.validation.recheckDue(opts.once ? { batch: 40 } : {}) },
-      // Phase 7–9 stages slot in here: match → notify → digest
+      {
+        name: 'match',
+        run: () => this.matching.matchPending(opts.once ? { batch: 300, maxAiCalls: 20 } : {}),
+      },
+      // Phase 8–9 stages slot in here: notify → digest
       { name: 'retention', run: () => this.housekeeping.runRetention(opts.once) },
     ];
     for (const stage of stages) {

@@ -78,6 +78,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Every user-owned table has `user_id` and an RLS owner policy; shared tables (jobs, companies, sources) are read-only for `authenticated`.
 - Natural-key uniques are the idempotency mechanism: `(source_id, external_id)`, `(job_id, user_id, profile_version)`, `(user_id, job_id, channel, type)`.
 - Writes in the pipeline are per-record transactions; selection uses `FOR UPDATE SKIP LOCKED`.
+- Batch writes rather than per-row round trips over the pooler, and flush a long stage incrementally (≤ 50 rows or ≤ 60 s): never hold a pooled connection idle across AI or HTTP calls (D37, D44, D51).
 - Never delete saved/applied jobs; retention rules in docs 02 §8.
 
 ## 8. API conventions (docs/architecture/03-api-contract.md)
@@ -102,6 +103,13 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Every result carries `evidence[]` and `confidence`; the UI shows evidence, never a bare score.
 - Ambiguous ⇒ `NEEDS_REVIEW`, never silently VALID or silently dropped.
 - Scam patterns are versioned with unit tests for true positives _and_ known false positives.
+
+## 10a. Matching rules (docs/architecture/09-ai.md §5)
+
+- The deterministic scorer in `packages/validation/src/match` always runs and is always stored; the AI may only refine `skillScore`/`roleScore` within ±25 of it, and only for jobs already scoring ≥ 35.
+- A score never rejects a job: low matches are stored and ranked, never deleted or hidden.
+- Every match row carries its `profile_version`. Editing a profile bumps the version and re-scores; old rows stay for history.
+- Scores are per user — `(job_id, user_id, profile_version)` is the idempotency key, so re-running a match run is always safe.
 
 ## 11. Security rules (docs/architecture/11-security.md)
 

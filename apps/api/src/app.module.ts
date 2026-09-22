@@ -10,6 +10,7 @@ import { HttpModule } from './common/http/http.module';
 import { HttpExceptionFilter } from './common/errors/http-exception.filter';
 import { EnvelopeInterceptor } from './common/interceptors/envelope.interceptor';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
+import { MatchingModule } from './matching/matching.module';
 import { ResumesModule } from './resumes/resumes.module';
 import { SourcesModule } from './sources/sources.module';
 import { ValidationModule } from './validation/validation.module';
@@ -35,6 +36,7 @@ import { UsersModule } from './users/users.module';
     ResumesModule,
     SourcesModule,
     ValidationModule,
+    MatchingModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },

@@ -2,6 +2,18 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 7] AI matching — 2026-09-22
+
+- `@jobsentinel/validation`: `scoreMatch` — the deterministic resume ↔ job scorer (skill 0.40 / role 0.30 / experience 0.20 / location 0.10), with `canonicalSkill` alias resolution, priority banding, and an explanation built from the same evidence it scored (`Match 82% — ✓ Python ✓ SQL ✗ Kubernetes · ✓ Fresher eligible · ✓ Preferred role · ✓ Bengaluru`). Pure and synchronous; the AI never replaces it.
+- `applyAiRefinement`: clamps an AI verdict to ±25 points of the deterministic skill/role scores. A model claiming 100 against a baseline of 58 yields 83, never 100; experience and location are never AI-scored.
+- `@jobsentinel/ai`: `JOB_REQUIREMENTS` prompt v1 (must-have/nice-to-have skills, year range, fresher-friendliness, responsibilities — extraction only, no judgement) and `MATCH` prompt v1 (skill equivalence with the deterministic scores supplied as a baseline). Both Zod-validated with deterministic fallbacks.
+- `MatchingService`: pipeline stage `VALID`/`NEEDS_REVIEW` → `MATCHED`. Per user, per `profile_version`; upserts on `(job_id, user_id, profile_version)` so re-running is free and a profile edit re-scores the backlog while keeping the old rows. The AI is only consulted for jobs already scoring ≥ 35, under `maxAiCalls` and a wall-clock budget. A `NEEDS_REVIEW` job is scored but keeps its status — ranking it is not the same as passing it.
+- `--user=`/`--jobIds` scoping and `pnpm --filter @jobsentinel/api match [--batch=N] [--ai=N] [--user=<uuid>]`; worker loop gained the `match` stage after `recheck`.
+- Tests: 162 validation unit tests (30 for the scorer, incl. the ±25 bound, the experience cap and "a low score never deletes a job") and 5 matching integration tests against the live DB — deterministic scoring, `(job_id, user_id, profile_version)` idempotency, re-scoring on a version bump, the AI pre-filter and bound, and the deterministic fallback when the AI is unavailable. 240 unit + 53 e2e in total.
+- Live run over all 192 matchable postings (120 VALID + 72 NEEDS_REVIEW) against a representative final-year CS profile: 192 scored in 4.6 s deterministically (41 jobs/s); with AI, 8 refinements and 1 provider timeout that correctly fell back to the rules verdict. Final ranking: 1 VERY_HIGH (Thoughtworks "Developer (Vapasi) – Intern", 90), 6 MEDIUM, 185 OTHER. The temporary profile and its 576 match rows were removed afterwards and every job restored to its previous status.
+- Two defects found by the live run and fixed: scores are now flushed every 50 jobs / 60 s instead of once per batch (a 10-minute AI run lost all 192 scores to a pooler timeout), and a posting the user is not eligible for is capped below the MEDIUM band (a senior role was reaching 62, and the unit test had frozen the same bug at 80).
+- `docs/matching.md` added; decisions D51–D52 recorded.
+
 ## [Phase 6] Validation engine — 2026-09-22
 
 - `@jobsentinel/config`: validation rule data — 40-entry ATS domain allowlist, URL shorteners, free-mail providers, 9 weighted scam patterns (with sentence-level negation so "we never charge a fee" is a warning, not a demand), closed-page markers incl. ATS-specific wording, apply-form markers.

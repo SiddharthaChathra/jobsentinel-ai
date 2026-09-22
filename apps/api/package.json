@@ -17,7 +17,8 @@
     "db:seed": "node --env-file=.env -r ts-node/register src/common/db/seed/index.ts",
     "db:studio": "drizzle-kit studio",
     "classify": "node dist/scripts/reclassify.js",
-    "validate": "node dist/scripts/validate.js"
+    "validate": "node dist/scripts/validate.js",
+    "match": "node dist/scripts/match.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",

@@ -27,7 +27,7 @@ This folder is the complete Phase 0 deliverable requested by the engineering spe
 | 20     | Phased implementation roadmap                        | [architecture/16-roadmap.md](architecture/16-roadmap.md)                                     |
 | 21, 22 | Risks, limitations, recommended MVP scope            | [architecture/17-risks-and-mvp.md](architecture/17-risks-and-mvp.md)                         |
 
-Long-lived operational docs: [database.md](database.md), [sources.md](sources.md). After approval, the Phase 1 setup will move the long-lived versions of these into the `docs/` layout the spec asks for (`architecture.md`, `database.md`, `ai.md`, `sources.md`, `deployment.md`) and generate `AGENTS.md` from them.
+Long-lived operational docs: [database.md](database.md), [sources.md](sources.md), [matching.md](matching.md). After approval, the Phase 1 setup will move the long-lived versions of these into the `docs/` layout the spec asks for (`architecture.md`, `database.md`, `ai.md`, `sources.md`, `deployment.md`) and generate `AGENTS.md` from them.
 
 ## Non-negotiable rules carried through every document
 
