@@ -7,3 +7,6 @@ export * from './classify/experience';
 export * from './classify/category';
 export * from './extract/skills';
 export * from './dedupe';
+export * from './validate/domain';
+export * from './validate/suspicion';
+export * from './validate/decide';

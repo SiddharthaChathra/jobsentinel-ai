@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@jobsentinel/config": "workspace:*",
-    "@jobsentinel/types": "workspace:*"
+    "@jobsentinel/types": "workspace:*",
+    "tldts": "^7.4.13"
   }
 }

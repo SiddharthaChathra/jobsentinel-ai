@@ -12,6 +12,7 @@ import { EnvelopeInterceptor } from './common/interceptors/envelope.interceptor'
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 import { ResumesModule } from './resumes/resumes.module';
 import { SourcesModule } from './sources/sources.module';
+import { ValidationModule } from './validation/validation.module';
 import { SystemModule } from './system/system.module';
 import { UsersModule } from './users/users.module';
 
@@ -33,6 +34,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     ResumesModule,
     SourcesModule,
+    ValidationModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },

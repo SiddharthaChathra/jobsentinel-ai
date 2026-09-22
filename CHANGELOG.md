@@ -2,6 +2,19 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 6] Validation engine — 2026-09-22
+
+- `@jobsentinel/config`: validation rule data — 40-entry ATS domain allowlist, URL shorteners, free-mail providers, 9 weighted scam patterns (with sentence-level negation so "we never charge a fee" is a warning, not a demand), closed-page markers incl. ATS-specific wording, apply-form markers.
+- `@jobsentinel/validation`: `domainRelationship` (SAME_DOMAIN / SUBDOMAIN / KNOWN_ATS with slug matching / UNRELATED), `lookalikeOf` (length-scaled edit distance), `detectSuspiciousIndicators`, `detectClosedMarkers`, `hasApplyForm`, and `decideValidation` — the scoring function that turns evidence into VALID / SUSPICIOUS / NEEDS_REVIEW / EXPIRED / INVALID with a confidence and a full evidence list.
+- `UrlProbeService`: fetches the application page through `HttpClient` (SSRF-checked on every redirect hop), records the redirect chain, final URL and HTTP status, extracts page text, detects closure markers and apply forms. 403/429 is recorded as BLOCKED — "could not verify", never "scam".
+- `CompanyVerificationService`: DNS resolution, homepage reachability, own-ATS-board evidence, multi-source presence, user trust list, look-alike domain detection; cached on the company row for 7 days.
+- `ValidationOrchestrator`: pipeline stage `CLASSIFIED → VALIDATING → …`, writes `job_validation` + denormalised status, schedules the 6 h → 24 h → 72 h re-check, and `recheckDue()` which expires jobs that close after discovery (or pass 45 days).
+- `SUSPICION` prompt v1, consulted only in the ambiguous 0.35–0.65 band or for an unresolved soft flag; its influence is capped at ±0.2 and it can never turn a job VALID or SUSPICIOUS on its own.
+- Manual review API: `POST /jobs/:id/review` (ACCEPT/REJECT, optional note, optional "trust this company") and `POST /jobs/:id/revalidate`. `pnpm --filter @jobsentinel/api validate [--batch=N] [--ai=N] [--recheck]` CLI.
+- Tests: 140 validation unit tests, 9 engine integration tests against recorded application pages (VALID / EXPIRED via three different closed-page styles / fee-scam SUSPICIOUS / unknown company NEEDS_REVIEW / blocked company REJECTED / scam-warning false-positive guard / re-check expiry), 3 review API tests. 221 unit + 48 e2e in total.
+- Live run: 120 real postings validated against their actual application pages — 120 VALID, average confidence 0.94; 71 OK, 39 bot-protected, 10 redirected; 46 KNOWN_ATS, 65 SUBDOMAIN, 9 UNRELATED (slice.careers vs sliceit.com — a genuine brand-domain variant).
+- Decisions D47–D50 recorded.
+
 ## [Phase 5] Fresher filtering & classification — 2026-09-22
 
 - `@jobsentinel/config`: fresher/senior/experienced indicator sets and non-engineering role patterns, calibrated against the 2,651 real postings ingested in Phase 4.
