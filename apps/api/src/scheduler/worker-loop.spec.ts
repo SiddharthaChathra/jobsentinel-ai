@@ -1,25 +1,58 @@
 import pino from 'pino';
 import type { Env } from '@jobsentinel/config';
 import { loadEnv } from '@jobsentinel/config';
+import type { AuditLogger } from '../system/audit-logger';
+import type { HousekeepingService } from './housekeeping.service';
+import type { RecoveryService } from './recovery.service';
+import type { SchedulerService } from './scheduler.service';
 import { WorkerLoop } from './worker-loop';
 
 describe('WorkerLoop', () => {
   const env: Env = loadEnv({ WORKER_TICK_MS: '1000' });
   const logger = pino({ level: 'silent' });
+  const audit = { event: jest.fn().mockResolvedValue(undefined) } as unknown as AuditLogger;
 
-  it('runs exactly one tick in --once mode', async () => {
-    const loop = new WorkerLoop(env);
-    const tickSpy = jest.spyOn(loop as unknown as { tick: () => Promise<void> }, 'tick');
+  function build(
+    overrides: { scans?: () => Promise<unknown>; recovery?: () => Promise<unknown> } = {},
+  ) {
+    const scheduler = {
+      runDueScans: jest.fn(overrides.scans ?? (() => Promise.resolve([]))),
+    } as unknown as SchedulerService;
+    const recovery = {
+      sweep: jest.fn(overrides.recovery ?? (() => Promise.resolve({}))),
+    } as unknown as RecoveryService;
+    const housekeeping = {
+      workerId: 'test-1',
+      heartbeat: jest.fn().mockResolvedValue(undefined),
+      runRetention: jest.fn().mockResolvedValue(undefined),
+    } as unknown as HousekeepingService;
+    return {
+      loop: new WorkerLoop(env, scheduler, recovery, housekeeping, audit),
+      scheduler,
+      recovery,
+      housekeeping,
+    };
+  }
+
+  it('runs every stage exactly once in --once mode', async () => {
+    const { loop, scheduler, recovery, housekeeping } = build();
     await loop.run({ once: true, logger });
-    expect(tickSpy).toHaveBeenCalledTimes(1);
+    expect(scheduler.runDueScans).toHaveBeenCalledTimes(1);
+    expect(recovery.sweep).toHaveBeenCalledTimes(1);
+    expect(housekeeping.runRetention).toHaveBeenCalledWith(true);
   });
 
-  it('a failing stage does not escape the loop', async () => {
-    const loop = new WorkerLoop(env);
-    jest
-      .spyOn(loop as unknown as { tick: () => Promise<void> }, 'tick')
-      .mockImplementationOnce(() => Promise.reject(new Error('boom')));
-    // run() must surface the error only via the logger, never by rejecting
+  it('a failing stage does not stop later stages or reject the loop', async () => {
+    const { loop, scheduler, housekeeping } = build({
+      recovery: () => Promise.reject(new Error('db hiccup')),
+    });
     await expect(loop.run({ once: true, logger })).resolves.toBeUndefined();
+    expect(scheduler.runDueScans).toHaveBeenCalledTimes(1);
+    expect(housekeeping.runRetention).toHaveBeenCalledTimes(1);
+    expect(
+      (audit.event as jest.Mock).mock.calls.some((c) =>
+        String(c[1]).includes('stage recovery failed'),
+      ),
+    ).toBe(true);
   });
 });

@@ -17,6 +17,10 @@ async function bootstrap(): Promise<void> {
   const logger = createLogger(env, 'worker');
   const args = new Set(process.argv.slice(2));
   const once = args.has('--once');
+  const sourcesArg = [...args].find((a) => a.startsWith('--sources='));
+  const sourceIds = sourcesArg
+    ? sourcesArg.slice('--sources='.length).split(',').filter(Boolean)
+    : undefined;
 
   const app = await NestFactory.createApplicationContext(WorkerModule, {
     logger: new PinoNestLogger(logger),
@@ -31,7 +35,7 @@ async function bootstrap(): Promise<void> {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 
   logger.info({ version: APP_VERSION, once, tickMs: env.WORKER_TICK_MS }, 'worker starting');
-  await loop.run({ once, logger });
+  await loop.run({ once, sourceIds, logger });
   await app.close();
 }
 

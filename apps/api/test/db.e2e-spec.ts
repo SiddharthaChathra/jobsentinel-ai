@@ -53,8 +53,8 @@ describeIf('database guarantees (integration)', () => {
     });
     const createErr = u1.error ?? u2.error;
     if (createErr) throw new Error(createErr.message);
-    userId = u1.data.user.id;
-    otherUserId = u2.data.user.id;
+    userId = u1.data.user!.id;
+    otherUserId = u2.data.user!.id;
     await db.insert(users).values([
       { id: userId, email: `${tag}-a@jobsentinel.test` },
       { id: otherUserId, email: `${tag}-b@jobsentinel.test` },

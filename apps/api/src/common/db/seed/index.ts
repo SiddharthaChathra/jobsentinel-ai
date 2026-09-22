@@ -3,21 +3,11 @@ import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { assertEnv, loadEnv, SCAN_INTERVAL_SEC, SKILL_DICTIONARY } from '@jobsentinel/config';
+import { normalizeCompanyName } from '@jobsentinel/validation';
 import { normalizeSkillName } from '../../../users/profiles.service';
 import { companies, jobSources, skills } from '../schema';
 import * as schema from '../schema';
 import { STARTER_SOURCES } from './starter-sources';
-
-export function normalizeCompanyName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(
-      /\b(pvt|private|ltd|limited|inc|llc|llp|corp|corporation|technologies|technology|labs)\b\.?/g,
-      ' ',
-    )
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
 
 /**
  * Idempotent seed (docs 02 §7): skill dictionary + starter sources (+ their companies).

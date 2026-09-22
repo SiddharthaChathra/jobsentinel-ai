@@ -104,7 +104,7 @@ export const envSchema = z
     WORKER_TICK_MS: int(60_000, { min: 1_000 }),
     WORKER_MAX_SOURCES_PER_TICK: int(3, { min: 1 }),
     WORKER_SOURCE_CONCURRENCY: int(2, { min: 1 }),
-    SOURCE_SCAN_TIMEOUT_MS: int(120_000, { min: 5_000 }),
+    SOURCE_SCAN_TIMEOUT_MS: int(600_000, { min: 5_000 }),
     HTTP_USER_AGENT: strDefault('JobSentinelAI/0.1 (+https://github.com/jobsentinel-ai)'),
     HTTP_TIMEOUT_MS: int(15_000, { min: 1_000 }),
     WORKER_HEALTH_PORT: z.preprocess(

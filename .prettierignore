@@ -3,3 +3,6 @@ dist
 .next
 coverage
 pnpm-lock.yaml
+
+# Next.js regenerates this file with its own formatting
+apps/web/next-env.d.ts

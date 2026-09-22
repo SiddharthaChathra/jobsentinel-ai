@@ -2,6 +2,19 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 4] Job ingestion — 2026-09-22
+
+- `HttpClient`: single outbound gateway — DNS-first SSRF guard on every redirect hop (with NAT64 decoding), timeouts, retries with jitter on 5xx/network only, `Retry-After`, per-host politeness, 20 MB body cap, identifying User-Agent. 25 tests.
+- `JobSource` contract + `SourceRegistry`; adapters **greenhouse, lever, ashby, remotive, rss** with recorded real fixtures (10 tests) and live verification. Blocked (403/429) sources back off and self-disable after 3 strikes.
+- `@jobsentinel/validation`: `normalizeCompanyName`, `normalizeLocation` (Indian metros + global hubs), `parseEmploymentType`, `parseExperience`, `parseSalary` (LPA/lakhs/USD, never invents), `cleanUrl`, `htmlToText`, dedupe primitives (`dedupeTitleKey` keeps level markers, `computeDedupeKey`, 64-bit SimHash, `titleSimilarity`). 68 tests.
+- `normalizeRawJob` (sanitized HTML → text, requirements, skills, keys) and `DedupeService.upsertBatch`: batched, transactional merge order mapping → URL → dedupe key → SimHash+title → within-batch; only primary mappings update canonical content.
+- `SourceManager.runScan` (one scan = one `scan_runs` row, per-record isolation, cursor advances only on success, backoff table), `SchedulerService` (SKIP LOCKED leases, manual-first ordering, `--sources=` override), `RecoveryService.sweep`, `HousekeepingService` (heartbeats, daily retention), upgraded `WorkerLoop`.
+- Admin API `/sources*` (list, adapters, create with validation, patch, manual scan, validate, scan history) and `/system/status`.
+- Live results: all 33 seeded sources ACTIVE; 2,600+ real postings ingested; rescans idempotent; kill-mid-scan recovered with 0 duplicate mappings / 0 duplicate dedupe keys. Throughput ~7 jobs/s after storing text only and stripping raw payloads.
+- Tests: 143 unit, 24 e2e (ingestion pipeline with a scripted adapter against the live DB, sources API, DB guarantees, onboarding).
+- Seed fixes: Lever `porter` and Ashby `navi` removed (wrong companies behind the slugs); seed now shares `normalizeCompanyName` with the pipeline.
+- Decisions D36–D40 recorded.
+
 ## [Phase 3] Database — 2026-09-22
 
 - Migration 0001: 16 new tables (`companies`, `job_sources`, `scan_runs`, `jobs`, `job_source_mappings`, `job_validation`, `job_matches`, `saved_jobs`, `applications`, `job_events`, `notification_settings`, `telegram_links`, `notifications`, `system_logs`, `ai_calls`, `worker_heartbeats`), 17 Postgres enums derived from the Zod enums, indexes/checks/RLS, plus hand-written `pg_trgm`, trigram + full-text indexes on jobs and a `set_updated_at()` trigger on every table with `updated_at`. Live project: 23 tables, 20 policies.

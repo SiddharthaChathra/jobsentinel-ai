@@ -2,7 +2,8 @@ import type { SourcePriority, SourceType } from '@jobsentinel/types';
 
 /**
  * Starter job sources (docs 06 §3). Every ATS board below was verified live on 2026-09-22
- * (public JSON endpoint, ≥ 1 open posting). Adapters land in Phase 4; until then the rows just
+ * (public JSON endpoint, ≥ 1 open posting) AND checked by the locations of the postings — slugs are
+ * global namespaces: Lever "porter" and Ashby "navi" are unrelated US companies, not the Indian ones. Adapters land in Phase 4; until then the rows just
  * describe what to scan. `company` creates/links a `companies` row with ATS evidence for validation.
  */
 export interface StarterSource {
@@ -68,10 +69,8 @@ export const STARTER_SOURCES: StarterSource[] = [
   lever('meesho', 'Meesho', 'meesho.com', 'HIGH'),
   lever('zeta', 'Zeta', 'zeta.tech', 'HIGH'),
   lever('mindtickle', 'Mindtickle', 'mindtickle.com', 'NORMAL'),
-  lever('porter', 'Porter', 'porter.in', 'NORMAL'),
   lever('fampay', 'FamPay', 'famapp.in', 'NORMAL'),
   lever('pocketfm', 'Pocket FM', 'pocketfm.com', 'NORMAL'),
-  ashby('navi', 'Navi', 'navi.com', 'HIGH'),
   ashby('atlan', 'Atlan', 'atlan.com', 'NORMAL'),
   // Global, remote-friendly engineering employers — NORMAL/LOW
   gh('cloudflare', 'Cloudflare', 'cloudflare.com', 'NORMAL'),
