@@ -39,6 +39,10 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,73 +52,86 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Palette: indigo primary with a slightly cool neutral ramp, plus semantic success/warning used
+ * by the verification and match badges. The neutrals carry a trace of blue so cards read as
+ * deliberate rather than default-grey.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.995 0.002 265);
+  --foreground: oklch(0.21 0.02 265);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.21 0.02 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.21 0.02 265);
+  --primary: oklch(0.53 0.2 272);
+  --primary-foreground: oklch(0.99 0.005 265);
+  --secondary: oklch(0.96 0.008 265);
+  --secondary-foreground: oklch(0.27 0.03 265);
+  --muted: oklch(0.965 0.006 265);
+  --muted-foreground: oklch(0.53 0.02 265);
+  --accent: oklch(0.95 0.02 272);
+  --accent-foreground: oklch(0.36 0.12 272);
+  --destructive: oklch(0.58 0.22 25);
+  --success: oklch(0.6 0.15 155);
+  --success-foreground: oklch(0.99 0.005 265);
+  --warning: oklch(0.72 0.16 75);
+  --warning-foreground: oklch(0.25 0.04 75);
+  --border: oklch(0.91 0.008 265);
+  --input: oklch(0.91 0.008 265);
+  --ring: oklch(0.53 0.2 272);
+  --chart-1: oklch(0.53 0.2 272);
+  --chart-2: oklch(0.6 0.15 155);
+  --chart-3: oklch(0.72 0.16 75);
+  --chart-4: oklch(0.62 0.17 320);
+  --chart-5: oklch(0.6 0.13 220);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0.004 265);
+  --sidebar-foreground: oklch(0.21 0.02 265);
+  --sidebar-primary: oklch(0.53 0.2 272);
+  --sidebar-primary-foreground: oklch(0.99 0.005 265);
+  --sidebar-accent: oklch(0.95 0.02 272);
+  --sidebar-accent-foreground: oklch(0.36 0.12 272);
+  --sidebar-border: oklch(0.91 0.008 265);
+  --sidebar-ring: oklch(0.53 0.2 272);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.16 0.015 265);
+  --foreground: oklch(0.96 0.005 265);
+  --card: oklch(0.2 0.018 265);
+  --card-foreground: oklch(0.96 0.005 265);
+  --popover: oklch(0.2 0.018 265);
+  --popover-foreground: oklch(0.96 0.005 265);
+  --primary: oklch(0.68 0.17 272);
+  --primary-foreground: oklch(0.16 0.015 265);
+  --secondary: oklch(0.27 0.02 265);
+  --secondary-foreground: oklch(0.96 0.005 265);
+  --muted: oklch(0.26 0.018 265);
+  --muted-foreground: oklch(0.7 0.02 265);
+  --accent: oklch(0.3 0.05 272);
+  --accent-foreground: oklch(0.9 0.05 272);
+  --destructive: oklch(0.67 0.19 25);
+  --success: oklch(0.7 0.15 155);
+  --success-foreground: oklch(0.16 0.015 265);
+  --warning: oklch(0.78 0.15 75);
+  --warning-foreground: oklch(0.2 0.03 75);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.68 0.17 272);
+  --chart-1: oklch(0.68 0.17 272);
+  --chart-2: oklch(0.7 0.15 155);
+  --chart-3: oklch(0.78 0.15 75);
+  --chart-4: oklch(0.7 0.16 320);
+  --chart-5: oklch(0.68 0.13 220);
+  --sidebar: oklch(0.19 0.018 265);
+  --sidebar-foreground: oklch(0.96 0.005 265);
+  --sidebar-primary: oklch(0.68 0.17 272);
+  --sidebar-primary-foreground: oklch(0.16 0.015 265);
+  --sidebar-accent: oklch(0.3 0.05 272);
+  --sidebar-accent-foreground: oklch(0.9 0.05 272);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.68 0.17 272);
 }
 
 @layer base {
@@ -122,9 +139,30 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    /* Long job descriptions read better with slightly open leading. */
+    text-rendering: optimizeLegibility;
   }
   html {
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Respect a user's reduced-motion setting everywhere, including the shadcn animations. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Subtle lift for interactive cards — used by JobCard and the dashboard tiles. */
+  .card-hover {
+    @apply transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5;
   }
 }

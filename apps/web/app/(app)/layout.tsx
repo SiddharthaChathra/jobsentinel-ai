@@ -4,11 +4,11 @@ import type { Me } from '@jobsentinel/types';
 import { ApiError } from '@/lib/api';
 import { serverApi } from '@/lib/api-server';
 import { isSupabaseConfigured } from '@/lib/env';
+import { AppShell } from '@/components/layout/AppShell';
 
 /**
  * Authenticated app shell. Users who have not finished onboarding are sent to /onboarding.
  * (proxy.ts already guarantees a session; this adds the API-side onboarding state.)
- * Navigation chrome (sidebar / bottom tabs) is Gemini's Phase 8 work — docs 04 §2.
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
   if (isSupabaseConfigured()) {
@@ -22,5 +22,5 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       // API down: render the shell anyway so the user sees an error state instead of a loop.
     }
   }
-  return <>{children}</>;
+  return <AppShell>{children}</AppShell>;
 }

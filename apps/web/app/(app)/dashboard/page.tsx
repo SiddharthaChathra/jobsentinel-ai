@@ -1,98 +1,72 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import type { Me, PreferredRole, Profile } from '@jobsentinel/types';
-import { SignOutButton } from '@/components/auth/sign-out-button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ApiError } from '@/lib/api';
 import { serverApi } from '@/lib/api-server';
 import { isSupabaseConfigured } from '@/lib/env';
+import { StatTiles } from '@/components/dashboard/StatTiles';
+import { PrioritySummary } from '@/components/dashboard/PrioritySummary';
+import { RecentJobs } from '@/components/dashboard/RecentJobs';
+import { TopMatches } from '@/components/dashboard/TopMatches';
+import { SystemMini } from '@/components/dashboard/SystemMini';
+import type { DashboardSummary } from '@/lib/types/jobs';
+import type { Me } from '@jobsentinel/types';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
-/** Phase 2 placeholder: shows the confirmed profile. The real dashboard (docs 04 §4) is Gemini's Phase 8. */
 export default async function DashboardPage() {
   let me: Me | null = null;
-  let profile: Profile | null = null;
-  let roles: PreferredRole[] = [];
+  let summary: DashboardSummary | null = null;
   let apiError: string | null = null;
 
   if (isSupabaseConfigured()) {
     try {
       const api = await serverApi();
-      [me, profile, roles] = await Promise.all([
+      [me, summary] = await Promise.all([
         api.get<Me>('/me').then((r) => r.data),
-        api
-          .get<Profile>('/profile')
-          .then((r) => r.data)
-          .catch(() => null),
-        api.get<PreferredRole[]>('/preferred-roles').then((r) => r.data),
+        api.get<DashboardSummary>('/dashboard/summary').then((r) => r.data),
       ]);
-    } catch (err) {
-      apiError = err instanceof ApiError ? `${err.code}: ${err.message}` : 'API unreachable';
+    } catch (err: unknown) {
+      apiError = err instanceof Error ? err.message : 'API unreachable';
     }
   }
 
+  if (apiError || !summary) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {apiError ?? 'Failed to load dashboard data. Please try again later.'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+    <div className="space-y-8">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            {me ? `Signed in as ${me.user.email}` : (apiError ?? 'Not signed in')}
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            {me ? `Welcome back, ${me.user.displayName ?? me.user.email}` : 'Welcome back'}
           </p>
         </div>
-        {me && <SignOutButton />}
       </header>
 
-      {profile && (
-        <section className="mt-6 grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your profile</CardTitle>
-              <CardDescription>
-                {profile.experienceLevel.replace('_', ' ').toLowerCase()} · {profile.degree ?? '—'}{' '}
-                {profile.branch ?? ''} · {profile.graduationYear ?? '—'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {profile.summary && <p className="text-sm">{profile.summary}</p>}
-              <ul className="flex flex-wrap gap-1.5" aria-label="Skills">
-                {profile.skills.map((s) => (
-                  <li key={s.id}>
-                    <Badge variant="secondary">{s.name}</Badge>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/onboarding" className="text-sm underline underline-offset-4">
-                Re-run onboarding
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Target roles</CardTitle>
-              <CardDescription>Profile version {me?.profileVersion}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-1 text-sm">
-                {roles.map((r) => (
-                  <li key={r.id} className="flex items-center justify-between">
-                    <span>{r.title}</span>
-                    <Badge variant={r.tier === 'PRIMARY' ? 'default' : 'outline'}>
-                      {r.tier.toLowerCase()}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </section>
-      )}
+      <StatTiles summary={summary} />
 
-      <section className="mt-6 rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-        Job monitoring arrives in Phase 4; the full dashboard UI in Phase 8.
-      </section>
-    </main>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="lg:col-span-4 space-y-4">
+          <TopMatches summary={summary} />
+          <RecentJobs summary={summary} />
+        </div>
+        <div className="lg:col-span-3 space-y-4">
+          <SystemMini summary={summary} />
+          <PrioritySummary summary={summary} />
+        </div>
+      </div>
+    </div>
   );
 }

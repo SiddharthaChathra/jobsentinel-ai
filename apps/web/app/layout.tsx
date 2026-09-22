@@ -22,9 +22,22 @@ export const viewport: Viewport = {
   ],
 };
 
+/**
+ * Applies the stored theme before first paint. Without this the page renders light and then
+ * flips, which is the most noticeable flaw on a dark-mode phone.
+ */
+const THEME_SCRIPT = `(function(){try{var s=localStorage.getItem('jobsentinel-theme');var d=s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark')}catch(e){}})()`;
+
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>{children}</Providers>
       </body>

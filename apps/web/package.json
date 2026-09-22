@@ -16,8 +16,10 @@
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.103.1",
+    "@tanstack/react-virtual": "^3.14.13",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
+    "date-fns": "^4.4.0",
     "lucide-react": "^1.47.0",
     "next": "16.3.5",
     "react": "19.2.8",
@@ -37,10 +39,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "jsdom": "^30.1.0",
+    "shadcn": "^4.21.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^5.0.1",
-    "shadcn": "^4.21.0"
+    "vitest": "^5.0.1"
   },
   "description": "JobSentinel AI web dashboard (Next.js) — owned by Gemini"
 }
