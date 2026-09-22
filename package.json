@@ -23,7 +23,8 @@
     "db:generate": "pnpm --filter @jobsentinel/api db:generate",
     "db:migrate": "pnpm --filter @jobsentinel/api db:migrate",
     "db:seed": "pnpm --filter @jobsentinel/api db:seed",
-    "prepare": "git config core.hooksPath .githooks || exit 0"
+    "prepare": "git config core.hooksPath .githooks || exit 0",
+    "env:sync": "node scripts/sync-env.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
