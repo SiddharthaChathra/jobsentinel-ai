@@ -133,6 +133,7 @@ export const envSchema = z
     AI_CLAUDE_MODEL: strDefault('claude-haiku-4-5'),
     AI_LOCAL_BASE_URL: urlDefault('http://localhost:11434'),
     AI_LOCAL_MODEL: strDefault('llama3.1'),
+    AI_REQUEST_TIMEOUT_MS: int(20_000, { min: 1_000 }),
     AI_DAILY_CALL_BUDGET: int(500, { min: 0 }),
     AI_DAILY_TOKEN_BUDGET: int(1_500_000, { min: 0 }),
     AI_ALLOW_DETERMINISTIC_ALERTS: bool(true),

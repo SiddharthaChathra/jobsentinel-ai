@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file=.env -r ts-node/register src/common/db/migrate.ts",
     "db:seed": "node --env-file=.env -r ts-node/register src/common/db/seed/index.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "classify": "node dist/scripts/reclassify.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Env } from '@jobsentinel/config';
 import type { Logger } from 'pino';
 import { ENV } from '../common/config/config.module';
+import { ClassificationService } from '../jobs/classification.service';
 import { AuditLogger } from '../system/audit-logger';
 import { HousekeepingService } from './housekeeping.service';
 import { RecoveryService } from './recovery.service';
@@ -30,6 +31,7 @@ export class WorkerLoop {
   constructor(
     @Inject(ENV) private readonly env: Env,
     private readonly scheduler: SchedulerService,
+    private readonly classification: ClassificationService,
     private readonly recovery: RecoveryService,
     private readonly housekeeping: HousekeepingService,
     private readonly audit: AuditLogger,
@@ -86,7 +88,12 @@ export class WorkerLoop {
             sourceIds: opts.sourceIds,
           }),
       },
-      // Phase 5–9 stages slot in here: classify → validate → match → notify → recheck → digest
+      {
+        name: 'classify',
+        run: () =>
+          this.classification.classifyPending(opts.once ? { batch: 200, maxAiCalls: 50 } : {}),
+      },
+      // Phase 6–9 stages slot in here: validate → match → notify → recheck → digest
       { name: 'retention', run: () => this.housekeeping.runRetention(opts.once) },
     ];
     for (const stage of stages) {

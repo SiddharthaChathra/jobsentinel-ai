@@ -1,4 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
+import { JobsModule } from '../jobs/jobs.module';
 import { SourcesModule } from '../sources/sources.module';
 import { SystemModule } from '../system/system.module';
 import { HousekeepingService } from './housekeeping.service';
@@ -7,7 +8,7 @@ import { SchedulerService } from './scheduler.service';
 import { WorkerLoop } from './worker-loop';
 
 @Module({
-  imports: [forwardRef(() => SourcesModule), SystemModule],
+  imports: [forwardRef(() => SourcesModule), SystemModule, JobsModule],
   providers: [SchedulerService, RecoveryService, HousekeepingService, WorkerLoop],
   exports: [SchedulerService, RecoveryService, HousekeepingService, WorkerLoop],
 })

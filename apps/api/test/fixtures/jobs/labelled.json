@@ -1,0 +1,651 @@
+[
+  {
+    "title": "Copy Intern",
+    "experienceText": null,
+    "employmentType": "INTERNSHIP",
+    "description": "About Fam (previously FamPay)\n\nFam is India’s first payments app for everyone above 11. FamApp helps make online and offline payments through UPI and FamCard. We are on a mission to raise a new, financially aware generation, and drive 250 million+ young users in India to kickstart their financial journey super early in their life.\n\nWe’re reimagining how the next generation experiences fintech—going beyond payments to build a lifestyle brand that blends money, identity, and everyday experiences into one seamless, intuitive journey.\n\nFounded in 2019 by IIT Roorkee alumni, Fam is backed by some of the most respected investors around the world like Elevation Capital, Y-Combinator, Peak XV (Sequoia Capital) India, Venture Highway, Global Founder’s Capital and the likes of Kunal Shah, Amrish Rao as angel investors.\n\n\nAbout this Role\nYou don't come across a company every day that puts content and communication on top of its priorities. We believe communication is the most powerful tool and can be a total game changer.\nWith a product aimed at next generation, it's essential for us to reach our users in the form they actually want to consume, not the form we think sounds \"professional.\"\nWe're looking for a copy intern with a sharp eye for words, a good sense of what makes Gen Z stop and read, and the itch to craft content that feels less like marketing and more like a conversation with a friend.",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Full Stack Engineer - Internal Audit",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations - Bengaluru, India\nAbout the Role\nThe Internal Audit (IA) organization is responsible for delivering high-quality objective and independent assurance over the Company’s key business risks to the Audit Committee and Management in a cost-e",
+    "expectedLevels": ["UNKNOWN", "ENTRY_LEVEL"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Senior Software Engineer - Query Engine, Database Internals - Elasticsearch",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nWhat is The Role\nWe're looking for a Senior Software Engineer to join the Elasticsearch - Analytical Engine team. This globally-distributed, completely remote team of senior engineers is responsible for building new analytics capabilities in Elasticsearch’s latest aggregation framework based on a completely new compute engine, and accessed via our new piped query language called ES|QL . This is a senior software engineering role that covers the design and implementation of new features, enhancements to existing features, and resolving bugs.\nOur company is distributed by intention. We hire the best engineers we can find wherever they are, whoever they are. We collaborate across continents every day over email, GitHub, Zoom, and Slack. At our best, we write fast, scalable, and intuitive software. We believe that the best way to do that is to empower individual engineers, code review every change, decide big things by consensus, and strive for incremental improvements.\nWhat You Will Be Doing\n• You'll be a full-time Elasticsearch contributor, building data-intensive new features and fixing intriguing bugs, all while making the code easier to understand. ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Product Management Intern",
+    "experienceText": null,
+    "employmentType": "INTERNSHIP",
+    "description": "Datadog is seeking curious, driven interns to join our Product Management team and help build products that improve how engineers monitor and understand their systems. As a Product Management Intern, you’ll work alongside Engineering, Design, and Product Marketing throughout the product development lifecycle, contributing to meaningful initiatives and real product decisions. You’ll gain hands-on experience building for highly technical customers while developing your product thinking, technical communication, and cross-functional collaboration skills. With Datadog’s platform processing over 100 trillion events per day across 30,000+ customers in a multi-cloud environment, you’ll gain direct exposure to large-scale, real-time systems built by engineers, for engineers.\nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them.\n \nWhat You’ll Do:\n• Conduct customer discovery conversations and gather feedback to better understand user needs\n• Drive product initiatives from concept through launch alongside Engineering, Design, and Product Marketing teams\n• Translate customer and business needs into clear product requirements and engineering priorities\n• Analyze customer feedback, product data, and market insights to help inform product decisions\n• Prepare and deliver technical product demonstrations and communication materials\n• Develop technical understanding of Datadog’s observability platform and cloud infrastructure products\n \nWho You Are:\n• Targeting a 2027 full-time graduation\n• Pursuing a degree in Computer Science, Software Engineering, or a related technical field\n• Prior internshi",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Software Engineering Intern",
+    "experienceText": null,
+    "employmentType": "INTERNSHIP",
+    "description": "We’re looking for Software Engineering Interns to help build and scale the systems that power Datadog’s observability and security platform. Interns contribute directly to real-world engineering challenges across backend, frontend, infrastructure, data engineering, and developer tooling while working alongside experienced engineers and mentors. You’ll help design, build, and improve systems that process and analyze massive volumes of metrics, logs, and application data in real time. Whether you’re interested in distributed systems, Kubernetes, AI-powered products like Bits AI, or developer platform tooling, you’ll work on meaningful projects that deliver impact for customers at global scale.\n \nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them. \n \nWhat You’ll Do:\n• Contribute to production systems that process and analyze large-scale observability and application data in real time\n• Build and improve distributed systems across backend infrastructure, developer platforms, and cloud-native services\n• Help identify and solve performance, reliability, and scalability challenges in critical services supporting Datadog’s growing customer base\n• Own and deliver technical projects from design through deployment with guidance from experienced engineers and mentors\n• Develop technical expertise through hands-on experience with technologies such as Kubernetes, distributed systems, and cloud-native infrastructure\n• Collaborate with fellow interns, mentors, and engineers while building software that delivers impact at global scale\n \nWho You Are:\n• Pursuing a degree in Computer Science, Soft",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Video Editor Intern",
+    "experienceText": null,
+    "employmentType": "INTERNSHIP",
+    "description": "About Groww:\nWe are a passionate group of people focused on making financial services accessible to every Indian through a multi-product platform. Each day, we help millions of customers take charge of their financial journey. Customer obsession is in our DNA. Every product, every design, every algorithm down to the tiniest detail is executed keeping the customers’ needs and convenience in mind. Our people are our greatest strength. Everyone at Groww is driven by ownership, customer-centricity, integrity and the passion to constantly challenge the status quo.\n \nAre you as passionate about defying conventions and creating something extraordinary as we are? Let’s chat.\n \nOur Vision\nEvery individual deserves the knowledge, tools, and confidence to make informed financial decisions. At Groww, we are making sure every Indian feels empowered to do so through a cutting-edge multi-product platform offering a variety of financial services. Our long-term vision is to become the trusted financial partner for millions of Indians.\n \nOur Values\nOur culture enables us to be what we are — India’s fastest-growing financial services company. It fosters an environment where collaboration, transparency, and open communication take center-stage and hierarchies fade away. There is space for every individual to be themselves and feel motivated to bring their best to the table, as well as craft a promising career for themselves.\nThe values that form our foundation are:\n• Radical customer centricity\n• Ownership-driven culture\n• Keeping everything simple\n• Long-term thinking\n• Complete transparency\nJob Summary:\nAs a Video Editor Intern at Groww, you will work closely with our experienced video production team to assist in creating engaging and visually appealing content. You will collaborate wit",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Product Management - Intern",
+    "experienceText": null,
+    "employmentType": "INTERNSHIP",
+    "description": "About Zeta\nBuild the future of banking. \n\nZeta is a next-generation banking technology company providing cloud-native, fully stackable processing and core banking platforms for issuers. With a focus on scalability, compliance, and innovation, Zeta empowers financial institutions to modernize their technology infrastructure and deliver secure, seamless digital banking experiences.  \n\nOur impact runs at real-world scale. Today, over 25 million cards are live on Zeta-powered platforms across 7 countries, supported by a passionate team of 1,700+ Zetanauts across India, the US, EMEA, and Asia. Backed by SoftBank Vision Fund, Mastercard, and other reputed strategic investors, we reached a valuation of $2 billion in 2025. \n\nOur focus is on establishing product lines that focus on key outcomes by addressing real customer pain points, modernizing legacy systems, and strengthening core fundamentals. As a result, our systems and platforms support a wide range of banking and payments capabilities, including: \n\n1. Tachyon, our cloud-native banking stack built for population-scale systems \n\n2. Cipher, our unified authentication platform for secure, high-volume banking environments \n\n3. Digital Credit as a Service, enabling banks to launch credit lines on UPI \n\n4. Elena, our intelligent and conversational AI platform for banking. \n\n5. Pixel, India’s first digital-native credit card, launched in partnership with HDFC Bank, for whom we also revamped their PayZapp mobile app: Winner of the Celent Model Bank Award for Payments Innovation 2024. \n\n6. Sparrow, the leading card experience for non-prime cardholders in the US \n\n…and more across cards, payments, lending, and core banking. \n\nWe are an engineering-first organization that values ownership, bias for action, and long-term thinking. T",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Software Engineer, Internal Fraud Platform",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAbout the Role\nCloudflare's Internal Fraud Platform team is focused on protecting Cloudflare from fraud and abuse: fraudulent signups, promo and trial abuse, payment fraud, chargebacks, and account takeover that cost the company revenue and support overhead",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Intern - Creative & Communications, People Team",
+    "experienceText": null,
+    "employmentType": "INTERNSHIP",
+    "description": "InMobi Advertising  is a global technology leader helping marketers win the moments that matter. Our advertising platform reaches over 2 billion people across 150+ countries and turns real-time context into business outcomes, delivering results grounded in privacy-first principles. Trusted by 30,000+ brands and leading publishers, InMobi is where intelligence, creativity, and accountability converge. By combining lock screens, apps, TVs, and the open web with AI and machine learning, we deliver receptive attention, precise personalization, and measurable impact.\nThrough Glance AI,  we are shaping AI Commerce, reimagining the future of e-commerce with inspiration-led discovery and shopping. Designed to seamlessly integrate into everyday consumer technology, Glance AI transforms every screen into a gateway for instant, personal, and joyful discovery.  Spanning diverse categories such as fashion, beauty, travel, accessories, home décor, pets, and beyond, Glance AI delivers deeply personalized shopping experiences. With rich first-party data and unparalleled consumer access, it harnesses InMobi’s global scale, insights, and targeting capabilities to create high impact, performance driven shopping journeys for brands worldwide.\nRecognized as a Great Place to Work, and by MIT Technology Review, Fast Company’s Top 10 Innovators, and more, InMobi is a workplace where bold ideas create global impact. Backed by investors including SoftBank, Kleiner Perkins, and Sherpalo Ventures, InMobi has offices across San Mateo, New York, London, Singapore, Tokyo, Seoul, Jakarta, Bengaluru and beyond.\nAt  InMobi Advertising , you’ll have the opportunity to shape how billions of users connect with content, commerce, and brands worldwide. To learn more, visit www.inmobi.com\nAbout the Role  \nWe ",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Product Manager, Internal Financial Data",
+    "experienceText": "3 - 5 years",
+    "employmentType": "UNKNOWN",
+    "description": "The Internal Data team is on a mission to power data-informed decisions and applications across MongoDB, oriented around the business areas of Customer, Product, Finance, and Employee. We build and scale the data products MongoDB employees rely on every day, including data pipelines, datasets, analytics, APIs, ML models, and frameworks that form the backbone of our internal data ecosystem.\nWe treat data as a product. That means applying the same rigor, user focus, and outcome orientation to internal data that MongoDB brings to its external-facing platform and products. As MongoDB scales, our financial data footprint has grown exponentially. You will inherit the challenge of providing the focus and product management needed to transform complex, high-volume consumption data into clean, compliant, and near-real-time financial products; moving our Finance teams away from manual workflows and toward automated, AI-driven forecasting.\nWe are looking to speak to candidates who are based in NYC, Austin, Palo Alto, or San Francisco for our hybrid working model.\nWhat You'll Do\n• Drive the end-to-end product vision, strategy, and roadmap for critical data products that power company-wide financial planning, forecasting, spend efficiency, and operational rigor\n• Navigate ambiguity and shape requirements by partnering deeply with Finance leadership to unpack complex, unformed business problems. Proactively translate high-level financial strategies into concrete data requirements, technical frameworks, and user stories\n• Lead cross-functional squads to design, build, and deploy robust pipelines, datasets, dashboards, APIs, and frameworks. Champion underlying data management tools that serve as the foundational engine for AI and BI across the enterprise\n• Act as the ultimate advocate ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Specialist 2, Internal Audit",
+    "experienceText": "2+ years",
+    "employmentType": "UNKNOWN",
+    "description": "We are looking for a curious, intelligent, and energetic Internal Audit Senior Specialist 2 to join the MongoDB Internal Audit team, reporting to the Senior Manager of Internal Audit, in a role to expand the capabilities and impact of our India Internal Audit pillar. This is a critical role on a team instrumental for making sure that the company has the right controls in place to enable scalable growth, with trust in mind. \nIn this role, you will have a strong background in current accounting pronouncements, internal and external financial statements, and control-based audits. The ideal candidate will possess strong analytical skills, a high degree of attention to detail and a focus on building long term partnerships across the organization. \nWe are looking to speak to candidates who are based in Gurugram for our hybrid working model.\nResponsibilities\n• Work closely with Senior Manager of Internal Audit to implement and execute on the annual internal audit plan, which includes tests of design and effectiveness of internal controls over financial reporting as well as risk-based operational audits\n• Work cross functionally with process owners across the Company to evaluate processes, to identify process deficiencies or enhancements, and ensure action is taken to address these\n• Perform testing on behalf of management over the effectiveness of internal controls over operational, financial, and IT processes\n•  Assist in the preparation of internal audit updates to be presented to the management team, Chief Accounting Officer, CFO/COO, and Audit Committee on a semi-annual or quarterly basis\n• Coordinate with external auditors on their annual plan including but not limited to the performance of process walkthroughs and control testing\n• Assist with internal investigations as ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Trainee - Recruitment Coordinator",
+    "experienceText": null,
+    "employmentType": "TRAINEE",
+    "description": "About the Team\n \nOur Human Resources team operates as a strategic partner to the business, focused on cultivating a high-performance culture where exceptional talent thrives. Our work is fundamentally guided by the DICE (Democratize Internet Commerce for Everyone) mission, which underpins our approach to all people strategies. Our core mandate centers on two critical pillars: driving world-class Talent Density and continuously elevating Employee Experience. We achieve this by relentlessly attracting, developing, and retaining the highest caliber of professionals, ensuring that every individual contributes significantly to our success. Concurrently, we are committed to shaping an unparalleled employee experience—one defined by transparent communication, meaningful development, and a deeply engaging, inclusive culture. As stewards of the company's most valuable asset—its people—we design, implement, and champion people strategies that directly translate into sustained business growth and a position as one of India’s most sought-after e-commerce destinations.\n \nAbout the Role\n \nAs Talent Acquisition Trainee, you’ll work closely with the TA team and will help in handling the hiring process for our multiple vacancies. You’ll work on numbers, and get an idea of what a metrics-driven team looks like. You'll also support the team in preparing reports and dashboards.",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Systems Engineer",
+    "experienceText": "8+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations: Bengaluru, India\nAbout the role\nWe are looking for a talented Distributed Systems Engineer to join the Data Localization team. The team builds the infrastructure that enforces where customer data is stored, processed, and decrypted acro",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Senior Solutions Architect",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nJob location: United Kingdom\nWhat is The Role\nAre you looking to make a real impact and play a meaningful role in the growth of our company?\nAs a Solutions Architect (SA) at Elastic, you will serve as a technical authority and trusted advisor to our sales team, customers, partners and community. You will understand and solve our customers’ business issues with the Elastic Stack, and engage the regional Elastic community through events and programs. A successful SA at Elastic will be focused on excellence, taking the initiative to improve both themselves and the team through continuous learning and questioning the status quo. \nWhat You Will Be Doing\n• Serving as the technical point of contact for some of our clients\n• Developing a deep understanding of customers’ goals and objectives, and articulating how our offerings address their needs.\n• Creating and owning value-based relationships at all levels in customer organisations.\n• Actively participating in all phases of planning and execution for your territory, from initial discovery to the technical win.\n• Developing and maintaining a deep understanding of the Elastic products and solutions to demonst",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "FP&A Director GTM Finance",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Netradyne harnesses the power of Computer Vision and Edge Computing to revolutionize the modern-day transportation ecosystem. We are a leader in fleet safety solutions. With growth exceeding 4x year over year, our solution is quickly being recognized as a significant disruptive technology. Our team is growing, and we need forward-thinking, uncompromising, competitive team members to continue to facilitate our growth.\nRole: Director, GTM FP&A | REMOTE WORK NOT AVAILABLE \nReports To: Head of Financial Planning & Analysis\nDepartment: Finance\nLocation: San Francisco, CA\nAbout Netradyne:\nNetradyne harnesses the power of Computer Vision and Edge Computing to revolutionize the modern-day transportation ecosystem. We are a leader in fleet safety solutions. With growth exceeding 4x year over year, our solution is quickly being recognized as a significant disruptive technology. Our team is growing, and we are looking for forward-thinking, uncompromising, competitive team members to help us build what we believe is a generational company.\nPosition Summary:\nWe are seeking an exceptional Director of GTM FP&A to lead the financial planning, analysis, and strategic guidance for our Go-To-Market organization as we scale into the next phase of our growth journey. This is a high-impact, high-visibility leadership role where you will serve as the primary financial partner to our Chief Revenue Officer, Chief Customer Officer, Chief Marketing Officer. You will build and scale world-class GTM financial planning processes, deliver data-driven insights that optimize our path to scale growth and help orchestrate our expansion across new markets and segments. You will lead a growing team and play a critical role in establishing the financial rigor and reporting infrastructure.\nKey Responsibiliti",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Staff Software Engineer, Core Infrastructure",
+    "experienceText": "7+ yrs",
+    "employmentType": "UNKNOWN",
+    "description": "Secure Every Identity, from AI to Human\nIdentity is the key to unlocking the potential of AI. Okta secures AI by building the trusted, neutral infrastructure that enables organizations to safely embrace this new era. This work requires a relentless drive to solve complex challenges with real-world stakes. We are looking for builders and owners who operate with speed and urgency and execute with excellence.\nThis is an opportunity to do career-defining work. We're all in on this mission. If you are too, let's talk.\nStaff Software Engineer, Core Infrastructure\nOkta is the identity standard. The Okta Identity Cloud is an independent and neutral platform that securely connects the right people to the right technologies at the right time. We help organizations do two things - secure and manage their extended enterprise, and transform their customers’ experiences. With over 15,800 customers globally, 7000+ app integrations, and well over 200 million registered users, we are only getting started.\n \nOkta's Core Engineering team is responsible for building and evolving shared infrastructure and services that lay the foundation for what other engineering teams build on. We're in charge of common shared services like search, cache, configuration management, frameworks for async job management, and  email pipeline, to name a few. We're cloud native, where redundancy, multi-tenancy, scale, resource optimization and resiliency are first class citizens. With Okta's mantra of 'Always On!' there's never a dull moment. Our biggest asset is our team of passionate engineers and technically minded managers. \n \nYou'll be joining a team of highly skilled and talented team players who're proud of what they own and deliver. Our elite team is fast, creative and flexible; with a weekly release cyc",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Senior Named Account Executive, Israel - Digital Natives",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Location: London, United Kingdom \nAbout the Role\nWe are seeking a highly accomplished and strategic Account Executive to join our Enterprise / Field Sales team. In this advanced role, you will be pivotal in driving significant growth by leading co",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Security Research Engineer",
+    "experienceText": "6+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nWhat is The Role\nThe Elastic Security Endpoint Protections team researches, designs, and builds the visibility and prevention capabilities at the core of Elastic Defend, our endpoint and SIEM security solution. We are looking for a Senior Security Research Engineer to help lead our efforts to build innovative features that secure our users against the latest emerging threats. You will collaborate with the broader Elastic Security team, a diverse group of skilled researchers, data scientists, and engineers who bring deep domain knowledge in their respective areas. Our geographically dispersed team values positivity and inclusivity in the workplace, clear communication, collaborative learning, and guided mentorship.\n \nWe don't just claim our protections work. In recent third-party enterprise protection testing, Elastic Security earned a perfect malware protection score with zero false alarms, the top result in the field. If you have a passion for security research and would enjoy the challenge of devising novel methods for thwarting malicious actors in an ever-evolving threat landscape, join our growing team!\nWhat You Will Be Doing\n• Research emerging ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Director, Security Channels (North America)",
+    "experienceText": "5+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Director, Security Channels - North America \nAs the Director of Security Channels you will drive incremental revenue for Datadog by building and scaling a highly capable partner community.  In this role, you will be responsible for managing Sr. Partner Managers & Principal Partner Managers (individual contributors) within your organization who are aligned to specific Security Partner relationships in North America.  Additionally, your team will recruit, develop, and manage new Datadog Security Partners. The role reports into the Sr. Director of Channels & Alliances, North America and works cross functionally with marketing, sales, field enablement, product, sales ops, and legal to build, manage, and scale the Datadog Partner business in the region.\nAt Datadog, we place value in our office culture - the relationships and collaboration it builds, and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them.\nWhat You’ll Do: \n• Hire, develop, and manage a high-performing team by recognizing exceptional talent and coaching them for success in their role\n• Identify and recruit new companies into the Datadog Partner Network to drive incremental revenue and deliver successful outcomes for end customers\n• Accelerate existing Datadog Partners’ business through business and technical enablement and successfully executing go-to-market activities\n• Collaborate closely with Datadog’s regional enterprise and commercial sales organizations as well as regional marketing and customer success teams to drive incremental revenue for the region.\n• Serve as executive regional sponsor for key partnerships including top GSI channel partners. \n• Own regional metrics and reporting to Datadog leadership.\n \nWho",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Staff Software Engineer, AI Agentic Experience (Auth0)",
+    "experienceText": "8+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Secure Every Identity, from AI to Human\nIdentity is the key to unlocking the potential of AI. Okta secures AI by building the trusted, neutral infrastructure that enables organizations to safely embrace this new era. This work requires a relentless drive to solve complex challenges with real-world stakes. We are looking for builders and owners who operate with speed and urgency and execute with excellence.\nThis is an opportunity to do career-defining work. We're all in on this mission. If you are too, let's talk.\nThe Auth0 Team\nAuth0 is an easy-to-implement authentication and authorization platform designed by developers for developers.  We make access to applications safe, secure, and seamless for the more than 100 million daily logins around the world. Our modern approach to identity enables this Tier-Ø global service to deliver convenience, privacy, and security so customers can focus on innovation.\nThis team focuses on providing tenant-level protections to our customers, at scale. From bot detection to brute-force to suspicious IP throttling and beyond, this team often provides the first line of defense for Auth0 customers.\nThe Staff Software Engineer \nAt Okta, we’re building the next generation of authentication for the GenAI era. \nWe’re looking for a  Staff Software Engineer  to join the AI DevEx team at Auth0. This role is pivotal in extending and complementing our  Auth for GenAI  offering by building the infrastructure, tooling, and developer experiences that empower both human developers and AI agents to build secure, intelligent applications.\nAuth0 Emerging Tech is the Engineering organization where we take care of the hottest technology out there: we ship fast, we don't break things. We are a dynamic and collaborative distributed and diverse team. We value o",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Staff Technical Product Marketing Manager, Context Engineering",
+    "experienceText": "7-10 years",
+    "employmentType": "UNKNOWN",
+    "description": "We’re hiring a Senior Technical Product Marketing Manager to lead positioning, messaging, and product adoption across our AI and agentic context solutions.\nThis is a high-impact role for a technical marketer who thinks and acts like a builder. Most AI systems don't fail because the model is bad—they fail because they lack a crucial, contextual foundation. MongoDB owns a piece of nearly every step in that chain.\nThis role requires deep technical expertise across the context stack—including VoyageAI embedding and reranking models, MCP Server, and the coding agent ecosystem (Claude Code, Cursor, GitHub Copilot, Gemini CLI, Codex, etc.)—combined with product marketing instincts to deeply understand the market and translate technical depth into crisp, differentiated messaging for distinct user and buyer personas.\nThe ideal candidate has experience building and shipping AI-enabled products and using developer tools in their day-to-day workflows. Individuals with prior experience in technical sales, developer relations, or software development are encouraged to apply. The ideal candidate is a voracious consumer of AI research and pays close attention to shifting patterns in how software and AI applications are built and consumed. This individual is confident in communicating with technical practitioners and non-technical decision makers in one-to-few and one-to-many engagements for internal and external audiences. You will leverage your technical depth to craft clear, compelling, and highly differentiated messaging by working backward from customer requirements. \nWe are looking to speak to candidates who are based in Dublin for our hybrid working model.\nWhat You’ll Do\n• Drive Strategy & Execution: Act as the strategic owner for MongoDB’s context engineering portfolio—MCP Serve",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Principal Partner Specialist",
+    "experienceText": "8+ years",
+    "employmentType": "UNKNOWN",
+    "description": "We’re looking for a hardworking, driven Partner Sales Leader with superb energy, passion and initiative to drive partner awareness and channel new business for the fastest growing database on the planet, MongoDB. The Partner Sales team focuses exclusively on formulating and executing a pipeline generation strategy through Partners within assigned territories, resulting in aggressive pipeline growth and new customer acquisition.\nWith a people-first culture, managing and leading our Sales team is top of mind. MongoDB is always changing and innovating — not only in our technology, but also in our sales go-to-market strategy. Our sales leadership is committed to building the best salesforce in technology. This means, inspiring and enabling success for everyone on the team. We not only equip you to be successful, but we want your feedback and input on how we can continue to “Think Big and Go Far.” As a crucial part of the Sales team at MongoDB, you will have access to a lucrative market and learn how to sell from some of the most successful sales leaders in the software industry.\nWe are looking to speak to candidates who are based in Frankfurt, Berlin, Stuttgart and Munich for our hybrid working model.\nResponsibilities\n• Proactively prospect, identify, qualify and develop a sales pipeline through our SI Partners\n• Work with our Sales team to close business to meet and exceed monthly, quarterly and annual bookings objectives\n• Recruit and build strong and effective partner relationships, resulting in growth opportunities\n• Own, on behalf of VP - Area Sales, all things partner related\n• Manage Partners at an Area level but loop back to Global team\n• Interlock with Global Pillar teams for backup and support\n• Participate in our sales enablement trainings, including our comprehe",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Customer Engineer, Digital Native Business, Indonesia",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nJob Location: Singapore\nWhat you will do as a Senior Customer Engineer\nThe Customer Engineer (CE) is the core driver of our technical go-to-market strategy: a trusted technical advisor and primary architect of the customer journey. You will bridge the gap b",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Senior Partner Manager - Channels (UKI)",
+    "experienceText": "7+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Our Channels & Alliances Team’s charter builds and activates a strategic, differentiated and high-impact partner ecosystem for our best-of-breed multi-cloud monitoring product, one partner at a time. As a Senior Partner Manager, you will recruit and develop channel partners that drive new customer adoption and revenue, including Regional and Global Systems Integrators, Managed Service Providers, and Value Added Resellers.\n \nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them.\n \nWhat You’ll Do: \n• Identify and recruit new strategic channel partners to drive revenue growth\n• Enable and activate existing partners through training, planning and joint selling activities\n• Coordinate the technical and marketing aspects of integrated partnership launches\n• Host regular business reviews with partners to drive accountability and report on success metrics\n• Work hand-in-hand with Datadog’s regional enterprise and commercial sales organizations\n• Generate partner-sourced net-new sales pipeline and revenue\n \nWho You Are: \n• Experienced in 7+ years of partner-facing, quota-carrying business development, strategic alliances, or channel sales at a cloud services or software as a service organization\n• Proven in driving sales opportunities from lead generation to closure, effectively negotiating agreements and building long-lasting partnerships\n• Able to quickly comprehend technical concepts and architectural scenarios, and explain them to others verbally and in writing\n• Proficiency in managing premier Cloud MSP partners will be advantageous\n• Willing to travel 20-30% of the time\nDatadog value",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Developer Support Associate (New Grad)",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Secure Every Identity, from AI to Human\nIdentity is the key to unlocking the potential of AI. Okta secures AI by building the trusted, neutral infrastructure that enables organizations to safely embrace this new era. This work requires a relentless drive to solve complex challenges with real-world stakes. We are looking for builders and owners who operate with speed and urgency and execute with excellence.\nThis is an opportunity to do career-defining work. We're all in on this mission. If you are too, let's talk.\n \nLocation:\nThis role is based in Chicago. We are looking for local candidates who are excited to work on a hybrid schedule. There is a requirement to join a rotation for weekend shifts, in order to ensure we can deliver outstanding service, 24x7.\n \nThe Opportunity:\nAs a Developer Support Associate you will work closely with our customers to provide operative support, operational maintenance, and support services. This is an entry level position within the global Support Team with huge potential for growth into Developer Support Engineer, or other roles across Okta.\nThe Developer Support Associate (DSA) is the primary point of contact for all support related issues for Okta’s Customer Identity Cloud customers. This DSA acts as the voice of the customer to ensure technical support and best practice guidance are provided within published Service Level Agreement (SLA). In order to succeed in this team you must have the passion and energy to work in an entrepreneurial and fast paced environment. You love to collaborate, understand how to give and take constructive feedback and are always looking to make yourself and your peers better.\n \nThis role is geared for New Graduates, graduating between summer 2025 and fall 2026. Applicants must reside in Chicago. \n \nJob Dut",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Head of Marketing Operations",
+    "experienceText": "10 + years",
+    "employmentType": "FULL_TIME",
+    "description": "Replit is the agentic software creation platform that enables anyone to build applications using natural language. With millions of users worldwide, Replit is democratizing software development by removing traditional barriers to application creation.\n\n\nWe're looking for a Head of Marketing Operations to serve as the operational backbone of the marketing organization. This person will own budget, hiring operations, cross-team coordination, and the marketing tech stack, while working closely with the CMO on executive presentations, readouts, and the day-to-day priorities that keep the marketing organization running smoothly. This is a highly cross-functional role suited to someone who thrives on structure, enjoys translating ambiguity into clear process, and can build trust across a diverse set of stakeholders (creative, demand gen, product marketing, comms, etc.) as well as with senior leadership.\n\n\n\n\nWHAT YOU'LL DO\n\nBudget & Financial Operations\n\n - Own and manage the marketing department's budget end to end, tracking spend against plan, flagging variances, and partnering with Finance on forecasting and reporting\n\n - Build visibility into spend by team/channel/program so leadership can make informed tradeoffs\n\n - Support quarterly and annual budget planning cycles\n\nHiring Operations\n\n - Partner with Talent Acquisition and marketing leads to manage headcount planning, requisition tracking, and interview logistics\n\n - Help standardize hiring processes across marketing sub-teams (job descriptions, interview loops, scorecards)\n\n - Keep hiring plans aligned with budget and org design\n\nCross-Functional Coordination & Executive Partnership\n\n - Bring together the different functions within marketing (brand, demand gen, product marketing, comms, etc.) for regular tactical updat",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "AWS Alliance Director — EMEA",
+    "experienceText": "12+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nWhat is The Role\nAs a 3X global award-winning partner of AWS with deep integrations across AWS services and a growing ecosystem of connectors, Elastic is positioned as the context and retrieval layer of choice for enterprise AI on AWS.\nEMEA represents approximately one-third of Elastic's global revenue, spanning nine sub-regions, ~200 sellers, and a rapidly growing AWS Marketplace footprint. The AWS relationship in EMEA is both Elastic's greatest strategic growth lever and its most complex partnership to execute — where collaboration and competition coexist across cloud, security, and AI.\nWe are seeking a driven, regionally expert AWS Alliance Director for EMEA to lead execution of the joint Elastic–AWS go-to-market strategy across the region. This is a high-visibility individual contributor leadership role that demands executive presence, deep AWS ecosystem knowledge — ideally from time spent inside AWS — and the operational discipline to turn strategy into revenue. You will own Marketplace growth, co-sell engine activation, new logo acquisition, channel development, and geo expansion across EMEA, directly partnering with AWS EMEA leadership and coo",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior OIC and OPA Developer",
+    "experienceText": "10+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations\n• Bengaluru, India\nAbout the Role\nThe Senior OIC and OPA Developer is the definitive technical expert responsible for developing, governing, and standardizing all data movement and orchestration involving the Oracle Fusion ERP Cloud envi",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Principal Partner Manager - Channels (GSI)",
+    "experienceText": "10+ years",
+    "employmentType": "UNKNOWN",
+    "description": "We are looking for an experienced Partner Sales Manager to ignite partnerships by identifying and recruiting new partners for long-term success and nurture ongoing relationships with key strategic Global Systems Integrator partners.  Our ultimate goal is building channels and alliances that drive new customer adoption and revenue. This is a great opportunity for you to join a high-growth cloud software company and help blaze the path for our company's expansion.\nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them.\nWhat You'll Do: \n• Identify and recruit new strategic Global SI partners to drive revenue growth\n• Enable and activate existing GSI partners through training, planning and joint selling activities\n• Coordinate the technical and marketing aspects of integrated partnership launches\n• Host regular business reviews with partners to drive accountability and report on success metrics\n• Work hand-in-hand with Datadog’s regional enterprise and commercial sales organizations\n• Generate partner-sourced net-new sales pipeline and revenue\nWho You Are: \n• 10+ years of partner-facing, quota-carrying experience in business development, strategic alliances, or channel sales at a cloud services or software as a service organization\n• Proven experience in driving sales opportunities from lead generation to closure, effectively negotiating agreements and building long-lasting partnerships\n• Understanding of, and exposure to working with, the leading Global and regional SIs\n• Ability to quickly understand technical concepts and architectural scenarios, and explain them to others verbally ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Regional Manager, Sales Engineering - UK",
+    "experienceText": "1-3+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Datadog is seeking a Regional Manager, Sales Engineering to join our high-growth organization and world-class pre-sales team. You will manage a team of talented Sales Engineers to help qualify and close opportunities and coach the team on their approach to providing technical expertise through sales presentations, product demonstrations, and supporting technical evaluations (POCs). This is a hands-on management role where you will take the lead technical role in your region supporting customer facing activities and engagements for key accounts. Enable a strong partnership between the SE team and other organizations within Datadog.\nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them.\nWhat You’ll Do: \n• Partner with the Sales Team to articulate the overall Datadog value proposition, vision and strategy to customers.\n• Manage a team of leaders and individual contributors, helping to ensure customer success pre-sale;\n• Assist recruiting efforts to find and hire top talent within your region. Mentor/coach new hires during on-boarding to ensure proper ramping of skills and capabilities\n• Ensure that your team is enabled to support all required Datadog solutions along with key technical and soft skills\n• Develop a close working relationship with Product Management, Support, and Enablement to ensure continuity between pre and post sales activities\n• Deliver semi-annual performance reviews along with collaborating on and executing individual development plans\nWho You Are:\n• Experienced with 1-3+ years in a Sales Engineering team lead or mentorship role and 3+ years in a Sales Engineering",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "GTM Strategy/Operations Associate - New York",
+    "experienceText": "2 - 4 years",
+    "employmentType": "UNKNOWN",
+    "description": "The GTM Strategy & Operations Associate will join a global team driving Datadog’s next phase of growth. We’re interdisciplinary thinkers leveraging diverse business backgrounds in management consulting, investment banking, business development, and tech to accelerate Datadog’s global growth. We work directly with Datadog’s most senior leaders to set strategy, improve efficiency across the business, support data-driven decision-making, own complex operations, and more. \nIn this role, you will serve as the strategic partner for our Enterprise segment in the Americas region, identifying opportunities for revenue growth & sales force effectiveness, spearheading strategic initiatives across our go-to-market teams, and driving critical annual planning activities. This role offers the chance to make an immediate and significant impact as we continue to expand our Americas footprint.\nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them\nWhat You’ll Do:\n• Support the Enterprise Strategy & Operations team in addressing strategic and operational challenges faced by the Americas Enterprise sales leadership\n• Partner with senior team members to analyze key business areas and surface insights that inform decision-making\n• Support the design and execution of regional programs, including headcount planning, territory design, pipeline reviews, and business performance tracking\n• Collaborate with cross-functional teams including Sales, Channels & Alliances, Marketing, and Customer Success to execute high-impact initiatives that drive growth and improve sales productivity\n• Support sales leadership ",
+    "expectedLevels": ["ENTRY_LEVEL", "EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Ecosystem Sales Manager, Japan",
+    "experienceText": "15+ years",
+    "employmentType": "UNKNOWN",
+    "description": "GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.\nThe same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. Co-create the future with us as we build technology that transforms how the world develops software.\n* Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.\nAbout the Team\nGitLab's APJ Ecosystem team builds and scales the partner (channel, alliance, and hyperscaler) motion across the region. Japan is a strategic market for GitLab, and this hire is central to strengthening our partner ecosystem there — deepening a smaller number of high-value partnerships rather than spreading thin across many transactional ones.\nAbout the Role\nThe Ecosystem Sales Manager (ESM), Japan is a senior, market-facin",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Principal Software Engineer",
+    "experienceText": "12+ yrs",
+    "employmentType": "UNKNOWN",
+    "description": "Secure Every Identity, from AI to Human\nIdentity is the key to unlocking the potential of AI. Okta secures AI by building the trusted, neutral infrastructure that enables organizations to safely embrace this new era. This work requires a relentless drive to solve complex challenges with real-world stakes. We are looking for builders and owners who operate with speed and urgency and execute with excellence.\nThis is an opportunity to do career-defining work. We're all in on this mission. If you are too, let's talk.\nAbout the Team\nOkta's Core Engineering team is responsible for building and evolving shared infrastructure and services that lay the foundation for what other engineering teams build on. We're in charge of common shared services like distributed cache, configuration management, frameworks for async job management, internal tooling for developer support, and email pipeline, to name a few. We're cloud native, where redundancy, multi-tenancy, scale, resource optimization and resiliency are first class citizens. With Okta's mantra of 'Always On!' there's never a dull moment. Our biggest asset is our team of passionate engineers and technically minded managers. \nRole:\nThis is an opportunity for an experienced Backend engineer to join our growing Core Platform team based out of Bengaluru. In this role, you will get to work with highly skilled and talented engineers throughout the organization to build and manage some of the critical platform services powering Okta’s products and infrastructure. This role requires a blend of high-level architectural thinking and hands-on execution to build resilient, high-performance backend services. We are not only passionate about building services but operating them at scale, making them resilient to provide a seamless service to ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Senior Director Product Management, Growth",
+    "experienceText": "10+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About the Role \nWe’re looking for a Senior Director of Product Management to help define and drive our next phase of growth. Our team owns the end-to-end product-led growth journey, from developer acquisition and onboarding through activation, adoption, monetization, retention, expansion, and sales handoffs. We use customer insight, data, and experimentation to reduce friction, accelerate time-to-value, grow revenue, and increase long-term customer value. This is a high-impact, strategic role that requires strong leadership, creativity, strong product sense, and the ability to mentor a team of high-performing Product Managers. You’ll be expected to lead your team, but also influence across the Product and Technology and Marketing teams, build cross-functional relationships, and elevate the team’s overall strategic thinking and execution.\nWhat You’ll Do\n• Develop a clear, cohesive product-led growth  strategy for both MongoDB Community Edition and MongoDB Atlas translating that strategy into testable hypotheses, measurable growth outcomes, and a prioritized experimentation roadmap\n• Identify and validate opportunities to expand into new user segments, improve onboarding and activation, accelerate time-to-value, and strengthen product education across the developer journey\n• Own the growth measurement and experimentation framework across acquisition, activation, adoption, retention, expansion, and sales handoffs, using product and customer insights, rapid testing, and structured learning loops to identify friction, prioritize investments, measure impact, and scale what works\n• Mentor and guide Product Managers to think more broadly and creatively about the customer journey, instilling a culture of innovation and strategic problem-solving\n• Partner closely with Engineering",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Engineering Manager, Cloudflare Network Interconnect",
+    "experienceText": "3+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations: Austin\nAbout the Role\nThe CNI team builds and operates the systems that let Cloudflare's enterprise customers connect their networks directly to Cloudflare through private, dedicated interconnects — rather than traversing the public Int",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Sr. Sales Engineer - Rubrik Agent Cloud",
+    "experienceText": "5+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About Team & About Role:\nRubrik’s sales organization is a united group of elite cross-functional sales professionals that help companies & government entities achieve resilience against cyberattacks, malicious insiders, and operational disruptions. We offer continuous professional development through our world class sales enablement program and our One Rubrik selling approach provides all the resources you need to exceed your goals, maximize your earnings potential and take your career to the next level. All this while doing something that truly matters, protecting the world's data.\nRubrik is looking for Sales Engineers with extensive experience in agentic technologies to provide technical direction and business guidance to our new product incubation team - RubrikX. As a Go To Market (GTM) Tech Lead, you will be accountable for product line revenue goals by developing the corporate technical go to market strategy and overseeing key account technical pre-sales activities. You will be responsible for building, evangelizing, positioning, and architecting the industry's leading agentic AI governance and security platform for a mix of enterprise and majors customers throughout North America.\nWhat You'll Do:\n• Provides technical leadership and direction to Rubrik, customers, and prospects in the development and positioning Rubrik's AI Agentic Cloud offerings.\n• Serves as a trusted technology advisor to customers and serves as an agentic AI subject matter expert when positioning Rubrik's cloud capabilities to key accounts.\n• Leads technical sales calls, gathers / analyzes customer feedback, and identifies trends.\n• Qualifies sales opportunities in the terms of customer technical requirements, competition, decision making process and funding.\n• Maintains a consistent cadence wi",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Technical Sourcing Manager, Network Hardware",
+    "experienceText": "5 years of experience",
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations: Austin, TX (US), Lisbon (Portugal)\nAbout the Role\nWe are seeking a Technical Sourcing Manager for Network Hardware to lead commercial engagement and oversee the supply chain for Cloudflare's 200+ data centers. You will drive ambitious g",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Product Manager - Self service cloud",
+    "experienceText": "4+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nWhat is The Role\nThe Product Manager will lead critical areas within self-service cloud growth, empowering self-service customers and trial users to be successful. This role specifically focuses on human user onboarding and agents onboarding, directly influencing the successful growth of Elastic Cloud.\nWhat You Will Be Doing\n• Define the vision and roadmap for self service cloud growth, encompassing: onboarding and trial experience, product features adoption and trial activation, customer interviews and churn analysis, product engagement analytics and email nurturing.\n• Partnering with engineering leads to prioritizing technical investments and establishing realistic delivery timelines.\n• Collaborate with downstream Elastic solution teams (Observability, Security, Enterprise Search) to understand their specific onboarding flows and trial experience.\n• Drive technical decision-making regarding onboarding, activation, expansion and retention of self-service customers.\n• Interface with customers and trial users to gather feedback on trial experience.\n• Collaborate with Sales & Marketing on competitive positioning and brand awareness.\n• Drive native inte",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Threat Intelligence Software Engineer, Cloudforce One",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations\n• Austin, US\n• London, UK\nAbout the Role\nCloudforce One is Cloudflare’s threat operations and research team, responsible for identifying and disrupting cyber threats ranging from sophisticated cyber criminal activity to nation-state spon",
+    "expectedLevels": ["UNKNOWN"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Support Engineer (EMEA)",
+    "experienceText": "3+ years",
+    "employmentType": "FULL_TIME",
+    "description": "Supabase is the Postgres development platform, built by developers for developers. We provide a complete backend solution including Database, Auth, Storage, Edge Functions, Realtime, and Vector Search. All services are deeply integrated and designed for growth.\n\nWe are seeking Support Engineers to provide world-class developer support for anyone experiencing issues or seeking guidance when using Supabase. The support team is globally distributed with a strong focus on minimizing time to fix, and works closely with the product engineering and growth teams.\n\nYou will:\n\n - Provide initial and timely responses to all support cases for a variety of topics, from billing or pre-sales requests to optimization or implementation questions.\n\n - Triage support cases including directing users to previous answers, code examples, documentation, or escalating to specific technical or business team members.\n\n - Monitor multiple feedback channels, e.g. Github Issues & Discussions (check them here: https://github.com/supabase/supabase/issues).\n\n - Identify where internal tooling might be developed or obtained to improve support efficiency.\n\n - Reproduce issues, create test cases and improve test coverage, if you have experience with testing.\n\nYou are:\n\n - Experienced in customer support, with 3+ years of experience providing developer support to technical customers.\n\n - Proficient in SQL (ideally PostgreSQL). You feel comfortable with complex SQL queries. If you have a database administration experience, it’s a plus.\n\n - Excellent communication skills and fluency in English.\n\n - Skilled in using Linux/Unix operating systems and the command line.\n\n - Experienced working with GitHub Issues and Discussions.\n\n - Bonus points if you're familiar with popular JavaScript frameworks like React, Vu",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Intermediate Support Engineer (SHIFT)",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "GitLab is the intelligent orchestration platform for DevSecOps. GitLab enables organizations to increase developer productivity, improve operational efficiency, reduce security and compliance risk, and accelerate digital transformation. More than 50 million registered users and more than 50% of the Fortune 100* trust GitLab to ship better, more secure software faster.\nThe same principles built into our products are reflected in how our team works: we embrace AI as a core productivity multiplier, with all team members expected to incorporate AI into their daily workflows to drive efficiency, innovation, and impact. GitLab is where careers accelerate, innovation flourishes, and every voice is valued. Our high-performance culture is driven by our values and continuous knowledge exchange, enabling our team members to reach their full potential while collaborating with industry leaders to solve complex problems. Co-create the future with us as we build technology that transforms how the world develops software.\n* Fortune 500® is a registered trademark of Fortune Media IP Limited, used under license. Claim based on GitLab data. Fortune 100 refers to the top 20% ranked companies in the 2025 Fortune 500 list, published in June 2025. Fortune and Fortune Media IP Limited are not affiliated with, and do not endorse products or services of GitLab.\nAn overview of this role\nThis is a shift role. Working 8-hour shifts with 4 weekdays and 1 weekend day.\nSupport Engineering at GitLab isn’t just a title - you will be embedded within the Engineering department and will truly operate in an environment where Support and Engineering meet. You’ll interact with customers daily as they encounter the difficult edge cases of running GitLab in complex environments. In the space of a day, you might",
+    "expectedLevels": ["UNKNOWN", "ENTRY_LEVEL"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Sr. Salesforce DevOps Engineer",
+    "experienceText": "5+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nWhat is The Role\nElastic is looking for a Sr. Salesforce Engineer & Dev Ops Specialist who combines deep architectural intuition, clean coding, and sharp debugging skills with an AI-native workflow (Cursor, Claude Code, Codex). You will serve as the technical backbone of our Salesforce ecosystem—owning the release lifecycle, managing GitHub administration, git automation, and CI/CD pipelines, while facilitating engineering practices across Certinia PSA, CPQ/ARM, AI initiatives, and cross-functional enterprise projects. Balancing hands-on platform development with release engineering, you will streamline revenue processes and scale architecture to deliver high-quality, reliable production solutions.\nWhat You Will Be Doing\n•\nDev Ops & Release Engineering: Lead end-to-end Dev Ops operations, including GitHub administration, git automation, branching strategies, CI/CD pipeline optimization, scratch org/sandbox management, backup strategies, and release governance.\n•\nFull-Stack Salesforce Development: Design and build full-stack features—UI, APIs, business logic, data models, and integrations—using LWC, Apex, SOQL/SOSL, Flows, and modern REST/event-driven",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Senior Engineering Manager, NAS Cloud Direct",
+    "experienceText": "10+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About Team :\nThe Rubrik Cloud Direct team helps customers manage and analyze petabytes of data and billions of files and objects. We make it easy for businesses to protect, search, secure, and analyze all of their data simply and scalably. This is a massive challenge and we’re just getting started so there is a lot of opportunity for personal growth and contribution. We believe in fostering a culture with strong engineering values and goals as the key to building a great company and product.\nAbout the Role :\nWe are seeking a seasoned technical leader who thrives in a dynamic environment and brings deep technical expertise to management. Based out of our Palo Alto office, you will drive your team while collaborating closely with key partners and stakeholders across our teams in Bangalore and Seattle to foster a cohesive and inclusive team culture. You will be responsible for setting clear goals, driving product value, and holding the team accountable to achieving engineering excellence.\nTo achieve this, we look for leaders who balance empathy with high standards thereby creating strong engagement while delivering frequent, high-quality product releases. You will provide the structure needed to prioritize high-impact work while empowering your team with the flexibility to deliver beyond expectations.\nKey Responsibilities : \n• Drive the roadmap and vision with key stakeholders\n• Diagnose and resolve obstacles that block the team from delivering quality software\n• Champion continuous improvement, a customer-first mindset, and engineering excellence\n• Apply first-principles thinking to help the team work through complex technical problems\n• Distill complex, ambiguous situations into actionable plans for your team\n• Represent the customer's perspective, anticipate how they're",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Sr AI Architect - Conversational AI",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Who we are \nAt Twilio, we’re shaping the future of communications, all from the comfort of our homes. We deliver innovative solutions to  hundreds of thousands of businesses  and empower millions of developers worldwide to craft personalized customer experiences.\nOur dedication to remote-first work , and strong culture of connection and global inclusion means that no matter your location, you’re part of a vibrant team with diverse experiences making a global impact each day. As we continue to revolutionize how the world interacts, we’re acquiring new skills and experiences that make work feel truly rewarding. Your career at Twilio is in your hands.\n.\nHiring and how we work\nWe use Artificial Intelligence (AI) to help make our hiring process efficient. That said, every hiring decision is made by real Twilions! \nAlso, while we are a remote-first company, you may be asked to report in person on an ad-hoc basis for team gatherings, functional off-sites or customer meetings. \n.\nSee yourself at Twilio\nJoin the team as Twilio’s next Sr AI Architect - Conversation AI.\nAbout the job\nThis position is critical to leveraging Twilio’s massive data ecosystem and unmatched communication scale to build our customer facing AI capabilities, such as Twilio Conversational Memory, Enterprise Knowledge, Behavioral Data Intelligence and many more to power the future of our customer engagement platform.\nAs a Sr. AI Architect for Twilio Platform, you will also influence the design and evolution of our company-wide ML/AI Ops foundation. You will set the long-term technical vision, establish architectural guardrails, and ensure strict adherence to responsible AI principles. You will drive cross-organizational initiatives, solve complex technical challenges, and elevate the technical standards acro",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Director, Enterprise Sales, Japan",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations\n• Tokyo, Japan\nAbout the Role\nAccount Executives, Business Development Representatives, Solution Engineers, Customer Success, and Sales Operations - all working together help our customers adopt Cloudflare and create great Internet-enabl",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Sales Development Representative - German",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Secure Every Identity, from AI to Human\nIdentity is the key to unlocking the potential of AI. Okta secures AI by building the trusted, neutral infrastructure that enables organizations to safely embrace this new era. This work requires a relentless drive to solve complex challenges with real-world stakes. We are looking for builders and owners who operate with speed and urgency and execute with excellence.\nThis is an opportunity to do career-defining work. We're all in on this mission. If you are too, let's talk.\nOkta’s Sales Development Representatives are high energy professionals that drive the demand, awareness, and interest for our market-leading cloud Security solutions. You will partner and collaborate closely with members of our Account Executive and Marketing teams to generate qualified sales leads, set meetings, and yield new deal opportunities. We're looking for professionals with strong organizational and follow up skills who work well in a team\nWhat you'll do:\n• Uncover and approach prospects to generate new business opportunities to fuel the\nsales pipeline\n• Help create and prioritize strategic target account lists within a defined territory\n• Research and build new and existing accounts (i.e.: adding contacts, emails, strategic\ncalling)\n• Conduct high-level conversations with Senior Executives in prospect accounts\n• Evangelize Okta and the On-Demand mode\n• Achieve monthly quotas of qualified opportunities and closed business\nWho you are:\n• Previous prospecting experience\n• Experience in working to sales targets, KPIs or under time pressure would be a plus\n• Salesforce.com experience\n•  Excellent written/verbal communication skills\n• Strong problem-solving skills\n• Highly motivated, driven and self-starting individual who is goal orientated\n• Ability to wo",
+    "expectedLevels": ["UNKNOWN", "ENTRY_LEVEL", "FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Associate Corporate Counsel - Legal Product, IP, and Marketing",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nWhat is The Role\nWe are looking for an innovative and curious Corporate Counsel to help shape how Elastic’s technologies are built, protected, and brought to market. Elastic is distributed-by-design  and this role can be located in the United States or Canada, reporting to the Vice President of Legal Innovation (Product, IP, Marketing) with dotted line supervision by the Director of Legal Innovation. You will work alongside product and engineering teams from initial ideation through product launch, supporting legal design advice on features at the cutting edge of enterprise technology, helping the company to scale at velocity. The role assists with day-to-day in-house innovation and patent prosecution management.  It carries a broad set of additional product counsel responsibilities collaborating with other legal team members to address AI governance, open-source licensing, dependency management, trademark and brand protection, baseline trade compliance backup, and commercial enablement. We're looking for a resourceful early career attorney with a roll-up-your-sleeves demeanor and the ability to navigate the intersection of law and emerging technolog",
+    "expectedLevels": ["UNKNOWN", "ENTRY_LEVEL", "FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Business Development Representative - Bahasa Indonesia Speaking",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations: Singapore\nAbout the Team:\nIn this role, you will contribute to Cloudflare's revenue generation engine by delivering pipeline at scale to the Sales counterparts. You will do this through a maniacal focus on people, process, and tools. Th",
+    "expectedLevels": ["UNKNOWN", "ENTRY_LEVEL", "FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Software Development Engineer III DevOps",
+    "experienceText": null,
+    "employmentType": "FULL_TIME",
+    "description": "About the team\n \nDevOps - because even the best developers need heroes.\n \nWhether you agree or not, a Senior DevOps Engineer is definitely nothing less than a hero to us - and with good reason! When 5% of Indian households shop with us, it’s important to build resilient systems to manage millions of orders every day. We’ve done this – with zero downtime! 😎 \n \nSounds impossible? Well, that’s the kind of Engineering muscle that has helped Meesho become the e-commerce giant that it is today. We value speed over perfection, and see failures as opportunities to become better. We’ve taken steps to inculcate a strong ‘Founder’s Mindset’ across our engineering teams, making us grow and move fast.\n \nWe place special emphasis on the continuous growth of each team member - and we do this with regular 1-1s and open communication. As Senior DevOps Engineer, you will be part of self-starters who thrive on teamwork and constructive feedback. \n \nWe know how to party as hard as we work! If we aren’t building unparalleled tech solutions, you can find us debating the plot points of our favourite books and games – or even gossipping over chai. So, if a day filled with building impactful solutions with a fun team sounds appealing to you, join us.\n \nAbout the role\n \nAs DevOps Engineer with us, your primary responsibility will be to create systems that serve as the brains of complex distributed products. You will closely mentor younger engineers on the team. You will work on code modularity, scalability, reusability and contribute to team building in the Engineering org.",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Engineer 3 - Business Systems",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "The CRM Technologies team builds, scales, and operates Salesforce-based solutions that power MongoDB’s customer lifecycle, from marketing engagement and lead management through sales execution, account management, renewals, reporting, and downstream operational workflows.\nThe team partners closely with Marketing, Sales Operations, Revenue Operations, Finance, Customer Success, Data, and Engineering to deliver secure, scalable, and reliable business systems. The team continuously evolves the CRM and marketing technology ecosystem through automation, integrations, data quality improvements, and platform operations.\nRole Overview\nWe are looking for an Engineer III, Business Systems to design, build, and support the systems and integrations that enable MongoDB’s top-of-funnel and lead-to-revenue processes.\nThis individual contributor role will focus on marketing technology, lead lifecycle management, enrichment, campaign operations, account and territory management, activity management, outreach, annual planning, and inbound and outbound integrations. You will translate business requirements into scalable technical solutions using Salesforce, marketing automation platforms, integration tools, APIs, and data services.\nYou will own delivery across the full solution lifecycle, including requirements analysis, solution design, development, testing, deployment, documentation, monitoring, and production support. You will also contribute to engineering standards, platform governance, data quality, and continuous improvement across the GTM Technology ecosystem.\nWe are looking to speak to candidates who are based in Gurugram for our hybrid working model.\nWhat You’ll Do\n• Design, build, and support solutions for top-of-funnel and marketing operations processes\n• Develop and enhance l",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Commercial Account Executive",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "As an Account Executive (AE) on our Commercial Sales team, you will assist in Datadog’s overall business growth by strategically engaging and closing net-new customers across small to midsize markets. Sellers follow a well-defined methodology, collaborate with internal stakeholders, identify the customer's unique needs, and clearly convey the value of the Datadog product. AEs have the opportunity to grow their careers in Sales and continue contributing to Datadog team success.\nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them.\nWhat You’ll Do:\n• Focus on net-new logo acquisition via outbound activity\n• Become a Datadog expert through continued product and sales trainings\n• Manage the full sales cycle, including technical demonstrations and negotiation \n• Collaborate with Sales Development Representatives to drive top of funnel activity\n• Strategically prospect into Chief Technology Officers, Engineering/IT Leaders, and technical end-users\nWho You Are:\n• Curious, driven, and motivated as a sales person\n• Creative in how you map and break into accounts\n• Able to learn from feedback and champion a growth mindset\n• Comfortable operating in a highly technical, fast paced environment\n• Experienced in carrying quota, with a proven track record of success\nDatadog values people from all walks of life. We understand not everyone will meet all the above qualifications on day one. That's okay. If you’re passionate about technology and want to grow your experience, we encourage you to apply.\nBenefits and Growth:\n• High income earning opportunities based on self performance\n• New hire stock ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live",
+    "labelNote": "corrected after reading the posting: \"Experienced in carrying quota, with a proven track record\""
+  },
+  {
+    "title": "Sales Development Representative (Singapore Public Sector)",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Elastic, the Search AI Company, enables everyone to find the answers they need in real time, using all their data, at scale — unleashing the potential of businesses and people. The Elastic Search AI Platform, used by more than 50% of the Fortune 500, brings together the precision of search and the intelligence of AI to enable everyone to accelerate the results that matter. By taking advantage of all structured and unstructured data — securing and protecting private information more effectively — Elastic’s complete, cloud-based solutions for search, security, and observability help organizations deliver on the promise of AI.\nWhat is The Role:\nAre you ready to accelerate your sales career at  Elastic, the Search AI company ?\nAs a Sales Development Representative (SDR) at Elastic, you'll play a key role in driving our continued growth by engaging prospective customers, understanding their business challenges, and creating high-quality opportunities that fuel our sales pipeline. Working closely with Account Executives and Marketing, you'll identify the right prospects, spark meaningful conversations, and help organizations discover how Elastic's platform can solve their most critical business challenges.\nWe've built a collaborative workspace for Singapore, where teamwork, continuous learning, and career development are at the heart of everything we do. We believe that drive, curiosity, and coachability are the foundations of long-term success. If you're eager to learn, embrace feedback, and make an impact, we'd love to meet you.\nWhat You Will Be Doing:\n• Partner for Success:  Collaborate closely with your Account Executives and Marketing to identify target accounts, execute strategic campaigns, and generate high-quality pipeline across your territory.\n• Prospecting: Prospec",
+    "expectedLevels": ["UNKNOWN", "ENTRY_LEVEL", "FRESHER"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Copywriter",
+    "experienceText": null,
+    "employmentType": "FULL_TIME",
+    "description": "About Fam (previously FamPay)\n\nFam is India’s first payments app for everyone above 11. FamApp helps make online and offline payments through UPI and FamCard. We are on a mission to raise a new, financially aware generation, and drive 250 million+ young users in India to kickstart their financial journey super early in their life.\n\nWe’re reimagining how the next generation experiences fintech—going beyond payments to build a lifestyle brand that blends money, identity, and everyday experiences into one seamless, intuitive journey.\n\nFounded in 2019 by IIT Roorkee alumni, Fam is backed by some of the most respected investors around the world like Elevation Capital, Y-Combinator, Peak XV (Sequoia Capital) India, Venture Highway, Global Founder’s Capital and the likes of Kunal Shah, Amrish Rao as angel investors.\n\n\nAbout this Role\nYou don't come across a company every day that obsesses over every word a user reads. At Fam, copy isn't an afterthought. It's a core part of the product and brand experience.\nWith a product built for teenagers, every word matters. From in-app nudges and push notifications to performance ads and social campaigns, the right copy can make experiences feel intuitive, trustworthy, and genuinely exciting.\nWe're looking for a sharp, versatile Copywriter who can own the written voice of Fam across surfaces. Someone equally comfortable writing a push notification that drives action as they are ideating a campaign concept or scripting a reel. You'll work closely with Product, Design, Growth, and Marketing teams to craft copy that's clear, on-brand, and built for a Gen-Z audience that has zero tolerance for boring.\nIf you can go from a blank doc to a finished brief fast, think in campaigns and copy simultaneously, and believe that a single sentence can make",
+    "expectedLevels": ["UNKNOWN"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Director, Revenue & CoGS Accounting",
+    "experienceText": null,
+    "employmentType": "UNKNOWN",
+    "description": "Who we are \nAt Twilio, we’re shaping the future of communications, all from the comfort of our homes. We deliver innovative solutions to  hundreds of thousands of businesses  and empower millions of developers worldwide to craft personalized customer experiences.\nOur dedication to remote-first work , and strong culture of connection and global inclusion means that no matter your location, you’re part of a vibrant team with diverse experiences making a global impact each day. As we continue to revolutionize how the world interacts, we’re acquiring new skills and experiences that make work feel truly rewarding. Your career at Twilio is in your hands.\n.\nHiring and how we work\nWe use Artificial Intelligence (AI) to help make our hiring process efficient. That said, every hiring decision is made by real Twilions! \nAlso, while we are a remote-first company, you may be asked to report in person on an ad-hoc basis for team gatherings, functional off-sites or customer meetings. \n.\nSee yourself at Twilio\nJoin the team as Twilio’s next Director, Revenue & CoGS Accounting.\nAbout the job\nIn this role, you will be the visionary leader of Twilio’s global revenue and CoGS accounting operations and play a critical role in shaping a global revenue recognition framework that is as agile as it is accurate, ensuring our financial reporting scales seamlessly with our product innovation. You will bridge the gap between complex technical accounting and high-velocity business operations, and partner with GTM, Product, and IT leaders to ensure our commercial strategies are not only ambitious but operationally sound and compliant.\nThe successful candidate possesses a rare blend of executive presence, technical mastery, and deep operational experience. You are someone who thrives on solving the \"p",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": false,
+    "source": "live"
+  },
+  {
+    "title": "Senior Systems Engineer, Identity & Access Management",
+    "experienceText": "5-8 years",
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations\n• Austin, US\n• Atlanta, GA\n• Denver, CO\n• San Francisco, CA\n• Washington D.C.\nAbout the Role\nCloudflare runs one of the world's largest networks, and every API call that configures it, from any customer, integration, or internal service,",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Federal Support Engineer 3",
+    "experienceText": "5+ years",
+    "employmentType": "UNKNOWN",
+    "description": "We are Datadog's in-house product experts. The Datadog Federal Support Engineering team is dedicated to serving as highly trusted technical advisors for our Public Sector customers, who operate within some of the most highly regulated and security-constrained environments. These customers include various government agencies and organizations with critical, sensitive missions. \nAs a Federal Support Engineer 3, this role places you at the forefront of supporting these customers' mission-critical workloads. These complex workloads are often deployed across sophisticated hybrid and multi-cloud architectures, requiring deep expertise in cloud technologies, monitoring, and security best practices. Your primary responsibility is to ensure the complete success of these customers across their entire lifecycle with Datadog.  Whether you’re looking to learn from the best or be the best, the Federal Support team is dedicated to furthering personal development and team success.\n \nAt Datadog, we place value in our office culture - the relationships and collaboration it builds and the creativity it brings to the table. We operate as a hybrid workplace to ensure our Datadogs can create a work-life harmony that best fits them.\n \nWhat You’ll Do:\n• Engage with public sector customers via multiple channels (ticketing system, live chat, calls, and screensharing tools) to identify and resolve technical support requests.\n• Troubleshoot, investigate, and resolve complex technical issues in highly constrained environments across Datadog's 1000+ integrations, often with limited logs or sanitized data.\n• Handle urgent escalation cases that may result in customer-facing troubleshooting calls, and internal or external incident management\n• Become a subject matter expert in many Datadog product area",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Staff Software Engineer",
+    "experienceText": "9+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About The Role\nWe're looking for a Staff Software Engineer to join our R&D team as a founding engineer for a brand-new product initiative at the site, focusing on the Identity, Non-Human Identity and AI Agents Security space. You will work closely with product and engineering leadership to architect, build, and scale our unique product offering. As a Staff Backend Engineer, you will lead the design of scalable, fault-tolerant systems that discover, analyze, and secure identities across complex enterprise environments.\nWhat You'll Be Doing\n• Architect, design, develop, test, deploy, and maintain robust distributed software systems at scale.\n• Serve as the technical lead and domain expert for our new Identity and Non-Human Identity Security offering, guiding technical direction and cross-engineer collaboration.\n• Partner closely with product management and leadership to align technical architecture with long-term business and product objectives.\n• Build data pipelines that analyze, classify, correlate, and evaluate non-human identity tokens and permissions at enterprise scale.\n• Design extensible, plug-and-play architectures optimized for high integration velocity, making it seamless and effortless to onboard new SaaS platforms (e.g., GitHub, Slack, Salesforce).\n• Take end-to-end technical accountability, from early system design trade-offs to ensuring high availability, performance, and fault tolerance in production.\n• Act as a technical multiplier and mentor, conducting design reviews, setting engineering standards, and elevating the capabilities of the team.\n• Drive continuous innovation across our software stack to solve complex, emerging security challenges.\n• Work in a high-velocity, agile environment that balances rapid execution with architectural excellence.\nRequ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Senior Solutions Engineer- LATAM",
+    "experienceText": "minimum of 4 years",
+    "employmentType": "UNKNOWN",
+    "description": "Headquarters: NYC, Remote; San Francisco, California\nFin is the AI Customer Agent company on a mission to help businesses provide perfect customer experiences.\nOur AI Agent Fin is the highest-performing AI Customer Agent on the market today, enabling businesses to deliver impeccable, always-on customer support across the customer journey – from service, to sales, to ecommerce. Powered by our own AI models, Fin resolves complex customer issues end-to-end across every channel, with minimal set-up and integration. Fin can also be combined with our natively integrated Intercom help desk for one single system that is designed to meet the needs of modern day support teams.\nFounded in 2011, Fin became one of the fastest growing companies and remains one of the largest private software companies in the world with nearly 30,000 global businesses using our products to transform their customer support. Driven by our core values, we push boundaries, build with speed and intensity, and relentlessly deliver incredible value to our customers.\nWhat's the opportunity? \nFin is looking for an exceptional Portuguese and Spanish Speaking Senior Solutions Engineer to join our vibrant Customer Solutions Team. In this role, you’ll engage directly with our customers as their trusted advisor, playing a pivotal part in defining and demonstrating value across the entire sales cycle. With a natural curiosity, independent thinking, and strong problem-solving skills, you’ll partner closely with Product, R&D, and Engineering to ensure our customers’ needs and insights are at the core of our AI powered solutions.\nWhat will I be doing? \n• Lead technical discovery to identify and address our customers’ needs\n• Deliver an exceptional pre-sales experience by articulating Fin's value and technical expertise",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Software Engineer 3, Atlas Growth 2",
+    "experienceText": "3+ years",
+    "employmentType": "UNKNOWN",
+    "description": "Atlas Growth is a cloud engineering group whose mission is to guide customers through their app development journey—from cluster configuration, data modeling and load testing, to running a production workload at scale. We use an in-house experiments platform which helps us validate our features quickly, releasing only the work that positively impacts our customers. Our engineers participate in cross-functional “squads” with product, design, analytics, and research focusing on a single metric (e.g. retention). Our engineering team is part of a larger Atlas Core Engineering org, building foundational elements of MongoDB’s developer data platform.\nAtlas Growth 2 builds customer-facing features in Atlas and sits alongside other Growth engineering teams. Recent projects include an AI Chatbot for cluster creation, a recommendation system that offers tips for better database performance, and a pricing page designed to optimize conversion rates.\nWe are looking to speak to candidates who are based in Dublin for our hybrid working model.\nRole Overview\nAtlas Growth seeks a mid-level software engineer (Software Engineer 3). SE3s are solid contributors to projects they work on and often lead projects of their own. They act in accordance with MongoDB’s core values and leadership principles, and are actively working toward a Senior role.\nCandidate Profile\n• 3+ years of software engineering experience, with fluency in TypeScript/JavaScript, and experience with a modern framework (e.g. React)\n• Proficiency in Java, Go, C++/C, or a similar compiled language is a plus\n• Experience writing database queries, either document-based or relational\n• Experience writing and reviewing technical specs, and leading small projects\n• Interest in A/B testing or product design\nExpectations\n• Contribute ",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Systems Engineer, SSL/TLS Team",
+    "experienceText": "3+ years",
+    "employmentType": "UNKNOWN",
+    "description": "About Us\nAt Cloudflare, we are on a mission to help build a better Internet. Today the company runs one of the world’s largest networks that powers millions of websites and other Internet properties for customers ranging from individual bloggers to SMBs to Fortune 500 companies. Cloudflare protects and accelerates any Internet application online without adding hardware, installing software, or changing a line of code. Internet properties powered by Cloudflare all have web traffic routed through its intelligent global network, which gets smarter with every request. As a result, they see significant improvement in performance and a decrease in spam and other attacks. Cloudflare was named to Entrepreneur Magazine’s Top Company Cultures list and ranked among the World’s Most Innovative Companies by Fast Company.\nAt Cloudflare, we’re not looking for people who wait for a polished roadmap; we’re looking for the builders who see the cracks in the Internet that everyone else has simply learned to live with. We value candidates who have the instinct to spot a \"normalized\" problem and the AI-native curiosity to create a solution using the latest tools. Our culture is built on iteration, leveraging AI to ship faster today to make it better tomorrow, while ensuring that every improvement, no matter how small, is shared across the team to lift everyone up. If you’re the type of person who values curiosity over bureaucracy, and that AI is a partner in solving tough problems to keep the Internet moving forward, you’ll fit right in.\nAvailable Locations: Austin\nRole Summary\nBack in 2014, Cloudflare launched Universal SSL to provide all of our customers with the security of encrypted traffic between visitors and Cloudflare’s network. On the day we flipped the switch, we doubled the amoun",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "live"
+  },
+  {
+    "title": "Graduate Engineer Trainee (2027 Batch)",
+    "experienceText": "0-1 years",
+    "employmentType": null,
+    "description": "Join our GET programme. Eligibility: B.E./B.Tech 2027 batch, CGPA above 7. Training in Java, SQL and Linux provided. Freshers only.",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Software Engineer - Fresher",
+    "experienceText": "Fresher",
+    "employmentType": null,
+    "description": "We are hiring freshers for our Bengaluru office. 0-1 years of experience. Strong fundamentals in data structures, Python or Java required.",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Technical Support Engineer (Night Shift)",
+    "experienceText": "0-2 years",
+    "employmentType": null,
+    "description": "Handle L1 tickets, Active Directory, LAN troubleshooting. 0-2 years experience. Recent graduates encouraged to apply.",
+    "expectedLevels": ["FRESHER", "ENTRY_LEVEL"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Associate Network Engineer",
+    "experienceText": "0-1 year",
+    "employmentType": null,
+    "description": "CCNA preferred. Entry level role supporting routing and switching for enterprise customers.",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Trainee Cloud Engineer",
+    "experienceText": "",
+    "employmentType": null,
+    "description": "Campus hiring for our cloud practice. No prior experience required; AWS certification is a plus.",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Junior Data Analyst",
+    "experienceText": "1-2 years",
+    "employmentType": null,
+    "description": "SQL, Excel and Power BI. 1-2 years of experience preferred but freshers with strong projects may apply.",
+    "expectedLevels": ["FRESHER", "ENTRY_LEVEL"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "SDE-1",
+    "experienceText": "",
+    "employmentType": null,
+    "description": "Build backend services in Go. Looking for engineers with 0-2 years of experience.",
+    "expectedLevels": ["FRESHER", "ENTRY_LEVEL"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Software Engineer",
+    "experienceText": "2-4 years",
+    "employmentType": null,
+    "description": "You will own services end to end. 2-4 years of experience with distributed systems.",
+    "expectedLevels": ["ENTRY_LEVEL", "EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Senior Software Engineer (Freshers welcome)",
+    "experienceText": "",
+    "employmentType": null,
+    "description": "Despite the title this is an entry programme: freshers are welcome to apply and will be trained.",
+    "expectedLevels": ["UNKNOWN", "FRESHER", "ENTRY_LEVEL"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Mechanical Design Engineer - Graduate Trainee",
+    "experienceText": "0-1 years",
+    "employmentType": null,
+    "description": "AutoCAD and SolidWorks. 2026/2027 pass outs eligible.",
+    "expectedLevels": ["FRESHER"],
+    "expectedEngineering": true,
+    "source": "authored"
+  },
+  {
+    "title": "Data Entry Executive",
+    "experienceText": "",
+    "employmentType": null,
+    "description": "Work from home opportunity. Earn daily. No interview required.",
+    "expectedLevels": ["UNKNOWN", "FRESHER", "ENTRY_LEVEL"],
+    "expectedEngineering": false,
+    "source": "authored"
+  },
+  {
+    "title": "Site Reliability Engineer II",
+    "experienceText": "",
+    "employmentType": null,
+    "description": "Own production reliability for a large fleet. Strong Linux and Kubernetes background expected.",
+    "expectedLevels": ["EXPERIENCED"],
+    "expectedEngineering": true,
+    "source": "authored"
+  }
+]

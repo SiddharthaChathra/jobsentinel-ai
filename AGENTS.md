@@ -125,6 +125,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 
 - Jest for `packages/*` and `apps/api` (+ Supertest e2e), Vitest + Testing Library for `apps/web`, Playwright for browser e2e.
 - New business logic ⇒ unit tests in the same commit. Pipeline stages ⇒ fake-based service tests. DB code ⇒ integration tests against local Postgres.
+- Classification rules live in `packages/validation/src/classify`; changing them requires re-running the accuracy gate (`apps/api/src/jobs/classification-accuracy.spec.ts`, 72 labelled postings, ≥90% required). Never tune a rule without measuring against it.
 - No live network or AI calls in CI (fixtures/recordings; `AI_LIVE_TESTS=1` for manual runs). API e2e suites need Supabase env (they skip themselves without it) and run under `--experimental-vm-modules` (`pnpm --filter @jobsentinel/api test:e2e`). E2E creates throwaway `*@jobsentinel.test` auth users and deletes them (plus their storage objects) in `afterAll`.
 - Before ending a phase: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build` must pass.
 

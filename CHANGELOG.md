@@ -2,6 +2,19 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 5] Fresher filtering & classification — 2026-09-22
+
+- `@jobsentinel/config`: fresher/senior/experienced indicator sets and non-engineering role patterns, calibrated against the 2,651 real postings ingested in Phase 4.
+- `@jobsentinel/validation`: `classifyExperience` (parsed year ranges outrank title tokens; internships outrank seniority words; contradictions return `UNKNOWN` + `needsAi`; every verdict carries readable evidence) and `classifyCategory` (non-engineering gate, role families, generic engineering fallback).
+- `@jobsentinel/ai`: `FRESHER_CLASSIFY` prompt v1 — Zod-validated, quotes evidence from the posting, refuses to guess.
+- `ClassificationService`: pipeline stage `DISCOVERED → CLASSIFIED | FILTERED_OUT`. Category/preference gate runs _before_ any AI call; a verdict below 0.6 confidence never overrides the rules; an AI outage leaves the rules result intact. Decisions are written in two statements per batch (one `UPDATE … FROM (VALUES …)`, one bulk event insert) — 1,294 jobs re-classified in 33 s (39/s) versus 0.33/s with per-job transactions.
+- `requeueFiltered()` + `pnpm --filter @jobsentinel/api classify [--requeue] [--ai=N]` so a preferences change can re-apply to the whole backlog.
+- Worker loop gained the `classify` stage; `AI_REQUEST_TIMEOUT_MS` (default 20 s) and a per-batch AI time budget keep a slow provider from stalling a tick.
+- Accuracy gate (`classification-accuracy.spec.ts`): 72 hand-labelled postings — 60 sampled from real boards plus 12 authored fresher-path cases. Current agreement **100 % on experience level and 100 % on engineering/non-engineering**, with explicit assertions that no clearly senior posting is ever called fresher-eligible and that abstention stays under 25 %.
+- Live run over all 2,651 ingested jobs: 1,229 CLASSIFIED / 1,422 FILTERED_OUT; levels 2,327 EXPERIENCED, 226 UNKNOWN, 59 FRESHER, 39 ENTRY_LEVEL; categories 1,100 NON_ENGINEERING, 520 OTHER_ENGINEERING, 391 SOFTWARE, 134 NETWORK, 68 CLOUD_DEVOPS, 60 DATA, 52 IT_SUPPORT.
+- Tests: 184 unit (106 validation, 54 api, 24 packages) and 36 e2e; the e2e suites now run serially because they share one live Supabase project.
+- Decisions D42–D46 recorded.
+
 ## [Phase 4] Job ingestion — 2026-09-22
 
 - `HttpClient`: single outbound gateway — DNS-first SSRF guard on every redirect hop (with NAT64 decoding), timeouts, retries with jitter on 5xx/network only, `Retry-After`, per-host politeness, 20 MB body cap, identifying User-Agent. 25 tests.

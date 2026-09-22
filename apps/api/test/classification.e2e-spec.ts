@@ -1,0 +1,257 @@
+import 'dotenv/config';
+import { Test } from '@nestjs/testing';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { and, eq, inArray } from 'drizzle-orm';
+import type { AIRequest, AIResult, AIService } from '@jobsentinel/ai';
+import { normalizeCompanyName } from '@jobsentinel/validation';
+import { AI_SERVICE } from '../src/common/ai/ai.module';
+import { DB, type Db } from '../src/common/db/db.module';
+import { companies, jobEvents, jobs, preferences, users } from '../src/common/db/schema';
+import { HTTP_CLIENT } from '../src/common/http/http.module';
+import { ClassificationService } from '../src/jobs/classification.service';
+import { WorkerModule } from '../src/worker.module';
+import { FakeHttpClient } from './helpers/fake-http';
+
+/**
+ * Classification stage against the live DB (docs 09 §4): rules decide, preferences gate,
+ * the AI is consulted only for ambiguous monitored jobs, and its failure is never fatal.
+ */
+const hasDb = Boolean(process.env.DATABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+const describeIf = hasDb ? describe : describe.skip;
+
+type Scripted = {
+  data?: unknown;
+  status?: 'INVALID_JSON' | 'ERROR' | 'BUDGET_EXCEEDED' | 'UNAVAILABLE';
+};
+
+class FakeAi {
+  readonly calls: AIRequest<unknown>[] = [];
+  constructor(private readonly script: Scripted = { status: 'ERROR' }) {}
+  run<T>(req: AIRequest<T>): Promise<AIResult<T>> {
+    this.calls.push(req as AIRequest<unknown>);
+    if (this.script.data) {
+      return Promise.resolve({
+        status: 'OK',
+        data: this.script.data as T,
+        provider: 'fake',
+        model: 'fake',
+        usage: { inputTokens: 1, outputTokens: 1 },
+        latencyMs: 1,
+        cached: false,
+      });
+    }
+    return Promise.resolve({ status: this.script.status ?? 'ERROR', error: 'scripted failure' });
+  }
+}
+
+describeIf('classification stage (integration)', () => {
+  const tag = `classify-${Date.now()}`;
+  let db: Db;
+  let moduleRef: Awaited<ReturnType<ReturnType<typeof Test.createTestingModule>['compile']>>;
+  let fakeAi: FakeAi;
+  let service: ClassificationService;
+  let companyId: string;
+  let userId: string;
+  let admin: SupabaseClient;
+
+  const seedJob = async (
+    title: string,
+    description: string,
+    extra: Partial<typeof jobs.$inferInsert> = {},
+  ) => {
+    const [row] = await db
+      .insert(jobs)
+      .values({
+        companyId,
+        title,
+        normalizedTitle: title.toLowerCase(),
+        description,
+        sourceUrl: `https://boards.example/${tag}/${encodeURIComponent(title)}`,
+        dedupeKey: `${tag}-${title}`,
+        status: 'DISCOVERED',
+        // dated in the past so the FIFO classification batch always picks the test's own jobs first
+        firstSeenAt: new Date('2020-01-01T00:00:00Z'),
+        ...extra,
+      })
+      .returning({ id: jobs.id });
+    return row!.id;
+  };
+
+  const build = async (script?: Scripted) => {
+    fakeAi = new FakeAi(script);
+    moduleRef = await Test.createTestingModule({ imports: [WorkerModule] })
+      .overrideProvider(HTTP_CLIENT)
+      .useValue(new FakeHttpClient({}))
+      .overrideProvider(AI_SERVICE)
+      .useValue(fakeAi as unknown as AIService)
+      .compile();
+    db = moduleRef.get(DB);
+    service = moduleRef.get(ClassificationService);
+  };
+
+  beforeAll(async () => {
+    await build();
+    const [c] = await db
+      .insert(companies)
+      .values({ name: `${tag} Co`, normalizedName: normalizeCompanyName(`${tag} Co`) })
+      .returning();
+    companyId = c!.id;
+    // A real auth user (users.id has an FK to auth.users) who monitors software/support only.
+    admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      auth: { persistSession: false },
+    });
+    const created = await admin.auth.admin.createUser({
+      email: `${tag}@jobsentinel.test`,
+      password: `Cls-${Math.random().toString(36).slice(2)}-Pass1!`,
+      email_confirm: true,
+    });
+    if (created.error) throw new Error(created.error.message);
+    userId = created.data.user!.id;
+    await db.insert(users).values({ id: userId, email: `${tag}@jobsentinel.test` });
+    await db.insert(preferences).values({
+      userId,
+      categories: ['SOFTWARE', 'IT_SUPPORT'],
+      fresherOnly: true,
+      includeUnknownExperience: true,
+    });
+  }, 60_000);
+
+  afterAll(async () => {
+    await db.delete(jobs).where(eq(jobs.companyId, companyId));
+    await db.delete(companies).where(eq(companies.id, companyId));
+    await db.delete(users).where(eq(users.id, userId));
+    if (userId) await admin.auth.admin.deleteUser(userId);
+    // requeueFiltered() is intentionally global (a preferences change re-classifies everything),
+    // so leave the shared project in a classified state again.
+    for (;;) {
+      const r = await service.classifyPending({ batch: 500 });
+      if (r.processed === 0) break;
+    }
+    await moduleRef.close();
+  }, 600_000);
+
+  const statusOf = async (id: string) =>
+    (await db.query.jobs.findFirst({ where: eq(jobs.id, id) }))!;
+
+  it('classifies clear cases with rules alone and never calls the AI for them', async () => {
+    const fresherId = await seedJob(
+      'Graduate Engineer Trainee',
+      'Join our GET programme. 0-1 years. B.E. 2027 batch.',
+    );
+    const seniorId = await seedJob(
+      'Senior Software Engineer',
+      'You have 8+ years of experience with distributed systems.',
+    );
+    const result = await service.classifyPending({ batch: 500 });
+
+    expect(result.processed).toBeGreaterThanOrEqual(2);
+    expect(fakeAi.calls).toHaveLength(0);
+
+    const fresher = await statusOf(fresherId);
+    expect(fresher).toMatchObject({
+      status: 'CLASSIFIED',
+      experienceLevel: 'FRESHER',
+      fresherEligible: true,
+      category: 'SOFTWARE',
+    });
+    expect(Number(fresher.fresherConfidence)).toBeGreaterThanOrEqual(0.8);
+    expect((fresher.fresherEvidence as { code: string }[]).length).toBeGreaterThan(0);
+
+    // fresher-only mode: an experienced role is filtered out, but the row and its evidence survive.
+    const senior = await statusOf(seniorId);
+    expect(senior).toMatchObject({
+      status: 'FILTERED_OUT',
+      experienceLevel: 'EXPERIENCED',
+      fresherEligible: false,
+    });
+    const events = await db.select().from(jobEvents).where(eq(jobEvents.jobId, seniorId));
+    expect(events.map((e) => e.type)).toContain('FILTERED_OUT');
+  }, 60_000);
+
+  it('filters out unmonitored categories without spending an AI call', async () => {
+    const salesId = await seedJob(
+      'Enterprise Account Executive',
+      'Sell our platform to enterprises.',
+    );
+    const dataId = await seedJob('Data Analyst', 'Build dashboards.'); // DATA is not in this user's categories
+    await service.classifyPending({ batch: 500 });
+    expect(await statusOf(salesId)).toMatchObject({
+      status: 'FILTERED_OUT',
+      category: 'NON_ENGINEERING',
+    });
+    expect(await statusOf(dataId)).toMatchObject({ status: 'FILTERED_OUT', category: 'DATA' });
+    expect(fakeAi.calls).toHaveLength(0);
+  }, 60_000);
+
+  it('asks the AI only for ambiguous monitored jobs and applies a confident verdict', async () => {
+    await moduleRef.close();
+    await build({
+      data: {
+        level: 'FRESHER',
+        fresherEligible: true,
+        confidence: 0.82,
+        evidence: ['"open to recent graduates"'],
+      },
+    });
+    const id = await seedJob(
+      'Software Engineer',
+      'Join the platform team and help us build great products for our customers.',
+    );
+    await service.classifyPending({ batch: 500, maxAiCalls: 5 });
+
+    expect(fakeAi.calls).toHaveLength(1);
+    expect(fakeAi.calls[0]!.purpose).toBe('FRESHER_CLASSIFY');
+    const job = await statusOf(id);
+    expect(job).toMatchObject({
+      status: 'CLASSIFIED',
+      experienceLevel: 'FRESHER',
+      fresherEligible: true,
+    });
+    expect(
+      (job.fresherEvidence as { code: string; detail: string }[]).some((e) => e.code === 'AI'),
+    ).toBe(true);
+  }, 60_000);
+
+  it('ignores a low-confidence AI verdict and keeps the rules result', async () => {
+    await moduleRef.close();
+    await build({
+      data: { level: 'EXPERIENCED', fresherEligible: false, confidence: 0.3, evidence: ['guess'] },
+    });
+    const id = await seedJob(
+      'Backend Engineer',
+      'Work with our team on services and APIs for our growing platform.',
+    );
+    await service.classifyPending({ batch: 500, maxAiCalls: 5 });
+    const job = await statusOf(id);
+    expect(job.experienceLevel).toBe('UNKNOWN');
+    expect(job.status).toBe('CLASSIFIED'); // unknown experience is still monitored, not hidden
+  }, 60_000);
+
+  it('survives an AI outage: the job is still classified by rules', async () => {
+    await moduleRef.close();
+    await build({ status: 'BUDGET_EXCEEDED' });
+    const id = await seedJob(
+      'Support Engineer',
+      'Help customers with technical issues across our products every day.',
+    );
+    const result = await service.classifyPending({ batch: 500, maxAiCalls: 5 });
+    expect(result.aiUnavailable).toBeGreaterThanOrEqual(1);
+    const job = await statusOf(id);
+    expect(job.status).toBe('CLASSIFIED');
+    expect(job.experienceLevel).toBe('UNKNOWN');
+  }, 60_000);
+
+  it('requeues classified jobs so a preferences change can be re-applied', async () => {
+    const mine = (status: ('CLASSIFIED' | 'FILTERED_OUT' | 'DISCOVERED')[]) =>
+      db
+        .select({ id: jobs.id })
+        .from(jobs)
+        .where(and(eq(jobs.companyId, companyId), inArray(jobs.status, status)));
+
+    const before = (await mine(['CLASSIFIED', 'FILTERED_OUT'])).length;
+    expect(before).toBeGreaterThan(0);
+    const requeued = await service.requeueFiltered(1000);
+    expect(requeued).toBeGreaterThanOrEqual(before);
+    expect((await mine(['DISCOVERED'])).length).toBe(before);
+  }, 60_000);
+});
