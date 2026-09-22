@@ -5,6 +5,10 @@ import { ENV } from '../common/config/config.module';
 import { ClassificationService } from '../jobs/classification.service';
 import { AuditLogger } from '../system/audit-logger';
 import { MatchingService } from '../matching/matching.service';
+import { DigestService } from '../notifications/digest.service';
+import { DispatcherService } from '../notifications/dispatcher.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TelegramPollerService } from '../notifications/telegram-poller.service';
 import { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import { HousekeepingService } from './housekeeping.service';
 import { RecoveryService } from './recovery.service';
@@ -36,6 +40,10 @@ export class WorkerLoop {
     private readonly classification: ClassificationService,
     private readonly validation: ValidationOrchestrator,
     private readonly matching: MatchingService,
+    private readonly notifications: NotificationsService,
+    private readonly dispatcher: DispatcherService,
+    private readonly digest: DigestService,
+    private readonly poller: TelegramPollerService,
     private readonly recovery: RecoveryService,
     private readonly housekeeping: HousekeepingService,
     private readonly audit: AuditLogger,
@@ -115,7 +123,18 @@ export class WorkerLoop {
         name: 'refine',
         run: () => this.matching.refinePending(opts.once ? { batch: 40, maxAiCalls: 10 } : {}),
       },
-      // Phase 9 stages slot in here: notify → digest
+      // Alerts: decide → deliver → summarise. Each is isolated, so a Telegram outage cannot
+      // stop scanning, and the web inbox is written even when delivery fails (docs 10 §5).
+      {
+        name: 'notify',
+        run: () => this.notifications.enqueuePending(opts.once ? { batch: 200 } : {}),
+      },
+      {
+        name: 'dispatch',
+        run: () => this.dispatcher.dispatchPending(opts.once ? { batch: 50 } : {}),
+      },
+      { name: 'digest', run: () => this.digest.sendDue() },
+      { name: 'telegram', run: () => this.poller.poll({ timeoutSec: opts.once ? 1 : 25 }) },
       { name: 'retention', run: () => this.housekeeping.runRetention(opts.once) },
     ];
     for (const stage of stages) {

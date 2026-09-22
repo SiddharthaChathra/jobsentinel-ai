@@ -1,5 +1,6 @@
 import { index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { logLevelEnum } from './enums';
+import { timestamps } from './shared';
 
 /**
  * System tables have no RLS policies at all: with RLS enabled and no policy, only the service
@@ -61,4 +62,16 @@ export const workerHeartbeats = pgTable('worker_heartbeats', {
   lastBeatAt: timestamp('last_beat_at', { withTimezone: true }).notNull().defaultNow(),
   currentTask: text('current_task'),
   once: integer('once').notNull().default(0),
+}).enableRLS();
+
+// ── system_state (small key/value for worker bookkeeping) ─────────────────────
+/**
+ * Durable scalars the worker needs across restarts — currently the Telegram `getUpdates`
+ * offset, which must survive a restart or the bot replays old messages (docs 10 §4).
+ * Service-role only: no RLS policy, so `authenticated` cannot read it.
+ */
+export const systemState = pgTable('system_state', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').notNull().default({}),
+  ...timestamps,
 }).enableRLS();

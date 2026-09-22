@@ -18,7 +18,8 @@
     "db:studio": "drizzle-kit studio",
     "classify": "node dist/scripts/reclassify.js",
     "validate": "node dist/scripts/validate.js",
-    "match": "node dist/scripts/match.js"
+    "match": "node dist/scripts/match.js",
+    "notify": "node dist/scripts/notify.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",

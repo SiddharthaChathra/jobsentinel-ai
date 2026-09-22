@@ -11,3 +11,4 @@ export * from './validate/domain';
 export * from './validate/suspicion';
 export * from './validate/decide';
 export * from './match/score';
+export * from './notify/decide';

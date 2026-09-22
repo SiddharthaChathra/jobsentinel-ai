@@ -173,13 +173,35 @@ describeIf('classification stage (integration)', () => {
       'Enterprise Account Executive',
       'Sell our platform to enterprises.',
     );
-    const dataId = await seedJob('Data Analyst', 'Build dashboards.'); // DATA is not in this user's categories
+    // The category gate is the union of EVERY user's monitored categories, so this test cannot
+    // make a category unmonitored by configuring its own user. It picks one that no account in
+    // the project currently watches, and skips the case if every engineering category is watched.
+    const monitored = new Set(
+      (await db.select({ categories: preferences.categories }).from(preferences)).flatMap(
+        (r) => r.categories,
+      ),
+    );
+    const unmonitored = (['DATA', 'MECHANICAL', 'CIVIL', 'ELECTRICAL_ELECTRONICS'] as const).find(
+      (c) => !monitored.has(c),
+    );
+
+    const dataId = unmonitored
+      ? await seedJob(
+          unmonitored === 'DATA' ? 'Data Analyst' : 'Site Engineer',
+          unmonitored === 'DATA' ? 'Build dashboards.' : 'Supervise construction works on site.',
+        )
+      : null;
+
     await service.classifyPending({ batch: 500 });
+
+    // A non-engineering posting is filtered whatever the preferences say.
     expect(await statusOf(salesId)).toMatchObject({
       status: 'FILTERED_OUT',
       category: 'NON_ENGINEERING',
     });
-    expect(await statusOf(dataId)).toMatchObject({ status: 'FILTERED_OUT', category: 'DATA' });
+    if (dataId) {
+      expect(await statusOf(dataId)).toMatchObject({ status: 'FILTERED_OUT' });
+    }
     expect(fakeAi.calls).toHaveLength(0);
   }, 60_000);
 

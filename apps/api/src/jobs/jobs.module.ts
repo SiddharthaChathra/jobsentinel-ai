@@ -32,6 +32,8 @@ import { TrackerService } from './tracker.service';
     JobEventsService,
     ClassificationService,
     JobsQueryService,
+    JobsDetailService,
+    TrackerService,
   ],
 })
 export class JobsModule {}

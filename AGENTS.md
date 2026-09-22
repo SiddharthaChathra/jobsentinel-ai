@@ -113,6 +113,15 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Every match row carries its `profile_version`. Editing a profile bumps the version and re-scores; old rows stay for history.
 - Scores are per user — `(job_id, user_id, profile_version)` is the idempotency key, so re-running a match run is always safe.
 
+## 10b. Notification rules (docs/architecture/10-notifications.md)
+
+- Two channels, one decision: the WEB inbox row is always written, Telegram is best-effort on top. An outage delays an alert, never loses one.
+- `(user_id, job_id, channel, type)` is unique and every insert is `ON CONFLICT DO NOTHING` — "never notify twice" is enforced by the database, not by code.
+- A job that is not `VALID` is never pushed; at most it is summarised in the digest, labelled.
+- Every alert carries its evidence (verification line, matched/missing skills), never a bare score.
+- All employer-supplied text is HTML-escaped before it reaches Telegram, and button URLs must be public (D56).
+- Quiet hours and the digest hour are evaluated in the user's timezone, not the server's.
+
 ## 11. Security rules (docs/architecture/11-security.md)
 
 - Secrets only in host env; `.env*` git-ignored; `.env.example` has placeholders only; gitleaks in CI.

@@ -3,6 +3,10 @@ import type { Env } from '@jobsentinel/config';
 import { loadEnv } from '@jobsentinel/config';
 import type { ClassificationService } from '../jobs/classification.service';
 import type { MatchingService } from '../matching/matching.service';
+import type { DigestService } from '../notifications/digest.service';
+import type { DispatcherService } from '../notifications/dispatcher.service';
+import type { NotificationsService } from '../notifications/notifications.service';
+import type { TelegramPollerService } from '../notifications/telegram-poller.service';
 import type { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import type { AuditLogger } from '../system/audit-logger';
 import type { HousekeepingService } from './housekeeping.service';
@@ -36,6 +40,18 @@ describe('WorkerLoop', () => {
       validatePending: jest.fn().mockResolvedValue({ processed: 0 }),
       recheckDue: jest.fn().mockResolvedValue({ checked: 0, expired: 0 }),
     } as unknown as ValidationOrchestrator;
+    const notificationsSvc = {
+      enqueuePending: jest.fn().mockResolvedValue({ instant: 0 }),
+    } as unknown as NotificationsService;
+    const dispatcher = {
+      dispatchPending: jest.fn().mockResolvedValue({ sent: 0 }),
+    } as unknown as DispatcherService;
+    const digest = {
+      sendDue: jest.fn().mockResolvedValue({ queued: 0 }),
+    } as unknown as DigestService;
+    const poller = {
+      poll: jest.fn().mockResolvedValue({ updates: 0 }),
+    } as unknown as TelegramPollerService;
     const matching = {
       matchPending: jest.fn().mockResolvedValue({ scored: 0 }),
       refinePending: jest.fn().mockResolvedValue({ pending: 0, refined: 0 }),
@@ -47,6 +63,10 @@ describe('WorkerLoop', () => {
         classification,
         validation,
         matching,
+        notificationsSvc,
+        dispatcher,
+        digest,
+        poller,
         recovery,
         housekeeping,
         audit,
@@ -55,14 +75,29 @@ describe('WorkerLoop', () => {
       classification,
       validation,
       matching,
+      notificationsSvc,
+      dispatcher,
+      digest,
+      poller,
       recovery,
       housekeeping,
     };
   }
 
   it('runs every stage exactly once in --once mode', async () => {
-    const { loop, scheduler, recovery, housekeeping, classification, validation, matching } =
-      build();
+    const {
+      loop,
+      scheduler,
+      recovery,
+      housekeeping,
+      classification,
+      validation,
+      matching,
+      notificationsSvc,
+      dispatcher,
+      digest,
+      poller,
+    } = build();
     await loop.run({ once: true, logger });
     expect(scheduler.runDueScans).toHaveBeenCalledTimes(1);
     expect(recovery.sweep).toHaveBeenCalledTimes(1);
@@ -72,6 +107,10 @@ describe('WorkerLoop', () => {
     expect(validation.recheckDue).toHaveBeenCalledTimes(1);
     expect(matching.matchPending).toHaveBeenCalledTimes(1);
     expect(matching.refinePending).toHaveBeenCalledTimes(1);
+    expect(notificationsSvc.enqueuePending).toHaveBeenCalledTimes(1);
+    expect(dispatcher.dispatchPending).toHaveBeenCalledTimes(1);
+    expect(digest.sendDue).toHaveBeenCalledTimes(1);
+    expect(poller.poll).toHaveBeenCalledTimes(1);
   });
 
   it('a failing stage does not stop later stages or reject the loop', async () => {

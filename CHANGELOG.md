@@ -2,6 +2,22 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 9] Notifications — 2026-09-23
+
+- `@jobsentinel/validation`: `decideNotification` — the pure rule that decides instant / digest / nothing, with quiet hours resolved in the user's own timezone (windows crossing midnight and DST transitions included). An unconfirmed job is never pushed; it can only ever be summarised, and only if the user opted in.
+- `TelegramClient`: Bot API over `HttpClient`, so there is still exactly one outbound path with the SSRF guard, timeouts and body caps. No SDK. Paced to 1 message/second, honours `retry_after` on 429, and distinguishes permanent failures (blocked bot, dead chat, bad token) from retryable ones.
+- Message formatters: instant alert, daily digest and system alert. Every employer-supplied string is HTML-escaped — an unescaped `<` in a title would otherwise truncate the whole message — and the verification line (company verified / apply link verified / host) is never omitted, so an alert always carries its evidence.
+- `NotificationsService` decides and records; `DispatcherService` delivers. The split is deliberate: the row exists before any network call, so a Telegram outage delays an alert and never loses one. `ON CONFLICT DO NOTHING` against the `(user_id, job_id, channel, type)` unique index is the "never notify twice" guarantee.
+- `DigestService`: one digest per user per **local** day, enforced by the `(user, channel, digest_date)` index rather than by timing.
+- `TelegramPollerService`: long-poll linking (`/start <code>`, 15-minute codes, one chat per user), the `/status` `/digest` `/pause` `/resume` `/help` commands, and the Save / Not-interested inline buttons — which route through the same services the web UI uses. Messages from unlinked chats are ignored. The `getUpdates` offset is persisted in the new `system_state` table so a restart never replays old messages.
+- API: `GET /notifications` (web inbox, cursor-paged), `/notifications/summary`, `/notifications/:id/read`, `/notifications/read-all`, `GET/PUT /notifications/settings`, `POST /notifications/test`, `POST /telegram/link` and `/telegram/unlink`.
+- Worker gained four isolated stages: `notify` → `dispatch` → `digest` → `telegram`.
+- Migration 0002 adds `system_state`; `pnpm --filter @jobsentinel/api notify [--digest] [--dispatch-only] [--user=]` added.
+- Tests: 13 decision-rule unit tests, 16 formatter tests and 8 integration tests against the live database — duplicate prevention, delivery to both channels, "the web alert survives a Telegram outage and the Telegram one retries", ineligible jobs never alerted, one digest per local day, and system-alert rate limiting. 269 unit + 80 e2e in total.
+- **Verified live**: four real Telegram alerts delivered to a real account for four real validated jobs (top match Thoughtworks "Developer (Vapasi) – Intern", 98 %), each with a working APPLY button. This is Phase 9's definition of done.
+- Two defects found by that live run and fixed: Telegram rejects an inline keyboard containing a `localhost` URL and drops the entire message (D56), and the classification integration test had assumed no real account monitors `DATA` (D57).
+- `docs/notifications.md` added; decisions D56–D57 recorded.
+
 ## [Phase 8 — API half] Jobs, tracker and dashboard endpoints — 2026-09-23
 
 Claude's half of Phase 8 (docs 16). The UI is Gemini's and is tracked separately.
