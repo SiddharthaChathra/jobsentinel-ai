@@ -22,19 +22,7 @@ import {
   roleTierEnum,
 } from './enums';
 
-const timestamps = {
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-};
-
-/** Owner policy shared by every user-owned table (docs 02 §6). */
-const ownerPolicy = (name: string, column = 'user_id') =>
-  pgPolicy(`${name}_owner`, {
-    for: 'all',
-    to: authenticatedRole,
-    using: sql.raw(`${column} = (select auth.uid())`),
-    withCheck: sql.raw(`${column} = (select auth.uid())`),
-  });
+import { ownerPolicy, timestamps } from './shared';
 
 // ── users ──────────────────────────────────────────────────────────────────────
 export const users = pgTable(

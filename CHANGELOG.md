@@ -2,6 +2,15 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 3] Database — 2026-09-22
+
+- Migration 0001: 16 new tables (`companies`, `job_sources`, `scan_runs`, `jobs`, `job_source_mappings`, `job_validation`, `job_matches`, `saved_jobs`, `applications`, `job_events`, `notification_settings`, `telegram_links`, `notifications`, `system_logs`, `ai_calls`, `worker_heartbeats`), 17 Postgres enums derived from the Zod enums, indexes/checks/RLS, plus hand-written `pg_trgm`, trigram + full-text indexes on jobs and a `set_updated_at()` trigger on every table with `updated_at`. Live project: 23 tables, 20 policies.
+- Schema split into `identity`, `companies`, `sources`, `jobs`, `notifications`, `system` files with shared `ownerPolicy`/`readAllPolicy` helpers.
+- Seed (`pnpm db:seed`, idempotent): 125-skill dictionary, 32 trusted companies, 35 starter sources — 31 ATS boards (Greenhouse/Lever/Ashby, each verified live), Remotive, WeWorkRemotely RSS, Adzuna (disabled until keys); staggered `next_scan_at`.
+- `scripts/backup.sh` (pg_dump + gzip + optional age), `docs/database.md` operational reference.
+- Tests: 6 DB integration tests against the live project (unique notification, one digest/day, idempotent mappings, `SKIP LOCKED` leasing with overlapping transactions, `updated_at` trigger, RLS isolation with a real user token). All 17 e2e pass.
+- User account for the owner created in Supabase Auth.
+
 ## [Phase 2] Auth + profile + resume — 2026-09-22
 
 - Supabase project `jobsentinel-ai` (ap-south-1) created; migration 0000 applied: `users`, `profiles`, `skills`, `profile_skills`, `preferred_roles`, `preferences`, `resumes` with RLS owner policies and an FK to `auth.users` (Drizzle schema + drizzle-kit migrations).

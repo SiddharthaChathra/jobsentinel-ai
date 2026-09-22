@@ -14,7 +14,7 @@
     "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config test/jest-e2e.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file=.env -r ts-node/register src/common/db/migrate.ts",
-    "db:seed": "echo 'seed — added in Phase 3'",
+    "db:seed": "node --env-file=.env -r ts-node/register src/common/db/seed/index.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
