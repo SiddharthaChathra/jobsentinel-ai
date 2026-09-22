@@ -1,0 +1,159 @@
+# AGENTS.md — Rules for Claude and Gemini working on JobSentinel AI
+
+Both agents **must read this file before modifying any code**. It is the operational summary of the architecture package in `docs/architecture/` — when this file and those docs disagree, fix whichever is wrong and say so.
+
+## 1. Project overview
+
+JobSentinel AI is a personal, free-first job discovery → verification → matching → notification system for a final-year engineering student seeking fresher/entry-level engineering roles. It continuously scans **permitted** public job sources, validates listings with evidence, matches them to the user's resume profile, and alerts via Telegram + a responsive web dashboard. It must feel like a real product: reliable, explainable, secure, mobile-friendly.
+
+Non-negotiables (from the spec):
+
+1. Never bypass CAPTCHA, logins, anti-bot systems, `robots.txt`, rate limits, paywalls or access controls. Unsupported source ⇒ not supported. No "trying harder".
+2. AI is never the sole decider of job legitimacy or fresher eligibility. Deterministic rules + evidence first; AI is a bounded, Zod-validated signal.
+3. AI layer is provider-independent (`AIProvider` interface; Gemini / Claude / local adapters). No vendor SDK outside `packages/ai`.
+4. Never lose a job because a scan failed (cursor never advances on failure; idempotent upserts).
+5. Never notify twice for one canonical job (DB unique index).
+6. Secrets stay server-side; resume data stays private and minimal when sent to AI.
+7. ₹0 development cost; every paid dependency needs a documented free alternative.
+
+## 2. Architecture in one paragraph
+
+Three deployables, one database: **web** (`apps/web`, Next.js 16 App Router on Vercel), **api** (`apps/api/src/main.ts`, NestJS 11 REST on Render/VM) and **worker** (`apps/api/src/worker.ts`, same Nest codebase, no HTTP, runs the scheduler/pipeline; supports `--once` for cron hosts). Supabase provides Postgres, Auth and private Storage. Shared packages: `@jobsentinel/types` (Zod schemas/enums/DTOs), `@jobsentinel/validation` (pure rules), `@jobsentinel/ai` (provider-independent AI), `@jobsentinel/config` (env schema + taxonomy). Pipeline: `DISCOVERED → CLASSIFIED → VALIDATING → VALID|SUSPICIOUS|NEEDS_REVIEW|EXPIRED|REJECTED → MATCHED → NOTIFY_PENDING → NOTIFIED`, driven by `jobs.status` and Postgres row leases (no Redis). Full detail: `docs/architecture/01-system-architecture.md`.
+
+## 3. Folder structure
+
+```
+apps/web        Next.js frontend (Gemini)      — app/, components/, hooks/, lib/, proxy.ts
+apps/api        NestJS API + worker (Claude)   — src/{common,auth,users,resumes,jobs,sources,scheduler,validation,matching,notifications,system}, test/
+packages/types  Zod schemas, enums, API DTOs   (Claude; consumed by both)
+packages/validation  pure deterministic rules   (Claude)
+packages/ai     AIService + adapters + prompts (Claude)
+packages/config env schema, taxonomy, constants (Claude)
+docs/           architecture package + long-lived docs
+scripts/        db, backup, ops scripts
+.github/        CI
+```
+
+## 4. Ownership and coordination (docs/architecture/15-responsibility-split.md)
+
+| Path                                                                                   | Owner      | Notes                                                                                   |
+| -------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------- |
+| `apps/web/**`                                                                          | **Gemini** | Claude reviews; Claude may touch auth wiring (`lib/supabase/*`, `proxy.ts`) with a flag |
+| `apps/api/**`, `packages/**`, `docs/**`, root configs, `.github/**`, `scripts/**`      | **Claude** | Gemini requests changes (e.g. new API fields) rather than editing                       |
+| `AGENTS.md`, `README.md`, `.env.example`, `package.json` (root), `pnpm-workspace.yaml` | Claude     |                                                                                         |
+
+Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-contract.md` change **before** UI code uses them); never edit the same file in parallel; flag any cross-boundary edit explicitly; one agent per commit; Gemini never queries Supabase tables directly from the browser — all data goes through the API.
+
+## 5. Coding standards
+
+- **TypeScript strict** everywhere (`tsconfig.base.json`): `noUncheckedIndexedAccess`, no `any` in app code (tests may relax `no-unsafe-*`).
+- **Zod at every boundary**: HTTP bodies/queries, env, AI outputs, source payloads, file uploads. Infer types from schemas; never hand-write a type that a schema already defines.
+- **Prettier** (single quotes, 100 cols, trailing commas) and **ESLint** (type-checked rules; `--max-warnings 0`). Run `pnpm lint && pnpm format:check` before committing.
+- **Imports**: `import type` for types; no default exports in packages/api (Next.js pages excepted).
+- **Errors**: throw `AppError` subclasses in the API (mapped to the error envelope); never swallow errors silently — log with context and continue where the design says so (pipeline isolation).
+- **Logging**: pino via `createLogger`; never log resume text, tokens, secrets, full job descriptions. Business events go to `system_logs` via `AuditLogger`.
+- **No `process.env` outside `packages/config`** (API/worker) or `apps/web/lib/env.ts` (web, `NEXT_PUBLIC_*` only).
+- **Comments** explain _why_, not _what_; reference the architecture doc section when implementing a designed behaviour (e.g. `// docs 07 §2.1`).
+- Prefer small pure functions in `packages/validation` over logic inside Nest services; services orchestrate, packages compute.
+
+## 6. Naming conventions
+
+| Thing                      | Convention                                                                         | Example                                                     |
+| -------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Files                      | kebab-case                                                                         | `worker-loop.ts`, `login-form.tsx`                          |
+| Nest classes               | PascalCase + suffix                                                                | `ValidationOrchestrator`, `JobsController`, `SourceManager` |
+| DB tables/columns          | snake_case, plural tables                                                          | `job_source_mappings.external_id`                           |
+| Postgres enums / Zod enums | SCREAMING_SNAKE values                                                             | `NEEDS_REVIEW`                                              |
+| Env vars                   | SCREAMING_SNAKE with area prefix                                                   | `AI_GEMINI_API_KEY`, `WORKER_TICK_MS`                       |
+| API routes                 | plural nouns, kebab-case, `/api/v1`                                                | `/api/v1/saved-jobs`                                        |
+| React components           | PascalCase, one per file                                                           | `JobCard`                                                   |
+| Hooks                      | `useX` in `apps/web/hooks`                                                         | `useJobs`                                                   |
+| Tests                      | `*.test.ts` (packages/web unit), `*.spec.ts` (api unit), `*.e2e-spec.ts` (api e2e) |                                                             |
+| Branches / commits         | `phase-N-name`; Conventional Commits with scope                                    | `feat(api): [P4] greenhouse adapter`                        |
+
+## 7. Database rules (docs/architecture/02-database.md)
+
+- Drizzle schema in `apps/api/src/common/db/schema/`; SQL migrations generated by drizzle-kit, committed, applied manually (`pnpm db:migrate`), never auto-applied in prod.
+- `uuid` PKs, `timestamptz` UTC, `created_at/updated_at` on every table, Postgres enums mirrored in `packages/types/src/enums.ts` (keep both in sync; a test asserts it from Phase 3).
+- Every user-owned table has `user_id` and an RLS owner policy; shared tables (jobs, companies, sources) are read-only for `authenticated`.
+- Natural-key uniques are the idempotency mechanism: `(source_id, external_id)`, `(job_id, user_id, profile_version)`, `(user_id, job_id, channel, type)`.
+- Writes in the pipeline are per-record transactions; selection uses `FOR UPDATE SKIP LOCKED`.
+- Never delete saved/applied jobs; retention rules in docs 02 §8.
+
+## 8. API conventions (docs/architecture/03-api-contract.md)
+
+- Prefix `/api/v1`; bearer Supabase JWT on everything except `/health*`.
+- Envelope `{ data, meta }` / `{ error: { code, message, details?, requestId } }`; cursor pagination.
+- Every request validated by `ZodValidationPipe` with a schema from `packages/types/src/api`.
+- Ownership enforced in services (`user_id = current user`), admin routes behind `AdminGuard`.
+- Additive changes only within v1.
+
+## 9. AI rules (docs/architecture/09-ai.md)
+
+- Only `packages/ai` imports vendor SDKs. Callers use `AIService.run(AIRequest)` and get `AIResult<T>` (never throw for provider failure).
+- Every purpose has: versioned prompt file, Zod output schema, deterministic fallback, cache key, budget accounting (`ai_calls`).
+- Redact PII from resume text before sending; send minimal job fields; never send user email/tokens.
+- AI influence is bounded: validation ±0.2 max; match skill/role scores within ±25 of deterministic values.
+- Model names come from env, never hard-coded.
+
+## 10. Validation rules (docs/architecture/08-validation.md)
+
+- Rules + evidence weights live in `packages/validation`; the Nest `validation` module orchestrates I/O (URL probe, DNS).
+- Every result carries `evidence[]` and `confidence`; the UI shows evidence, never a bare score.
+- Ambiguous ⇒ `NEEDS_REVIEW`, never silently VALID or silently dropped.
+- Scam patterns are versioned with unit tests for true positives _and_ known false positives.
+
+## 11. Security rules (docs/architecture/11-security.md)
+
+- Secrets only in host env; `.env*` git-ignored; `.env.example` has placeholders only; gitleaks in CI.
+- `NEXT_PUBLIC_*` is limited to Supabase URL/anon key, API URL, bot username.
+- Outbound HTTP only through `HttpClient` (SSRF guard, timeouts, body caps, UA, per-host rate limit).
+- Job HTML sanitized server-side with a fixed allowlist; UI never renders unsanitized HTML.
+- Uploads: PDF/DOCX, ≤ 5 MB, magic-byte check, private bucket, signed URLs.
+- Sign-up gated by `ALLOWED_SIGNUP_EMAILS`.
+
+## 12. Job-source rules (docs/architecture/06-job-sources.md)
+
+- A source is supported only if it is a public API/feed or a public page allowed by `robots.txt`/terms.
+- Adapters implement `JobSource`, emit `RawJob`, never classify, never evade blocks (403/429/challenge ⇒ back off, mark BLOCKED, eventually disable).
+- One scan = one `scan_runs` row = one unit of failure isolation; a failed scan never advances the cursor.
+- Respect per-source politeness (`min_request_gap_ms`) and documented rate guidelines.
+
+## 13. Testing requirements (docs/architecture/13-testing.md)
+
+- Jest for `packages/*` and `apps/api` (+ Supertest e2e), Vitest + Testing Library for `apps/web`, Playwright for browser e2e.
+- New business logic ⇒ unit tests in the same commit. Pipeline stages ⇒ fake-based service tests. DB code ⇒ integration tests against local Postgres.
+- No live network or AI calls in CI (fixtures/recordings; `AI_LIVE_TESTS=1` for manual runs).
+- Before ending a phase: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build` must pass.
+
+## 14. Git conventions
+
+- `main` is always runnable. Work on `phase-N-<name>` branches; merge after the phase is verified.
+- Conventional Commits: `feat|fix|docs|test|chore|refactor(scope): [P<n>] message`. Scopes: `api`, `web`, `worker`, `types`, `validation`, `ai`, `config`, `db`, `docs`, `ci`.
+- One agent per commit; reference the phase; never commit `.env`, `dist/`, `.next/`.
+- Never rewrite published history; never force-push `main`.
+
+## 15. Environment variables
+
+Declared in `packages/config/src/env.ts` (Zod, defaults, per-process requirements) and documented in `.env.example`. Add a variable in three places: schema, `.env.example`, `docs/architecture/12-folder-structure-and-env.md`. Web variables must be `NEXT_PUBLIC_*` and public-safe.
+
+## 16. Deployment notes (docs/architecture/14-deployment-and-free-first.md)
+
+- Web → Vercel (root `apps/web`). API → Render free (Docker, `node dist/main.js`, health `/health/ready`). Worker → Oracle Always Free VM / laptop / GitHub Actions cron (`node dist/worker.js --once`). DB/Auth/Storage → Supabase free.
+- Migrations run manually before deploying API/worker. Backups: weekly `pg_dump` (script in Phase 12).
+- Free tiers change: the worker is portable by design; re-verify tier terms at deploy time and update the README cost table.
+
+## 17. Local commands
+
+```bash
+pnpm install                 # workspace install (Node ≥ 22, pnpm ≥ 9)
+pnpm build                   # packages → api → web (topological)
+pnpm dev:api | dev:worker | dev:web
+pnpm worker -- --once        # single worker tick (after build)
+pnpm lint | format | typecheck | test
+pnpm --filter @jobsentinel/api test:e2e
+```
+
+## 18. Phase loop
+
+Every phase: **PLAN → IMPLEMENT → RUN → TEST → DEBUG → VERIFY → DOCUMENT → COMMIT**. Update `docs/`, `CHANGELOG.md` and this file when conventions change. Do not start the next phase until the current one runs and its tests pass.

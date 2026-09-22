@@ -1,0 +1,44 @@
+{
+  "name": "@jobsentinel/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JobSentinel AI backend: NestJS REST API (main.ts) and background worker (worker.ts)",
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "dev:worker": "nest start --watch --entryFile worker",
+    "start": "node dist/main.js",
+    "worker": "node dist/worker.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "jest",
+    "test:e2e": "jest --config test/jest-e2e.config.ts",
+    "db:generate": "echo 'drizzle-kit generate — added in Phase 3'",
+    "db:migrate": "echo 'drizzle migrate — added in Phase 3'",
+    "db:seed": "echo 'seed — added in Phase 3'"
+  },
+  "dependencies": {
+    "@jobsentinel/ai": "workspace:*",
+    "@jobsentinel/config": "workspace:*",
+    "@jobsentinel/types": "workspace:*",
+    "@jobsentinel/validation": "workspace:*",
+    "@nestjs/common": "^11.2.5",
+    "@nestjs/core": "^11.2.5",
+    "@nestjs/platform-express": "^11.2.5",
+    "dotenv": "^18.0.1",
+    "helmet": "^8.3.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.24",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.2.5",
+    "@types/express": "^5.0.6",
+    "@types/supertest": "^7.2.1",
+    "pino-pretty": "^13.1.3",
+    "supertest": "^7.2.2"
+  }
+}

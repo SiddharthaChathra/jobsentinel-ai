@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm 12 blocks postinstall scripts by default; list explicit decisions here.
+allowBuilds:
+  sharp: true
+  unrs-resolver: false
+  '@parcel/watcher': false

@@ -1,0 +1,197 @@
+import { z } from 'zod';
+
+/**
+ * Single source of truth for every environment variable used by the API, worker and web app.
+ * Nothing else in the codebase reads `process.env` directly.
+ *
+ * Every variable is optional at the schema level (with a default where sensible) so that each
+ * process can boot with only what it needs; modules call `assertEnv(env, [...keys])` at startup
+ * to fail fast with a readable list of what is missing.
+ */
+
+const emptyToUndefined = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v);
+
+const bool = (defaultValue: boolean) =>
+  z.preprocess((v) => {
+    v = emptyToUndefined(v);
+    if (v === undefined) return defaultValue;
+    if (typeof v !== 'string') return v; // let zod produce the error
+    const s = v.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'on'].includes(s)) return true;
+    if (['0', 'false', 'no', 'off'].includes(s)) return false;
+    return v;
+  }, z.boolean());
+
+const int = (defaultValue: number, opts: { min?: number; max?: number } = {}) =>
+  z.preprocess(
+    (v) => {
+      v = emptyToUndefined(v);
+      if (v === undefined) return defaultValue;
+      if (typeof v !== 'string') return v;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : v;
+    },
+    z
+      .number()
+      .int()
+      .min(opts.min ?? 0)
+      .max(opts.max ?? Number.MAX_SAFE_INTEGER),
+  );
+
+const optStr = () => z.preprocess(emptyToUndefined, z.string().min(1).optional());
+const optUrl = () => z.preprocess(emptyToUndefined, z.url().optional());
+const strDefault = (d: string) => z.preprocess(emptyToUndefined, z.string().min(1).default(d));
+const urlDefault = (d: string) => z.preprocess(emptyToUndefined, z.url().default(d));
+
+/** `*` (anyone) or a deduplicated, lowercased list of emails. */
+export type EmailList = '*' | string[];
+
+export function parseEmailList(raw: string | undefined): EmailList {
+  if (raw === undefined || raw.trim() === '') return [];
+  if (raw.trim() === '*') return '*';
+  const list = raw
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e.length > 0);
+  return Array.from(new Set(list));
+}
+
+const emailList = (defaultValue: EmailList) =>
+  z.preprocess(
+    (v) => {
+      v = emptyToUndefined(v);
+      if (v === undefined) return defaultValue;
+      return typeof v === 'string' ? parseEmailList(v) : v;
+    },
+    z.union([z.literal('*'), z.array(z.email())]),
+  );
+
+export const AI_PROVIDERS = ['gemini', 'claude', 'local'] as const;
+export type AIProviderName = (typeof AI_PROVIDERS)[number];
+
+export const envSchema = z
+  .object({
+    // ── Shared ──────────────────────────────────────────────────────────────
+    NODE_ENV: z.preprocess(
+      emptyToUndefined,
+      z.enum(['development', 'test', 'production']).default('development'),
+    ),
+    APP_BASE_URL: urlDefault('http://localhost:3000'),
+    API_BASE_URL: urlDefault('http://localhost:4000'),
+    LOG_LEVEL: z.preprocess(
+      emptyToUndefined,
+      z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
+    ),
+
+    // ── Supabase ────────────────────────────────────────────────────────────
+    SUPABASE_URL: optUrl(),
+    SUPABASE_ANON_KEY: optStr(),
+    SUPABASE_SERVICE_ROLE_KEY: optStr(),
+    SUPABASE_JWT_ISSUER: optUrl(),
+    DATABASE_URL: optStr(),
+    DATABASE_DIRECT_URL: optStr(),
+    RESUME_BUCKET: strDefault('resumes'),
+
+    // ── API ─────────────────────────────────────────────────────────────────
+    PORT: int(4000, { min: 1, max: 65535 }),
+    WEB_ORIGIN: urlDefault('http://localhost:3000'),
+    ALLOWED_SIGNUP_EMAILS: emailList('*'),
+    ADMIN_EMAILS: emailList([]),
+    ENABLE_API_DOCS: bool(false),
+    RATE_LIMIT_PER_MIN: int(120, { min: 1 }),
+
+    // ── Worker ──────────────────────────────────────────────────────────────
+    WORKER_TICK_MS: int(60_000, { min: 1_000 }),
+    WORKER_MAX_SOURCES_PER_TICK: int(3, { min: 1 }),
+    WORKER_SOURCE_CONCURRENCY: int(2, { min: 1 }),
+    SOURCE_SCAN_TIMEOUT_MS: int(120_000, { min: 5_000 }),
+    HTTP_USER_AGENT: strDefault('JobSentinelAI/0.1 (+https://github.com/jobsentinel-ai)'),
+    HTTP_TIMEOUT_MS: int(15_000, { min: 1_000 }),
+    WORKER_HEALTH_PORT: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(1).max(65535).optional(),
+    ),
+    TELEGRAM_POLLING: bool(true),
+
+    // ── AI ──────────────────────────────────────────────────────────────────
+    AI_PROVIDER: z.preprocess(emptyToUndefined, z.enum(AI_PROVIDERS).default('gemini')),
+    AI_FALLBACK_PROVIDERS: z.preprocess(
+      (v) => {
+        v = emptyToUndefined(v);
+        if (v === undefined) return [];
+        if (typeof v !== 'string') return v;
+        return v
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+      },
+      z.array(z.enum(AI_PROVIDERS)),
+    ),
+    AI_GEMINI_API_KEY: optStr(),
+    AI_GEMINI_MODEL: strDefault('gemini-2.5-flash'),
+    AI_CLAUDE_API_KEY: optStr(),
+    AI_CLAUDE_MODEL: strDefault('claude-haiku-4-5'),
+    AI_LOCAL_BASE_URL: urlDefault('http://localhost:11434'),
+    AI_LOCAL_MODEL: strDefault('llama3.1'),
+    AI_DAILY_CALL_BUDGET: int(500, { min: 0 }),
+    AI_DAILY_TOKEN_BUDGET: int(1_500_000, { min: 0 }),
+    AI_ALLOW_DETERMINISTIC_ALERTS: bool(true),
+
+    // ── Notifications ───────────────────────────────────────────────────────
+    TELEGRAM_BOT_TOKEN: optStr(),
+    TELEGRAM_BOT_USERNAME: optStr(),
+    TELEGRAM_MODE: z.preprocess(
+      emptyToUndefined,
+      z.enum(['polling', 'webhook']).default('polling'),
+    ),
+    TELEGRAM_WEBHOOK_SECRET: optStr(),
+
+    // ── Sources ─────────────────────────────────────────────────────────────
+    ADZUNA_APP_ID: optStr(),
+    ADZUNA_APP_KEY: optStr(),
+
+    // ── Tests ───────────────────────────────────────────────────────────────
+    TEST_DATABASE_URL: optStr(),
+    AI_LIVE_TESTS: bool(false),
+  })
+  .transform((env) => ({
+    ...env,
+    SUPABASE_JWT_ISSUER:
+      env.SUPABASE_JWT_ISSUER ??
+      (env.SUPABASE_URL ? `${env.SUPABASE_URL.replace(/\/$/, '')}/auth/v1` : undefined),
+  }));
+
+export type Env = z.infer<typeof envSchema>;
+export type EnvKey = keyof Env;
+
+export class EnvError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EnvError';
+  }
+}
+
+/** Parse and validate an environment map (defaults to `process.env`). Throws `EnvError` with every problem listed. */
+export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
+  const result = envSchema.safeParse(source);
+  if (!result.success) {
+    const lines = result.error.issues.map(
+      (i) => `  - ${i.path.join('.') || '(root)'}: ${i.message}`,
+    );
+    throw new EnvError(`Invalid environment configuration:\n${lines.join('\n')}`);
+  }
+  return result.data;
+}
+
+/** Fail fast with a list of every required key that is missing. */
+export function assertEnv<K extends EnvKey>(
+  env: Env,
+  keys: readonly K[],
+): asserts env is Env & Required<Pick<Env, K>> {
+  const missing = keys.filter((k) => env[k] === undefined || env[k] === null);
+  if (missing.length > 0) {
+    throw new EnvError(
+      `Missing required environment variables:\n${missing.map((k) => `  - ${String(k)}`).join('\n')}\nSee .env.example for descriptions.`,
+    );
+  }
+}
