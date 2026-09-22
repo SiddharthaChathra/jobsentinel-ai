@@ -38,6 +38,7 @@ describe('WorkerLoop', () => {
     } as unknown as ValidationOrchestrator;
     const matching = {
       matchPending: jest.fn().mockResolvedValue({ scored: 0 }),
+      refinePending: jest.fn().mockResolvedValue({ pending: 0, refined: 0 }),
     } as unknown as MatchingService;
     return {
       loop: new WorkerLoop(
@@ -70,6 +71,7 @@ describe('WorkerLoop', () => {
     expect(validation.validatePending).toHaveBeenCalledTimes(1);
     expect(validation.recheckDue).toHaveBeenCalledTimes(1);
     expect(matching.matchPending).toHaveBeenCalledTimes(1);
+    expect(matching.refinePending).toHaveBeenCalledTimes(1);
   });
 
   it('a failing stage does not stop later stages or reject the loop', async () => {

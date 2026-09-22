@@ -109,7 +109,13 @@ export class WorkerLoop {
         name: 'match',
         run: () => this.matching.matchPending(opts.once ? { batch: 300, maxAiCalls: 20 } : {}),
       },
-      // Phase 8–9 stages slot in here: notify → digest
+      // Picks up matches whose AI refinement was skipped when the budget or provider was out
+      // — the AI_PENDING drain of docs 07 §1.4.
+      {
+        name: 'refine',
+        run: () => this.matching.refinePending(opts.once ? { batch: 40, maxAiCalls: 10 } : {}),
+      },
+      // Phase 9 stages slot in here: notify → digest
       { name: 'retention', run: () => this.housekeeping.runRetention(opts.once) },
     ];
     for (const stage of stages) {

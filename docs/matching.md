@@ -53,6 +53,12 @@ Bounds, in order:
 
 Scores are flushed every 50 jobs or every 60 seconds (D51), so a run that dies part-way keeps its progress and simply resumes where it stopped.
 
+## When the AI could not run
+
+A match whose refinement was skipped — budget spent, provider down, tick out of time — is stored with its deterministic score and `ai_provider = null`. That row **is** the pending queue: the worker's `refine` stage drains matches at the current profile version with no `ai_provider` and a score above the pre-filter, highest score first, and upgrades them in place once the provider recovers or the budget resets. The job stays `MATCHED` throughout and never disappears from the dashboard (D53).
+
+The budget and cache both live in `ai_calls`, not in process memory, because the worker is a short-lived `--once` process: an in-memory counter would reset the daily cap on every tick, and an in-memory cache would never survive long enough to save a call. `AI_DAILY_CALL_BUDGET` (default 500) and `AI_DAILY_TOKEN_BUDGET` (default 1.5 M) are counted over the UTC day; an identical input is answered from the stored response for 30 days.
+
 ## Operating it
 
 ```bash

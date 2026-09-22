@@ -327,4 +327,46 @@ describeIf('matching stage (integration)', () => {
       promptVersion: null,
     });
   }, 120_000);
+
+  it('retries a skipped refinement once the provider recovers (AI_PENDING drain)', async () => {
+    await moduleRef.close();
+    await build({
+      JOB_REQUIREMENTS: {
+        mustHaveSkills: ['Python', 'Kubernetes'],
+        niceToHaveSkills: ['SQL'],
+        minYears: 0,
+        maxYears: 1,
+        educationRequired: null,
+        isFresherFriendly: 'YES',
+        responsibilities: ['Build APIs'],
+      },
+      MATCH: {
+        skillScore: 100,
+        roleScore: 100,
+        matchedSkills: ['Python', 'SQL'],
+        missingSkills: ['Kubernetes'],
+        explanation: 'Recovered provider verdict.',
+      },
+    });
+
+    // The previous test left one match at profile version 4 with no ai_provider.
+    const result = await service.refinePending({ batch: 10, maxAiCalls: 5, userIds: [userId] });
+    expect(result).toMatchObject({ pending: 1, refined: 1, stillUnavailable: 0 });
+
+    const rows = await db
+      .select()
+      .from(jobMatches)
+      .where(and(eq(jobMatches.userId, userId), eq(jobMatches.profileVersion, 4)));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      aiProvider: 'fake',
+      promptVersion: 'match.v1',
+      skillScore: 83,
+    });
+    expect(rows[0]!.explanation).toBe('Recovered provider verdict.');
+
+    // Nothing is left pending, so a second pass costs no calls.
+    const again = await service.refinePending({ batch: 10, maxAiCalls: 5, userIds: [userId] });
+    expect(again).toMatchObject({ pending: 0, refined: 0 });
+  }, 120_000);
 });

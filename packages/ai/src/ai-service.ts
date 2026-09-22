@@ -3,11 +3,16 @@ import { z } from 'zod';
 import { parseJsonLoose } from './json-repair';
 import type { AIProvider, AIPurpose, AIRequest, AIResult, AIUsage } from './provider';
 
-/** Daily budget accounting; the DB-backed implementation (ai_calls) arrives in Phase 3/7. */
+/**
+ * Daily budget accounting. `InMemoryBudget` is the fallback for tests and for a run with no
+ * database; the API/worker binds the `ai_calls`-backed implementation so a budget survives the
+ * process (the worker is a short-lived `--once` process on a cron host).
+ */
 export interface BudgetPort {
   canSpend(purpose: AIPurpose): Promise<boolean>;
   record(entry: {
     purpose: AIPurpose;
+    promptVersion: string;
     provider: string;
     model: string;
     status: AIResult<unknown>['status'];
@@ -115,6 +120,7 @@ export class AIService {
     if (!(await this.budget.canSpend(req.purpose))) {
       await this.budget.record({
         purpose: req.purpose,
+        promptVersion: req.promptVersion,
         provider: '-',
         model: '-',
         status: 'BUDGET_EXCEEDED',
@@ -142,6 +148,7 @@ export class AIService {
         {
           provider: provider.name,
           purpose: req.purpose,
+          promptVersion: req.promptVersion,
           status: attempt.status,
           error: attempt.error,
         },
@@ -178,6 +185,7 @@ export class AIService {
         const message = err instanceof Error ? err.message : String(err);
         await this.budget.record({
           purpose: req.purpose,
+          promptVersion: req.promptVersion,
           provider: provider.name,
           model: provider.model,
           status: 'ERROR',
@@ -193,6 +201,7 @@ export class AIService {
       if (parsed?.success) {
         await this.budget.record({
           purpose: req.purpose,
+          promptVersion: req.promptVersion,
           provider: provider.name,
           model: provider.model,
           status: 'OK',
@@ -206,6 +215,7 @@ export class AIService {
             provider: provider.name,
             model: provider.model,
             purpose: req.purpose,
+            promptVersion: req.promptVersion,
             latencyMs,
             usage,
             round,
@@ -230,6 +240,7 @@ export class AIService {
               .join('\n');
       await this.budget.record({
         purpose: req.purpose,
+        promptVersion: req.promptVersion,
         provider: provider.name,
         model: provider.model,
         status: 'INVALID_JSON',

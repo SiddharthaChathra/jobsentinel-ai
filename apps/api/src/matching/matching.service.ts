@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import {
   buildJobRequirementsRequest,
   buildMatchRequest,
@@ -177,6 +177,75 @@ export class MatchingService {
       }
 
       await flush();
+    }
+
+    result.durationMs = Date.now() - startedAt;
+    return result;
+  }
+
+  /**
+   * Retries the AI refinement for matches that never got one because the budget was exhausted or
+   * the provider was down — the `AI_PENDING` drain of docs 07 §1.4, expressed as "a match row at
+   * the current profile version with no `ai_provider`" rather than as a job status (D53).
+   *
+   * Only rows above the pre-filter are eligible: a job that scored 12 was never meant to cost a
+   * call, and must not start costing one here.
+   */
+  async refinePending(
+    opts: { batch?: number; maxAiCalls?: number; aiTimeBudgetMs?: number; userIds?: string[] } = {},
+  ): Promise<{ pending: number; refined: number; stillUnavailable: number; durationMs: number }> {
+    const batch = opts.batch ?? 50;
+    const maxAiCalls = opts.maxAiCalls ?? 15;
+    const startedAt = Date.now();
+    const aiDeadline = startedAt + (opts.aiTimeBudgetMs ?? 120_000);
+    const result = { pending: 0, refined: 0, stillUnavailable: 0, durationMs: 0 };
+    if (!this.ai) return { ...result, durationMs: Date.now() - startedAt };
+
+    for (const ctx of await this.userContexts(opts.userIds)) {
+      const pending = await this.db
+        .select({ job: jobs, matchId: jobMatches.id })
+        .from(jobMatches)
+        .innerJoin(jobs, eq(jobs.id, jobMatches.jobId))
+        .where(
+          and(
+            eq(jobMatches.userId, ctx.userId),
+            eq(jobMatches.profileVersion, ctx.profileVersion),
+            isNull(jobMatches.aiProvider),
+            gte(jobMatches.overallScore, AI_PREFILTER_MIN),
+          ),
+        )
+        .orderBy(desc(jobMatches.overallScore))
+        .limit(batch);
+      result.pending += pending.length;
+
+      for (const row of pending) {
+        if (result.refined >= maxAiCalls || Date.now() >= aiDeadline) break;
+        const refined = await this.refineWithAi(ctx, row.job);
+        if (refined.status !== 'OK') {
+          result.stillUnavailable++;
+          // The provider is down or out of budget; the rest of the batch would fail the same way.
+          break;
+        }
+        const s = refined.score;
+        await this.db
+          .update(jobMatches)
+          .set({
+            overallScore: s.overall,
+            skillScore: s.skillScore,
+            roleScore: s.roleScore,
+            priority: s.priority,
+            matchedSkills: s.matchedSkills,
+            missingSkills: s.missingSkills,
+            explanation: s.explanation,
+            aiProvider: this.ai.primaryProvider.name,
+            aiModel: this.ai.primaryProvider.model,
+            promptVersion: 'match.v1',
+            computedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(jobMatches.id, row.matchId));
+        result.refined++;
+      }
     }
 
     result.durationMs = Date.now() - startedAt;
