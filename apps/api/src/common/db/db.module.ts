@@ -27,6 +27,14 @@ const PG_CLIENT = Symbol('PG_CLIENT');
           max: env.NODE_ENV === 'production' ? 8 : 4,
           idle_timeout: 30,
           connect_timeout: 10,
+          connection: {
+            // Without these, a query abandoned by a killed process pins a pooler slot
+            // indefinitely — observed as 13-minute `active` backends after a killed test run.
+            // The pooler queues new clients when its slots are full, so a leaked connection
+            // eventually stalls everyone. Both are generous: no request here is this slow (D54).
+            statement_timeout: 60_000,
+            idle_in_transaction_session_timeout: 30_000,
+          },
         });
       },
       inject: [ENV],

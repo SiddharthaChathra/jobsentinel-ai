@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq, sql } from 'drizzle-orm';
 import type { SystemStatus } from '@jobsentinel/types';
+import { AI_BUDGET } from '../common/ai/ai.module';
+import type { DbBudget } from '../common/ai/db-ai';
 import { DB, type Db } from '../common/db/db.module';
 import { companies, jobSources, jobs, scanRuns, workerHeartbeats } from '../common/db/schema';
 import { toScanRun } from '../sources/sources.controller';
@@ -10,9 +12,13 @@ const ALIVE_WINDOW_MS = 10 * 60_000;
 
 @Injectable()
 export class StatusService {
-  constructor(@Inject(DB) private readonly db: Db) {}
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    @Inject(AI_BUDGET) private readonly budget: DbBudget,
+  ) {}
 
   async snapshot(): Promise<SystemStatus> {
+    const aiUsage = await this.budget.usage();
     const [beat] = await this.db
       .select()
       .from(workerHeartbeats)
@@ -74,6 +80,12 @@ export class StatusService {
       pipeline: Object.fromEntries(pipelineRows.map((r) => [r.status, Number(r.n)])),
       jobsLast24h: { found: Number(last24?.found ?? 0), new: Number(last24?.new ?? 0) },
       totals: { jobs: Number(totals?.jobs ?? 0), companies: Number(totals?.companies ?? 0) },
+      ai: {
+        callsToday: aiUsage.calls,
+        callBudget: aiUsage.callBudget,
+        tokensToday: aiUsage.tokens,
+        tokenBudget: aiUsage.tokenBudget,
+      },
     };
   }
 }

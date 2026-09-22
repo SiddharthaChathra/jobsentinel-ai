@@ -2,6 +2,22 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 8 — API half] Jobs, tracker and dashboard endpoints — 2026-09-23
+
+Claude's half of Phase 8 (docs 16). The UI is Gemini's and is tracked separately.
+
+- `@jobsentinel/types`: the full read contract as shared DTOs — `JobsQuery` (20 filters, three sorts, cursor), `JobCard`, `JobDetail`, `TrackerState`, `ApplicationItem`, `DashboardSummary`, plus the `ApplicationUpsert`/`NotInterestedInput` bodies. Array filters accept `?category=A&category=B` or `?category=A,B`, because both reach a browser-built query string in practice. The web app imports these instead of hand-writing them, so the two halves cannot drift.
+- `GET /jobs`: every documented filter (text search over the indexed title+description document, role family, category, company, location, remote, fresher, experience level, score, priority, validation status, activity, posted-after, source, salary, saved, tracker state) with `newest` / `score` / `posted` sorting and keyset pagination. A corrupt cursor restarts the list rather than erroring.
+- Scores are pinned to the user's current `profile_version`: a score computed against an older resume is shown as no score at all, never as if it were current.
+- Unconfirmed jobs are opt-in. The default is `validationStatus=VALID`; `NEEDS_REVIEW` appears only when asked for.
+- `GET /jobs/:id`: description, requirements, skills, all source mappings, the validation evidence list and the full score breakdown, including `aiPending` when a match scored above the pre-filter but never got an AI verdict.
+- Tracker: `POST /jobs/:id/view|save|not-interested`, `DELETE /jobs/:id/save`, `GET /saved-jobs`, `GET/PUT/DELETE /applications`. "Not interested" marks the user's tracker and never touches the posting, so the decision is reversible (spec principle 9). An `APPLIED` status dates itself, and that date survives later status changes; history is appended, never rewritten.
+- `GET /dashboard/summary`: fourteen counters in a single statement of scalar subqueries, plus the five newest and five best-matching cards and worker/source health.
+- `GET /system/status` now reports today's AI usage against both daily budgets, completing the accounting added in Phase 7.
+- Tests: 14 integration tests against the live database, each request made as a real Supabase user with a real JWT so the guard, the Zod query pipe and the response envelope are all exercised. 240 unit + 72 e2e in total.
+- Three defects found and fixed while testing: a JS `Date` inside a raw `sql` template throws at runtime (D55, hit three queries); `/dashboard/summary` fanned out 8 parallel queries and could stall (D54); and `saved_jobs`/`applications` reference `jobs` with `ON DELETE RESTRICT`, which the test cleanup had to respect.
+- Decisions D54–D55 recorded.
+
 ## [Phase 7] AI matching — 2026-09-22
 
 - `@jobsentinel/validation`: `scoreMatch` — the deterministic resume ↔ job scorer (skill 0.40 / role 0.30 / experience 0.20 / location 0.10), with `canonicalSkill` alias resolution, priority banding, and an explanation built from the same evidence it scored (`Match 82% — ✓ Python ✓ SQL ✗ Kubernetes · ✓ Fresher eligible · ✓ Preferred role · ✓ Bengaluru`). Pure and synchronous; the AI never replaces it.

@@ -111,5 +111,12 @@ export const SystemStatus = z.object({
   pipeline: z.record(z.string(), z.number().int()),
   jobsLast24h: z.object({ found: z.number().int(), new: z.number().int() }),
   totals: z.object({ jobs: z.number().int(), companies: z.number().int() }),
+  /** Today AI usage against the daily caps (docs 09 §6). */
+  ai: z.object({
+    callsToday: z.number().int(),
+    callBudget: z.number().int(),
+    tokensToday: z.number().int(),
+    tokenBudget: z.number().int(),
+  }),
 });
 export type SystemStatus = z.infer<typeof SystemStatus>;

@@ -1,0 +1,292 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { and, desc, eq, gte, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
+import type {
+  ApplicationStatus,
+  JobCard,
+  JobsQuery,
+  JobSort,
+  TrackerState,
+} from '@jobsentinel/types';
+import { DB, type Db } from '../common/db/db.module';
+import { applications, companies, jobMatches, jobs, savedJobs, users } from '../common/db/schema';
+
+const DEFAULT_LIMIT = 25;
+const NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
+/** Statuses a job must be in to appear in the user's lists at all (docs 03 §3). */
+const LISTABLE = ['VALID', 'NEEDS_REVIEW', 'MATCHED', 'NOTIFY_PENDING', 'NOTIFIED'] as const;
+
+/** One row of the list query: the job, its company, this user's match and tracker state. */
+type Row = Awaited<ReturnType<JobsQueryService['select']>>[number];
+
+/**
+ * Read side of the jobs API (docs 03 §3). Every list goes through `list()` so `/jobs`,
+ * `/saved-jobs`, `/applications` and the dashboard all return the identical `JobCard` shape.
+ *
+ * Scores are per profile version: the join is pinned to the user's current version so an old
+ * score from a previous resume is never shown as if it were current.
+ */
+@Injectable()
+export class JobsQueryService {
+  constructor(@Inject(DB) private readonly db: Db) {}
+
+  async list(
+    userId: string,
+    query: JobsQuery,
+  ): Promise<{ items: JobCard[]; nextCursor: string | null }> {
+    const limit = query.limit ?? DEFAULT_LIMIT;
+    const sort: JobSort = query.sort ?? 'newest';
+    const profileVersion = await this.profileVersion(userId);
+
+    const where = this.buildWhere(query);
+    const cursor = decodeCursor(query.cursor);
+    const rows = await this.select(userId, profileVersion, [
+      ...where,
+      ...(cursor ? [cursorPredicate(sort, cursor)] : []),
+    ])
+      .orderBy(...orderFor(sort))
+      .limit(limit + 1);
+
+    const page = rows.slice(0, limit);
+    const nextCursor =
+      rows.length > limit && page.length > 0 ? encodeCursor(sort, page[page.length - 1]!) : null;
+    return { items: page.map(toCard), nextCursor };
+  }
+
+  /** Shared projection — kept in one place so every list returns the same `JobCard`. */
+  private select(userId: string, profileVersion: number, where: (SQL | undefined)[]) {
+    return this.db
+      .select({
+        job: jobs,
+        company: {
+          id: companies.id,
+          name: companies.name,
+          domain: companies.websiteDomain,
+          verificationStatus: companies.verificationStatus,
+        },
+        match: {
+          overallScore: jobMatches.overallScore,
+          priority: jobMatches.priority,
+          matchedSkills: jobMatches.matchedSkills,
+        },
+        saved: sql<boolean>`${savedJobs.jobId} is not null`,
+        trackerStatus: applications.status,
+        viewedAt: sql<Date | null>`case when ${applications.status} is null then null else ${applications.createdAt} end`,
+      })
+      .from(jobs)
+      .innerJoin(companies, eq(companies.id, jobs.companyId))
+      .leftJoin(
+        jobMatches,
+        and(
+          eq(jobMatches.jobId, jobs.id),
+          eq(jobMatches.userId, userId),
+          eq(jobMatches.profileVersion, profileVersion),
+        ),
+      )
+      .leftJoin(savedJobs, and(eq(savedJobs.jobId, jobs.id), eq(savedJobs.userId, userId)))
+      .leftJoin(applications, and(eq(applications.jobId, jobs.id), eq(applications.userId, userId)))
+      .where(and(...where.filter(Boolean)));
+  }
+
+  private buildWhere(q: JobsQuery): (SQL | undefined)[] {
+    const where: (SQL | undefined)[] = [inArray(jobs.status, [...LISTABLE])];
+
+    // Validation status defaults to VALID only: a job we could not confirm is opt-in (docs 08).
+    where.push(inArray(jobs.validationStatus, q.validationStatus ?? ['VALID']));
+
+    const activity = q.status ?? 'ACTIVE';
+    if (activity === 'ACTIVE') where.push(sql`${jobs.closedAt} is null`);
+    else if (activity === 'EXPIRED') where.push(isNotNull(jobs.closedAt));
+
+    if (q.q) {
+      // Plain-language search over the indexed title+description document.
+      where.push(
+        sql`to_tsvector('english', ${jobs.title} || ' ' || ${jobs.description}) @@ plainto_tsquery('english', ${q.q})`,
+      );
+    }
+    if (q.roleFamily?.length) where.push(inArray(jobs.roleFamily, q.roleFamily));
+    if (q.category?.length) where.push(inArray(jobs.category, q.category));
+    if (q.companyId) where.push(eq(jobs.companyId, q.companyId));
+    if (q.location) {
+      const like = `%${q.location.toLowerCase()}%`;
+      where.push(
+        or(
+          sql`lower(${jobs.locationCity}) like ${like}`,
+          sql`lower(${jobs.locationCountry}) like ${like}`,
+          sql`lower(${jobs.locationText}) like ${like}`,
+        ),
+      );
+    }
+    if (q.remote !== undefined) where.push(eq(jobs.isRemote, q.remote));
+    if (q.fresherOnly) where.push(eq(jobs.fresherEligible, true));
+    if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
+    if (q.postedAfter) where.push(gte(jobs.postedAt, new Date(q.postedAfter)));
+    if (q.salaryMin !== undefined) where.push(gte(jobs.salaryMin, String(q.salaryMin)));
+    if (q.sourceId) {
+      where.push(
+        sql`exists (select 1 from job_source_mappings m where m.job_id = ${jobs.id} and m.source_id = ${q.sourceId})`,
+      );
+    }
+
+    // Match-dependent filters. The join is already pinned to the current profile version.
+    if (q.minScore !== undefined) where.push(gte(jobMatches.overallScore, q.minScore));
+    if (q.priority?.length) where.push(inArray(jobMatches.priority, q.priority));
+
+    if (q.saved === true) where.push(sql`${savedJobs.jobId} is not null`);
+    else if (q.saved === false) where.push(sql`${savedJobs.jobId} is null`);
+    if (q.tracker?.length) where.push(inArray(applications.status, q.tracker));
+
+    return where;
+  }
+
+  /** The version every score shown to this user must belong to. */
+  async profileVersion(userId: string): Promise<number> {
+    const row = await this.db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { profileVersion: true },
+    });
+    return row?.profileVersion ?? 0;
+  }
+
+  /** Used by `/saved-jobs`, `/applications` and the dashboard, which pick their own rows. */
+  async cardsByIds(userId: string, ids: string[]): Promise<Map<string, JobCard>> {
+    if (ids.length === 0) return new Map();
+    const rows = await this.select(userId, await this.profileVersion(userId), [
+      inArray(jobs.id, ids),
+    ]);
+    return new Map(rows.map((r) => [r.job.id, toCard(r)]));
+  }
+
+  async trackerState(userId: string, jobId: string): Promise<TrackerState> {
+    const [saved, app] = await Promise.all([
+      this.db.query.savedJobs.findFirst({
+        where: and(eq(savedJobs.userId, userId), eq(savedJobs.jobId, jobId)),
+        columns: { jobId: true },
+      }),
+      this.db.query.applications.findFirst({
+        where: and(eq(applications.userId, userId), eq(applications.jobId, jobId)),
+        columns: { status: true },
+      }),
+    ]);
+    return { saved: Boolean(saved), status: (app?.status as ApplicationStatus) ?? null };
+  }
+}
+
+function orderFor(sort: JobSort): SQL[] {
+  // The id tiebreak makes the cursor stable when two jobs share a timestamp or score.
+  if (sort === 'score') {
+    return [sql`${jobMatches.overallScore} desc nulls last`, desc(jobs.id)];
+  }
+  if (sort === 'posted') return [sql`${jobs.postedAt} desc nulls last`, desc(jobs.id)];
+  return [desc(jobs.firstSeenAt), desc(jobs.id)];
+}
+
+interface Cursor {
+  key: string | null;
+  id: string;
+}
+
+function encodeCursor(sort: JobSort, row: Row): string {
+  const key =
+    sort === 'score'
+      ? row.match?.overallScore != null
+        ? String(row.match.overallScore)
+        : null
+      : sort === 'posted'
+        ? (row.job.postedAt?.toISOString() ?? null)
+        : row.job.firstSeenAt.toISOString();
+  return Buffer.from(JSON.stringify({ key, id: row.job.id })).toString('base64url');
+}
+
+function decodeCursor(raw: string | undefined): Cursor | null {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
+    if (typeof parsed !== 'object' || parsed === null) return null;
+    const { key, id } = parsed as { key?: unknown; id?: unknown };
+    if (typeof id !== 'string') return null;
+    return { key: typeof key === 'string' ? key : null, id };
+  } catch {
+    return null; // a corrupt cursor restarts the list rather than erroring
+  }
+}
+
+/**
+ * Keyset pagination: everything strictly after the last row in the sort order.
+ * `nulls last` means a null key is also "after" every non-null one.
+ */
+function cursorPredicate(sort: JobSort, c: Cursor): SQL {
+  if (sort === 'score') {
+    const score = c.key === null ? null : Number(c.key);
+    if (score === null) return sql`${jobMatches.overallScore} is null and ${jobs.id} < ${c.id}`;
+    return sql`(${jobMatches.overallScore} is null or ${jobMatches.overallScore} < ${score} or (${jobMatches.overallScore} = ${score} and ${jobs.id} < ${c.id}))`;
+  }
+  const column = sort === 'posted' ? jobs.postedAt : jobs.firstSeenAt;
+  if (c.key === null) return sql`${column} is null and ${jobs.id} < ${c.id}`;
+  // A raw Date has no encoder inside a sql template; postgres.js needs the ISO string (D54).
+  const iso = new Date(c.key).toISOString();
+  if (sort === 'posted') {
+    return sql`(${column} is null or ${column} < ${iso} or (${column} = ${iso} and ${jobs.id} < ${c.id}))`;
+  }
+  return sql`(${column} < ${iso} or (${column} = ${iso} and ${jobs.id} < ${c.id}))`;
+}
+
+function toCard(row: Row): JobCard {
+  const j = row.job;
+  const isNew = Date.now() - j.firstSeenAt.getTime() < NEW_WINDOW_MS && row.trackerStatus === null;
+  return {
+    id: j.id,
+    title: j.title,
+    company: {
+      id: row.company.id,
+      name: row.company.name,
+      domain: row.company.domain,
+      verificationStatus: row.company.verificationStatus,
+    },
+    location: {
+      text: j.locationText,
+      city: j.locationCity,
+      country: j.locationCountry,
+      isRemote: j.isRemote,
+    },
+    employmentType: j.employmentType,
+    experienceLevel: j.experienceLevel,
+    fresherEligible: j.fresherEligible,
+    experienceText: j.experienceText,
+    salary: salaryOf(j),
+    postedAt: j.postedAt?.toISOString() ?? null,
+    firstSeenAt: j.firstSeenAt.toISOString(),
+    deadline: j.deadline?.toISOString() ?? null,
+    validation: {
+      status: j.validationStatus,
+      confidence: j.validationConfidence === null ? null : Number(j.validationConfidence),
+      companyVerified: row.company.verificationStatus === 'VERIFIED',
+      applicationVerified: j.validationStatus === 'VALID',
+      jobActive: j.closedAt === null,
+    },
+    match:
+      row.match?.overallScore != null
+        ? {
+            overallScore: row.match.overallScore,
+            priority: row.match.priority,
+            matchedSkills: row.match.matchedSkills ?? [],
+          }
+        : null,
+    tracker: { saved: row.saved, status: row.trackerStatus ?? null },
+    // The probed final URL is the one that actually works; fall back to what the source gave us.
+    applicationUrl: j.finalApplicationUrl ?? j.applicationUrl ?? j.sourceUrl,
+    isNew,
+  };
+}
+
+function salaryOf(j: Row['job']): JobCard['salary'] {
+  if (j.salaryMin === null && j.salaryMax === null && !j.salaryText) return null;
+  return {
+    min: j.salaryMin === null ? null : Number(j.salaryMin),
+    max: j.salaryMax === null ? null : Number(j.salaryMax),
+    currency: j.salaryCurrency,
+    period: j.salaryPeriod,
+    text: j.salaryText,
+  };
+}
+
+export { toCard, LISTABLE };

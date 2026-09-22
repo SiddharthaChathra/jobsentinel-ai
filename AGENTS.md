@@ -79,6 +79,8 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Natural-key uniques are the idempotency mechanism: `(source_id, external_id)`, `(job_id, user_id, profile_version)`, `(user_id, job_id, channel, type)`.
 - Writes in the pipeline are per-record transactions; selection uses `FOR UPDATE SKIP LOCKED`.
 - Batch writes rather than per-row round trips over the pooler, and flush a long stage incrementally (≤ 50 rows or ≤ 60 s): never hold a pooled connection idle across AI or HTTP calls (D37, D44, D51).
+- Keep concurrent queries per request at or below the pool `max` (4 in dev): prefer one statement with scalar subqueries over a fan-out of counters (D54).
+- A JS `Date` inside a raw `sql` template has no encoder — pass `date.toISOString()` with an explicit `::timestamptz` cast. Typed helpers (`gte(col, date)`) take a `Date` as normal (D55).
 - Never delete saved/applied jobs; retention rules in docs 02 §8.
 
 ## 8. API conventions (docs/architecture/03-api-contract.md)
