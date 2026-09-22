@@ -11,7 +11,7 @@ jobsentinel-ai/
 │   │   ├── hooks/
 │   │   ├── lib/                      # api.ts, supabase/, format.ts, queryKeys.ts, constants.ts
 │   │   ├── public/                   # icons, manifest
-│   │   ├── middleware.ts
+│   │   ├── proxy.ts                  # Next 16 (was middleware.ts)
 │   │   ├── next.config.ts, tailwind.config.ts, components.json (shadcn)
 │   │   ├── vitest.config.ts, playwright.config.ts
 │   │   └── package.json
