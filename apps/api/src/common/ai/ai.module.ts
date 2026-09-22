@@ -38,10 +38,16 @@ const CACHE_MAX_AGE_DAYS = 30;
           return null;
         }
         logger.log(`AI providers: ${providers.map((p) => `${p.name}/${p.model}`).join(' → ')}`);
-        return new AIService(providers, budget, new DbCache(db, CACHE_MAX_AGE_DAYS), {
-          info: (obj, msg) => logger.log(`${msg} ${JSON.stringify(obj)}`),
-          warn: (obj, msg) => logger.warn(`${msg} ${JSON.stringify(obj)}`),
-        });
+        return new AIService(
+          providers,
+          budget,
+          new DbCache(db, CACHE_MAX_AGE_DAYS),
+          {
+            info: (obj, msg) => logger.log(`${msg} ${JSON.stringify(obj)}`),
+            warn: (obj, msg) => logger.warn(`${msg} ${JSON.stringify(obj)}`),
+          },
+          env.AI_MIN_REQUEST_GAP_MS,
+        );
       },
       inject: [ENV, DB, AI_BUDGET],
     },

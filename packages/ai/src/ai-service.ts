@@ -84,13 +84,31 @@ const REPAIR_SUFFIX =
  * Never throws for provider failures; callers branch on `status` and use deterministic fallbacks.
  */
 export class AIService {
+  private lastCallAt = 0;
+  private cooldownUntil = 0;
+
   constructor(
     private readonly providers: AIProvider[],
     private readonly budget: BudgetPort,
     private readonly cache: CachePort,
     private readonly logger: AILogger,
+    /**
+     * Minimum gap between provider calls. The default keeps us under the 15 requests/minute of
+     * Gemini's free tier with room to spare; a paid key can set it to 0.
+     */
+    private readonly minGapMs = 4_500,
   ) {
     if (providers.length === 0) throw new Error('AIService needs at least one provider');
+  }
+
+  /** Spaces calls out, and waits out any cooldown a 429 asked for. */
+  private async pace(): Promise<void> {
+    const waitFor = Math.max(
+      this.lastCallAt + this.minGapMs - Date.now(),
+      this.cooldownUntil - Date.now(),
+    );
+    if (waitFor > 0) await new Promise((resolve) => setTimeout(resolve, waitFor));
+    this.lastCallAt = Date.now();
   }
 
   get primaryProvider(): AIProvider {
@@ -170,6 +188,10 @@ export class AIService {
   ): Promise<AIResult<T>> {
     let userPrompt = req.user;
     for (let round = 0; round < 2; round++) {
+      // A free tier limits requests per MINUTE, not just per day, and the daily budget cannot
+      // see that. Without pacing, a batch burns the per-minute allowance in seconds and every
+      // remaining call fails 429 (D58).
+      await this.pace();
       const startedAt = Date.now();
       let text: string;
       let usage: AIUsage;
@@ -183,6 +205,10 @@ export class AIService {
         }));
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        // A 429 tells us exactly how long to wait; respecting it costs one pause, ignoring it
+        // costs every remaining call in the batch.
+        const retryAfterMs = parseRetryAfterMs(message);
+        if (retryAfterMs !== null) this.cooldownUntil = Date.now() + retryAfterMs;
         await this.budget.record({
           purpose: req.purpose,
           promptVersion: req.promptVersion,
@@ -257,4 +283,19 @@ export class AIService {
       provider: provider.name,
     };
   }
+}
+
+/**
+ * Reads a provider's "retry after" hint out of its error text. Gemini phrases it as
+ * "Please retry in 18.02s"; a plain `retry_after: 30` is also accepted. Returns null when the
+ * error carries no hint, in which case only the normal pacing applies.
+ */
+export function parseRetryAfterMs(message: string): number | null {
+  if (!/\b429\b|quota|rate.?limit/i.test(message)) return null;
+  const seconds =
+    /retry in ([0-9.]+)s/i.exec(message)?.[1] ??
+    /retry_?after["':\s]+([0-9.]+)/i.exec(message)?.[1];
+  if (seconds === undefined) return 30_000; // rate-limited but no hint: back off a sensible default
+  const ms = Math.round(Number(seconds) * 1000);
+  return Number.isFinite(ms) ? Math.min(Math.max(ms, 1_000), 120_000) : 30_000;
 }

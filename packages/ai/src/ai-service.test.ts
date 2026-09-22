@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { AIService, InMemoryBudget, InMemoryCache, hashInput } from './ai-service';
+import {
+  AIService,
+  InMemoryBudget,
+  InMemoryCache,
+  hashInput,
+  parseRetryAfterMs,
+} from './ai-service';
 import type { AIProvider, AIRequest, ProviderCompletionResponse } from './provider';
 
 const Out = z.object({
@@ -41,7 +47,7 @@ const req = (): AIRequest<z.infer<typeof Out>> => ({
 describe('AIService', () => {
   it('returns validated data on a clean response', async () => {
     const p = new FakeProvider('a', ['{"level":"FRESHER","confidence":0.9}']);
-    const svc = new AIService([p], new InMemoryBudget(10), new InMemoryCache(), logger);
+    const svc = new AIService([p], new InMemoryBudget(10), new InMemoryCache(), logger, 0);
     const r = await svc.run(req());
     expect(r.status).toBe('OK');
     if (r.status === 'OK') expect(r.data).toEqual({ level: 'FRESHER', confidence: 0.9 });
@@ -52,7 +58,7 @@ describe('AIService', () => {
       '```json\n{"level":"SENIOR","confidence":2}\n```',
       '{"level":"EXPERIENCED","confidence":0.7}',
     ]);
-    const svc = new AIService([p], new InMemoryBudget(10), new InMemoryCache(), logger);
+    const svc = new AIService([p], new InMemoryBudget(10), new InMemoryCache(), logger, 0);
     const r = await svc.run(req());
     expect(r.status).toBe('OK');
     expect(p.calls).toHaveLength(2);
@@ -63,7 +69,7 @@ describe('AIService', () => {
   it('fails over to the next provider on error and reports INVALID_JSON when all fail validation', async () => {
     const a = new FakeProvider('a', [new Error('503 overloaded')]);
     const b = new FakeProvider('b', ['not json', 'still not json']);
-    const svc = new AIService([a, b], new InMemoryBudget(10), new InMemoryCache(), logger);
+    const svc = new AIService([a, b], new InMemoryBudget(10), new InMemoryCache(), logger, 0);
     const r = await svc.run(req());
     expect(r.status).toBe('INVALID_JSON');
     expect(b.calls).toHaveLength(2);
@@ -72,7 +78,7 @@ describe('AIService', () => {
   it('serves repeated inputs from cache without spending budget', async () => {
     const p = new FakeProvider('a', ['{"level":"FRESHER","confidence":0.9}']);
     const budget = new InMemoryBudget(10);
-    const svc = new AIService([p], budget, new InMemoryCache(), logger);
+    const svc = new AIService([p], budget, new InMemoryCache(), logger, 0);
     await svc.run(req());
     const r2 = await svc.run(req());
     expect(r2.status).toBe('OK');
@@ -83,7 +89,7 @@ describe('AIService', () => {
 
   it('returns BUDGET_EXCEEDED without calling the provider', async () => {
     const p = new FakeProvider('a', ['{"level":"FRESHER","confidence":0.9}']);
-    const svc = new AIService([p], new InMemoryBudget(0), new InMemoryCache(), logger);
+    const svc = new AIService([p], new InMemoryBudget(0), new InMemoryCache(), logger, 0);
     const r = await svc.run(req());
     expect(r.status).toBe('BUDGET_EXCEEDED');
     expect(p.calls).toHaveLength(0);
@@ -93,5 +99,27 @@ describe('AIService', () => {
     expect(hashInput('MATCH', 'v1', { a: 1, b: [1, 2] })).toBe(
       hashInput('MATCH', 'v1', { b: [1, 2], a: 1 }),
     );
+  });
+});
+
+describe('parseRetryAfterMs', () => {
+  it('reads the delay Gemini suggests', () => {
+    expect(
+      parseRetryAfterMs(
+        'gemini 429: You exceeded your current quota. Please retry in 18.026912833s.',
+      ),
+    ).toBe(18027);
+  });
+
+  it('reads a plain retry_after and a bare rate-limit message', () => {
+    expect(parseRetryAfterMs('429 rate limit, retry_after: 30')).toBe(30_000);
+    expect(parseRetryAfterMs('HTTP 429 quota exceeded')).toBe(30_000);
+  });
+
+  it('clamps absurd values and ignores unrelated errors', () => {
+    expect(parseRetryAfterMs('429 quota, please retry in 9999s')).toBe(120_000);
+    expect(parseRetryAfterMs('429 quota, please retry in 0.1s')).toBe(1_000);
+    expect(parseRetryAfterMs('500 internal error')).toBeNull();
+    expect(parseRetryAfterMs('model returned invalid JSON')).toBeNull();
   });
 });
