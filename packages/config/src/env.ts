@@ -128,7 +128,7 @@ export const envSchema = z
       z.array(z.enum(AI_PROVIDERS)),
     ),
     AI_GEMINI_API_KEY: optStr(),
-    AI_GEMINI_MODEL: strDefault('gemini-2.5-flash'),
+    AI_GEMINI_MODEL: strDefault('gemini-3.5-flash-lite'),
     AI_CLAUDE_API_KEY: optStr(),
     AI_CLAUDE_MODEL: strDefault('claude-haiku-4-5'),
     AI_LOCAL_BASE_URL: urlDefault('http://localhost:11434'),
