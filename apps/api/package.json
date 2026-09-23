@@ -21,7 +21,9 @@
     "match": "node dist/scripts/match.js",
     "notify": "node dist/scripts/notify.js",
     "clean:test": "node dist/scripts/clean-test-data.js",
-    "apply-resume": "node dist/scripts/apply-resume-profile.js"
+    "apply-resume": "node dist/scripts/apply-resume-profile.js",
+    "repair:status": "node dist/scripts/repair-job-status.js",
+    "renormalize:locations": "node dist/scripts/renormalize-locations.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",
