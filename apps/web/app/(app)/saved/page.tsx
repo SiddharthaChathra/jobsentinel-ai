@@ -1,33 +1,48 @@
 'use client';
 
+import Link from 'next/link';
+import { BookmarkX } from 'lucide-react';
 import { JobList } from '@/components/jobs/JobList';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { buttonVariants } from '@/components/ui/button';
 import { useSavedJobs } from '@/hooks/useJobs';
 
 export default function SavedJobsPage() {
   const { data, isLoading, isError, error } = useSavedJobs();
-
   const jobs = data?.data ?? [];
-  const meta = data?.meta;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between pb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Saved Jobs</h1>
-          <p className="text-muted-foreground">Your saved opportunities</p>
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <JobList
-          jobs={jobs}
-          isLoading={isLoading}
-          isError={isError}
-          error={error as Error}
-          hasNextPage={!!meta?.nextCursor}
-          isFetchingNextPage={false}
-        />
-      </div>
-    </div>
+    <>
+      <PageHeader
+        title="Saved jobs"
+        description={
+          jobs.length > 0
+            ? `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} you are keeping an eye on.`
+            : 'Jobs you bookmark are kept here, even after they expire.'
+        }
+      />
+      <JobList
+        jobs={jobs}
+        isLoading={isLoading}
+        isError={isError}
+        error={error as Error}
+        hasNextPage={Boolean(data?.meta?.nextCursor)}
+        empty={
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
+            <BookmarkX className="size-8 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Nothing saved yet</p>
+              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                Tap Save on any job and it will wait for you here — saved jobs are never deleted,
+                even once the posting closes.
+              </p>
+            </div>
+            <Link href="/jobs" className={buttonVariants({ size: 'sm' })}>
+              Browse jobs
+            </Link>
+          </div>
+        }
+      />
+    </>
   );
 }

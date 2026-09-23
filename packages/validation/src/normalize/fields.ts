@@ -115,7 +115,9 @@ export function parseSalary(
     currencyInferred: false,
   };
   if (!text) return empty;
-  const t = text.replace(/\s+/g, ' ');
+  // "401(k)", "401k" and "403(b)" are benefits, not pay. Left in, the bare number is parsed as a
+  // salary and 222 live jobs ended up advertising "401" (D60).
+  const t = text.replace(/\s+/g, ' ').replace(/\b40[13]\s*\(?[kb]\)?\b/gi, ' ');
   const unit = '(lpa|lakhs?|lacs?|crores?|cr|k|m|million|l)?';
   const num = '(\\d{1,3}(?:,\\d{2,3})*(?:\\.\\d+)?|\\d+(?:\\.\\d+)?)';
   const range = new RegExp(
@@ -167,6 +169,18 @@ export function parseSalary(
   // Sanity: tiny INR yearly numbers (e.g. "6" without a unit) are meaningless.
   if (currency === 'INR' && period === 'YEAR' && max !== null && max < 50_000)
     return { ...empty, text: matched };
+
+  // A bare small number is almost never pay. Only believe it when a period makes it plausible
+  // (an hourly or monthly rate), otherwise it is a stray figure from the description — a team
+  // size, a percentage, a footnote — and showing it as a salary is worse than showing nothing.
+  const plausibleSmall = period === 'HOUR' ? min >= 5 : period === 'MONTH' ? min >= 1_000 : false;
+  if (min < 1_000 && !plausibleSmall) return { ...empty, text: null };
+
+  // …and a figure in the millions is a funding round or a revenue target, not pay. Descriptions
+  // say things like "raised $20 million", and that was reaching job cards as a salary (D60).
+  // INR is allowed a far higher ceiling because a real CTC is quoted in lakhs.
+  const ceiling = currency === 'INR' ? 100_000_000 : 2_000_000;
+  if (min > ceiling) return { ...empty, text: null };
 
   return { min, max, currency, period, text: matched, currencyInferred };
 }

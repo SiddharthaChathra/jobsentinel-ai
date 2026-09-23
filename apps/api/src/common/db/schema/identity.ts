@@ -135,6 +135,8 @@ export const preferences = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     locations: text('locations').array().notNull().default(['India', 'Remote']),
     remotePreference: remotePreferenceEnum('remote_preference').notNull().default('ANY'),
+    // Internships and traineeships are the point for a final-year student, so they stay in the
+    // default. (Changing this also needs a migration — the live default is set in SQL, not here.)
     employmentTypes: employmentTypeEnum('employment_types')
       .array()
       .notNull()

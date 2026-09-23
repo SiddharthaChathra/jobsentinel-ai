@@ -25,8 +25,13 @@ export class SchedulerService {
   /** Lease up to `max` due sources: manual requests first, then priority, then oldest due. */
   async leaseDueSources(max: number, onlyIds?: string[]): Promise<SourceRow[]> {
     // An explicit id list (worker --sources=) bypasses the schedule: those sources are scanned now.
+    // Each id is bound as its own parameter — interpolating the JS array gives Postgres a bare
+    // string and it fails with "malformed array literal" (D64).
     const dueFilter = onlyIds?.length
-      ? sql`and id = any(${onlyIds}::uuid[])`
+      ? sql`and id in (${sql.join(
+          onlyIds.map((id) => sql`${id}::uuid`),
+          sql`, `,
+        )})`
       : sql`and enabled and status <> 'DISABLED' and (next_scan_at is null or next_scan_at <= now())`;
     const rows = await this.db.execute<SourceRow>(sql`
       update job_sources set lease_until = now() + (${LEASE_MINUTES} * interval '1 minute'), last_attempted_scan = now()

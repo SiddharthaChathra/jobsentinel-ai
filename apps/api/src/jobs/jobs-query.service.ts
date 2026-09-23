@@ -8,7 +8,15 @@ import type {
   TrackerState,
 } from '@jobsentinel/types';
 import { DB, type Db } from '../common/db/db.module';
-import { applications, companies, jobMatches, jobs, savedJobs, users } from '../common/db/schema';
+import {
+  applications,
+  companies,
+  jobMatches,
+  jobs,
+  preferences,
+  savedJobs,
+  users,
+} from '../common/db/schema';
 
 const DEFAULT_LIMIT = 25;
 const NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -36,8 +44,12 @@ export class JobsQueryService {
     const limit = query.limit ?? DEFAULT_LIMIT;
     const sort: JobSort = query.sort ?? 'newest';
     const profileVersion = await this.profileVersion(userId);
+    const prefs = await this.db.query.preferences.findFirst({
+      where: eq(preferences.userId, userId),
+      columns: { locations: true },
+    });
 
-    const where = this.buildWhere(query);
+    const where = this.buildWhere(query, prefs?.locations ?? []);
     const cursor = decodeCursor(query.cursor);
     const rows = await this.select(userId, profileVersion, [
       ...where,
@@ -87,7 +99,7 @@ export class JobsQueryService {
       .where(and(...where.filter(Boolean)));
   }
 
-  private buildWhere(q: JobsQuery): (SQL | undefined)[] {
+  private buildWhere(q: JobsQuery, userLocations: string[] = []): (SQL | undefined)[] {
     const where: (SQL | undefined)[] = [inArray(jobs.status, [...LISTABLE])];
 
     // Validation status defaults to VALID only: a job we could not confirm is opt-in (docs 08).
@@ -113,6 +125,26 @@ export class JobsQueryService {
           sql`lower(${jobs.locationCity}) like ${like}`,
           sql`lower(${jobs.locationCountry}) like ${like}`,
           sql`lower(${jobs.locationText}) like ${like}`,
+        ),
+      );
+    } else if (q.anywhere !== true && userLocations.length > 0) {
+      // Default to the places the user said they would work. Without this the list is mostly
+      // jobs they cannot take — but it is opt-out (`anywhere=true`) and derived from their own
+      // preferences rather than a hard-coded country, so it works for any user (D62).
+      // Remote jobs and postings that state no location are always kept: "unknown" is not "no".
+      const matchers = userLocations.flatMap((loc) => {
+        const like = `%${loc.toLowerCase().trim()}%`;
+        return [
+          sql`lower(${jobs.locationCity}) like ${like}`,
+          sql`lower(${jobs.locationCountry}) like ${like}`,
+          sql`lower(${jobs.locationText}) like ${like}`,
+        ];
+      });
+      where.push(
+        or(
+          eq(jobs.isRemote, true),
+          sql`${jobs.locationCity} is null and ${jobs.locationCountry} is null and ${jobs.locationText} is null`,
+          ...matchers,
         ),
       );
     }

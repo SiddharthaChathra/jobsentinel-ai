@@ -15,6 +15,7 @@ import {
   jobs,
   savedJobs,
   users,
+  preferences,
 } from '../src/common/db/schema';
 import { HTTP_CLIENT } from '../src/common/http/http.module';
 import { FakeHttpClient } from './helpers/fake-http';
@@ -96,6 +97,9 @@ describeIf('jobs API (integration)', () => {
     token = signIn.data.session!.access_token;
 
     await db.insert(users).values({ id: userId, email, profileVersion: 1 });
+    // The list is scoped to the user's preferred locations by default (D62), so the suite needs
+    // a preferences row to exercise that at all.
+    await db.insert(preferences).values({ userId, locations: ['Bengaluru', 'India'] });
     const [c] = await db
       .insert(companies)
       .values({
@@ -340,6 +344,26 @@ describeIf('jobs API (integration)', () => {
       api().get(`/api/v1/jobs?companyId=${companyId}&tracker=NOT_INTERESTED`),
     ).expect(200);
     expect((res.body as { data: JobCard[] }).data.map((j) => j.id)).toEqual([remoteId]);
+  }, 60_000);
+
+  it('scopes the list to the preferred locations, and lifts it on request (D62)', async () => {
+    const abroadId = await seedJob('Berlin Backend Engineer', {
+      locationCity: 'Berlin',
+      locationCountry: 'Germany',
+      locationText: 'Berlin, Germany',
+    });
+
+    const scoped = await auth(api().get(`/api/v1/jobs?companyId=${companyId}&limit=50`)).expect(
+      200,
+    );
+    const scopedIds = (scoped.body as { data: JobCard[] }).data.map((j) => j.id);
+    expect(scopedIds).not.toContain(abroadId); // outside Bengaluru / India
+    expect(scopedIds).toContain(remoteId); // remote is always in scope
+
+    const all = await auth(
+      api().get(`/api/v1/jobs?companyId=${companyId}&limit=50&anywhere=true`),
+    ).expect(200);
+    expect((all.body as { data: JobCard[] }).data.map((j) => j.id)).toContain(abroadId);
   }, 60_000);
 
   it('summarises the dashboard', async () => {

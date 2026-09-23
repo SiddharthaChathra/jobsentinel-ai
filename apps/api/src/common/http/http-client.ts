@@ -28,16 +28,45 @@ export interface HttpResponse {
   requestCount: number;
 }
 
+/**
+ * Query parameters that carry credentials. Some APIs authenticate in the query string — Adzuna
+ * takes `app_id`/`app_key` — and our error messages and redirect chains are written to
+ * `scan_runs.error` and `job_validation`, so an un-redacted URL would persist a live key into the
+ * database and the logs (D61).
+ */
+const SECRET_PARAMS =
+  /^(app_key|api_key|apikey|key|token|access_token|auth|secret|client_secret|password|signature|sig)$/i;
+
+/** Replaces the value of any credential-bearing query parameter with `***`. */
+export function redactUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    let touched = false;
+    for (const name of [...url.searchParams.keys()]) {
+      if (SECRET_PARAMS.test(name)) {
+        url.searchParams.set(name, '***');
+        touched = true;
+      }
+    }
+    return touched ? url.toString() : raw;
+  } catch {
+    return raw; // not a URL we can parse; nothing to redact
+  }
+}
+
 export class HttpError extends Error {
   constructor(
     message: string,
     public readonly code:
       'SSRF_BLOCKED' | 'TIMEOUT' | 'NETWORK' | 'TOO_MANY_REDIRECTS' | 'INVALID_URL',
-    public readonly url?: string,
+    url?: string,
   ) {
-    super(message);
+    super(redactUrl(message));
     this.name = 'HttpError';
+    this.url = url === undefined ? undefined : redactUrl(url);
   }
+
+  readonly url?: string;
 }
 
 /** Ports so services and tests can swap the implementation (docs 05 §9). */
@@ -145,12 +174,12 @@ export class HttpClient implements HttpClientPort {
       ...opts,
       headers: { Accept: 'application/json', ...opts.headers },
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status} for ${redactUrl(url)}`);
     let data: T;
     try {
       data = JSON.parse(response.text) as T;
     } catch {
-      throw new Error(`Invalid JSON from ${url}`);
+      throw new Error(`Invalid JSON from ${redactUrl(url)}`);
     }
     return { data, response };
   }
@@ -238,7 +267,7 @@ export class HttpClient implements HttpClientPort {
         clearTimeout(timer);
         await res.body?.cancel().catch(() => undefined);
         const next = new URL(res.headers.get('location')!, parsed).toString();
-        chain.push({ url: next, status: res.status });
+        chain.push({ url: redactUrl(next), status: res.status });
         current = next;
         if (hop === maxRedirects)
           throw new HttpError(

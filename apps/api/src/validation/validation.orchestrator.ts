@@ -94,8 +94,16 @@ export class ValidationOrchestrator {
   }
 
   /** Re-checks active jobs whose `next_check_at` is due: closure detection only (docs 07 §1.5). */
-  async recheckDue(opts: { batch?: number } = {}): Promise<{ checked: number; expired: number }> {
+  /**
+   * `jobIds` narrows the sweep to specific jobs — used by the ops script and by tests, which
+   * otherwise compete with however many real jobs happen to be due (the batch would fill with
+   * them and never reach the job under test).
+   */
+  async recheckDue(
+    opts: { batch?: number; jobIds?: string[] } = {},
+  ): Promise<{ checked: number; expired: number }> {
     const batch = opts.batch ?? 20;
+    if (opts.jobIds?.length === 0) return { checked: 0, expired: 0 };
     const due = await this.db
       .select({ job: jobs, company: companies })
       .from(jobs)
@@ -104,6 +112,7 @@ export class ValidationOrchestrator {
         and(
           inArray(jobs.status, ['VALID', 'MATCHED', 'NOTIFIED', 'NEEDS_REVIEW'] as JobStatus[]),
           sql`${jobs.nextCheckAt} is not null and ${jobs.nextCheckAt} <= now()`,
+          ...(opts.jobIds ? [inArray(jobs.id, opts.jobIds)] : []),
         ),
       )
       .orderBy(jobs.nextCheckAt)

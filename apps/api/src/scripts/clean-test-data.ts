@@ -10,7 +10,8 @@ import postgres from 'postgres';
  * touching real rows. Run with `--dry` to see what would go. This exists because a killed test
  * run once left 24 fixture jobs scoring 100 % at the top of the real dashboard.
  */
-const COMPANY_PATTERN = '^(jobsapi|match|notif|ingest|classif|valid|review|onboard|db|sources)-[0-9]+';
+const COMPANY_PATTERN =
+  '^(jobsapi|match|notif|ingest|classif|valid|review|onboard|db|sources)-[0-9]+';
 const TEST_EMAIL = '%@jobsentinel.test';
 
 async function main(): Promise<void> {

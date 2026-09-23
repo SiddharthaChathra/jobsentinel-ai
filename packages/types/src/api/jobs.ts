@@ -48,6 +48,8 @@ export const JobsQuery = z.object({
   category: csv(JobCategory),
   companyId: z.uuid().optional(),
   location: z.string().trim().min(1).max(80).optional(),
+  /** By default the list is limited to the user's preferred locations; true lifts that. */
+  anywhere: bool,
   remote: bool,
   fresherOnly: bool,
   experienceLevel: csv(ExperienceLevel),

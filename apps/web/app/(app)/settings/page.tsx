@@ -1,85 +1,94 @@
 'use client';
 
-import { useMe, useUpdateMe } from '@/hooks/useUser';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { NotificationCard } from '@/components/settings/NotificationCard';
+import { TelegramCard } from '@/components/settings/TelegramCard';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { useNotificationSettings } from '@/hooks/useNotifications';
+import { useMe, useUpdateMe } from '@/hooks/useUser';
 
 export default function SettingsPage() {
-  const { data: me, isLoading } = useMe();
-  const updateMutation = useUpdateMe();
+  const { data: me, isLoading: meLoading } = useMe();
+  const updateMe = useUpdateMe();
+  const { data: notifications, isLoading: notifLoading } = useNotificationSettings();
 
-  const [displayName, setDisplayName] = useState('');
-  const [initialised, setInitialised] = useState(false);
-
-  if (me && !initialised) {
-    setDisplayName(me.user.displayName ?? '');
-    setInitialised(true);
+  const serverName = me?.user.displayName ?? '';
+  const [displayName, setDisplayName] = useState(serverName);
+  const [lastSynced, setLastSynced] = useState(serverName);
+  if (serverName !== lastSynced) {
+    setLastSynced(serverName);
+    setDisplayName(serverName);
   }
-
-  if (isLoading) {
-    return (
-      <div className="p-8 flex justify-center">
-        <Loader2 className="animate-spin h-6 w-6" />
-      </div>
-    );
-  }
-
-  const handleSave = () => {
-    updateMutation.mutate({ displayName: displayName || null });
-  };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and notification settings.</p>
-      </div>
+    <>
+      <PageHeader title="Settings" description="Your account, alerts and Telegram link." />
 
-      <div className="grid gap-6">
+      <div className="grid max-w-3xl gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
-            <CardDescription>Your personal information.</CardDescription>
+            <CardDescription>{me?.user.email ?? 'Loading…'}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2 max-w-sm">
-              <Label htmlFor="displayName">Display Name</Label>
+          <CardContent>
+            <div className="space-y-1.5">
+              <Label htmlFor="displayName">Display name</Label>
               <Input
                 id="displayName"
                 value={displayName}
+                placeholder="How should we greet you?"
                 onChange={(e) => setDisplayName(e.target.value)}
+                disabled={meLoading}
               />
             </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={handleSave} disabled={updateMutation.isPending}>
-              {updateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Settings
+          <CardFooter className="flex items-center gap-3 border-t border-border/60 pt-4">
+            <Button
+              onClick={() => updateMe.mutate({ displayName: displayName.trim() || null })}
+              disabled={updateMe.isPending || meLoading}
+            >
+              {updateMe.isPending && <Loader2 className="mr-1.5 size-4 animate-spin" />}
+              Save
             </Button>
+            {updateMe.isSuccess && <span className="text-sm text-success">Saved.</span>}
           </CardFooter>
         </Card>
 
+        {notifLoading && (
+          <div className="h-64 animate-pulse rounded-xl border border-border/60 bg-muted/40" />
+        )}
+        {notifications && <NotificationCard settings={notifications} />}
+        {notifications && <TelegramCard telegram={notifications.telegram} />}
+
         <Card>
           <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-            <CardDescription>Irreversible account actions.</CardDescription>
+            <CardTitle>Your data</CardTitle>
+            <CardDescription>What JobSentinel stores, and where.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button variant="destructive">Delete Account</Button>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              Your resume file is kept in private storage and is only ever read by the parser. Job
+              alerts contain job details only — never anything from your resume.
+            </p>
+            <p>
+              To remove everything, delete the Supabase auth user: the database cascades from it, so
+              your profile, matches, saved jobs and alerts go with it.
+            </p>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </>
   );
 }

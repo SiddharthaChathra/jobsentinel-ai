@@ -1,13 +1,11 @@
-/* eslint-disable */
 'use client';
 
-import { useRef, useEffect } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { JobCard } from './JobCard';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { AlertCircle, Loader2, SearchX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { JobCard as JobCardType } from '@/lib/types/jobs';
-import { Button } from '@/components/ui/button';
+import { JobCard } from './JobCard';
 
 interface JobListProps {
   jobs: JobCardType[];
@@ -17,8 +15,18 @@ interface JobListProps {
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
+  /** Each page supplies its own empty state — "no results" and "nothing saved" are different. */
+  empty?: ReactNode;
 }
 
+/** Roughly one card; the virtualizer measures the real height as rows render. */
+const ESTIMATED_CARD_PX = 232;
+
+/**
+ * Virtualised job list. It virtualises against the **window**, so the page scrolls normally
+ * instead of trapping a second scrollbar inside a fixed-height box — that nested scroller was
+ * awkward on a phone and made the footer unreachable.
+ */
 export function JobList({
   jobs,
   isLoading,
@@ -27,102 +35,94 @@ export function JobList({
   hasNextPage,
   fetchNextPage,
   isFetchingNextPage,
+  empty,
 }: JobListProps) {
-  const parentRef = useRef<HTMLDivElement>(null);
+  // A callback ref, not `useRef`: the virtualizer needs the list's offset from the top of the
+  // page, and reading `ref.current` during render is not allowed. This measures once on mount.
+  const [scrollMargin, setScrollMargin] = useState(0);
+  const listRef = useCallback((node: HTMLDivElement | null) => {
+    if (node) setScrollMargin(node.offsetTop);
+  }, []);
 
-  const virtualizer = useVirtualizer({
+  const virtualizer = useWindowVirtualizer({
     count: hasNextPage ? jobs.length + 1 : jobs.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 200,
-    overscan: 5,
+    estimateSize: () => ESTIMATED_CARD_PX,
+    overscan: 4,
+    scrollMargin,
   });
 
+  const items = virtualizer.getVirtualItems();
+  const lastIndex = items.at(-1)?.index;
+
   useEffect(() => {
-    const [lastItem] = virtualizer.getVirtualItems().slice(-1);
-    if (lastItem && lastItem.index >= jobs.length - 1 && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage?.();
-    }
-  }, [
-    virtualizer.getVirtualItems(),
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-    jobs.length,
-    virtualizer,
-  ]);
+    if (lastIndex === undefined || !hasNextPage || isFetchingNextPage) return;
+    if (lastIndex >= jobs.length - 1) fetchNextPage?.();
+  }, [lastIndex, hasNextPage, isFetchingNextPage, fetchNextPage, jobs.length]);
 
   if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error?.message || 'Failed to load jobs.'}</AlertDescription>
+        <AlertCircle className="size-4" />
+        <AlertTitle>Could not load jobs</AlertTitle>
+        <AlertDescription>{error?.message ?? 'Please try again.'}</AlertDescription>
       </Alert>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-3" aria-busy="true" aria-label="Loading jobs">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-40 animate-pulse rounded-xl border border-border/60 bg-muted/40"
+          />
+        ))}
       </div>
     );
   }
 
   if (jobs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-lg space-y-3">
-        <div className="text-muted-foreground text-center">
-          No jobs found matching your criteria.
+      empty ?? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
+          <SearchX className="size-8 text-muted-foreground" />
+          <div>
+            <p className="font-medium">No jobs match these filters</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try widening the location, lowering the minimum score, or clearing the search.
+            </p>
+          </div>
         </div>
-        <Button variant="outline" onClick={() => (window.location.search = '')}>
-          Clear Filters
-        </Button>
-      </div>
+      )
     );
   }
 
   return (
-    <div
-      ref={parentRef}
-      className="h-[800px] w-full overflow-y-auto pr-2"
-      style={{ contain: 'strict' }}
-    >
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualItem) => {
-          const isLoaderRow = virtualItem.index > jobs.length - 1;
-          const job = jobs[virtualItem.index];
-
-          return (
-            <div
-              key={virtualItem.key}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: `${virtualItem.size}px`,
-                transform: `translateY(${virtualItem.start}px)`,
-                paddingBottom: '1rem',
-              }}
-            >
-              {isLoaderRow ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <JobCard job={job} />
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <div ref={listRef} className="relative" style={{ height: virtualizer.getTotalSize() }}>
+      {items.map((virtualItem) => {
+        const isLoaderRow = virtualItem.index > jobs.length - 1;
+        const job = jobs[virtualItem.index];
+        return (
+          <div
+            key={virtualItem.key}
+            data-index={virtualItem.index}
+            ref={virtualizer.measureElement}
+            className="absolute inset-x-0 top-0 pb-3"
+            style={{
+              transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
+            }}
+          >
+            {isLoaderRow ? (
+              <div className="flex justify-center p-4">
+                <Loader2 className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              job && <JobCard job={job} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

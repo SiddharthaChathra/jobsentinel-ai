@@ -268,7 +268,9 @@ describeIf('validation engine (integration)', () => {
       .update(jobs)
       .set({ nextCheckAt: new Date(Date.now() - 1000) })
       .where(eq(jobs.id, id));
-    const result = await orchestrator.recheckDue({ batch: 10 });
+    // Scoped to this job: the live project usually has real jobs due for re-check, and an
+    // unscoped batch would fill with them before reaching this one.
+    const result = await orchestrator.recheckDue({ batch: 10, jobIds: [id] });
 
     expect(result.expired).toBeGreaterThanOrEqual(1);
     const job = await jobOf(id);

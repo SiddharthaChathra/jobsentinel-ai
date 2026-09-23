@@ -124,23 +124,42 @@ describeIf('sources API (e2e)', () => {
     expect(badConfig.body.error.code).toBe('INVALID_SOURCE_CONFIG');
   });
 
-  it('patching enabled/priority is validated and idempotent', async () => {
+  it('patching one field leaves the others alone, and rejects unknown fields', async () => {
     const list = await request(app.getHttpServer())
       .get('/api/v1/sources')
       .set(asAdmin())
       .expect(200);
-    const source = list.body.data.find((s: { adapter: string }) => s.adapter === 'adzuna'); // seeded disabled
-    const res = await request(app.getHttpServer())
+    // Any source will do. The test sets the state it depends on rather than assuming what the
+    // seed produced — which seed rows are enabled is a product decision that changes (D57).
+    const source = list.body.data[0] as { id: string; enabled: boolean; priority: string };
+
+    const disabled = await request(app.getHttpServer())
+      .patch(`/api/v1/sources/${source.id}`)
+      .set(asAdmin())
+      .send({ enabled: false })
+      .expect(200);
+    expect(disabled.body.data).toMatchObject({ id: source.id, enabled: false });
+
+    // The real invariant: a partial patch must not silently reset a field it was not given.
+    const repriced = await request(app.getHttpServer())
       .patch(`/api/v1/sources/${source.id}`)
       .set(asAdmin())
       .send({ priority: 'LOW' })
       .expect(200);
-    expect(res.body.data).toMatchObject({ id: source.id, priority: 'LOW', enabled: false });
+    expect(repriced.body.data).toMatchObject({ id: source.id, priority: 'LOW', enabled: false });
+
     await request(app.getHttpServer())
       .patch(`/api/v1/sources/${source.id}`)
       .set(asAdmin())
       .send({ scanIntervalSec: 10 })
       .expect(400);
+
+    // Put the source back the way it was found, so the suite leaves no trace.
+    await request(app.getHttpServer())
+      .patch(`/api/v1/sources/${source.id}`)
+      .set(asAdmin())
+      .send({ enabled: source.enabled, priority: source.priority })
+      .expect(200);
   });
 
   it('system status is readable by any user', async () => {

@@ -138,3 +138,47 @@ describe('htmlToText', () => {
     expect(out).toBe('Role\nBuild & ship\n• Python\n• SQL – basics');
   });
 });
+
+describe('parseSalary — figures that are not pay (D60)', () => {
+  it('ignores a 401(k) benefit line', () => {
+    for (const text of ['401(k) matching', '401k plan with company match', '403(b) retirement']) {
+      expect(parseSalary(text).min).toBeNull();
+    }
+  });
+
+  it('ignores a bare small number with no period to make it plausible', () => {
+    expect(parseSalary('Team of 5 engineers').min).toBeNull();
+    expect(parseSalary('1').min).toBeNull();
+    expect(parseSalary('Top 2% of applicants').min).toBeNull();
+  });
+
+  it('still accepts a genuine hourly or monthly rate', () => {
+    expect(parseSalary('$22 per hour')).toMatchObject({ min: 22, period: 'HOUR', currency: 'USD' });
+    expect(parseSalary('₹25,000 per month')).toMatchObject({ min: 25_000, period: 'MONTH' });
+  });
+
+  it('still accepts the normal cases', () => {
+    expect(parseSalary('₹6-10 LPA')).toMatchObject({
+      min: 600_000,
+      max: 1_000_000,
+      currency: 'INR',
+    });
+    expect(parseSalary('$120,000 - $150,000 a year')).toMatchObject({
+      min: 120_000,
+      max: 150_000,
+      currency: 'USD',
+      period: 'YEAR',
+    });
+  });
+});
+
+describe('parseSalary — figures in the millions are not pay (D60)', () => {
+  it('ignores funding and revenue numbers', () => {
+    expect(parseSalary('We raised $20 million to $50 million in Series C').min).toBeNull();
+    expect(parseSalary('backed by $15–20M in funding').min).toBeNull();
+  });
+
+  it('still accepts a large but real CTC in rupees', () => {
+    expect(parseSalary('₹18 LPA', { countryHint: 'India' })).toMatchObject({ min: 1_800_000 });
+  });
+});

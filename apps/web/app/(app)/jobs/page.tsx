@@ -1,52 +1,75 @@
 'use client';
 
+import { useState } from 'react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { JobFilters } from '@/components/jobs/JobFilters';
 import { JobList } from '@/components/jobs/JobList';
-import { useJobs } from '@/hooks/useJobs';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Button } from '@/components/ui/button';
 import { useFilterParams } from '@/hooks/useFilterParams';
+import { useJobs } from '@/hooks/useJobs';
 
 export default function JobsPage() {
   const { query } = useFilterParams();
-
-  // Note: we are using a simple query for now. TanStack infinite query would be better here for real infinite scroll,
-  // but `useJobs` currently just wraps a standard query. We will mock the pagination interaction.
   const { data, isLoading, isError, error } = useJobs(query);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const jobs = data?.data || [];
-  const meta = data?.meta;
+  const jobs = data?.data ?? [];
+  const hasMore = Boolean(data?.meta?.nextCursor);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between pb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Job Matches</h1>
-          <p className="text-muted-foreground">
-            {meta?.total ? `Found ${meta.total} matches` : 'Finding your best matches...'}
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title="Jobs"
+        description={
+          isLoading
+            ? 'Loading…'
+            : // The API pages by cursor and returns no total, so report what is actually loaded
+              // rather than implying a count we do not have.
+              `${jobs.length}${hasMore ? '+' : ''} ${jobs.length === 1 ? 'job' : 'jobs'} matching your filters`
+        }
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setFiltersOpen((open) => !open)}
+            aria-expanded={filtersOpen}
+            aria-controls="job-filters-mobile"
+          >
+            {filtersOpen ? (
+              <X className="mr-1.5 size-4" />
+            ) : (
+              <SlidersHorizontal className="mr-1.5 size-4" />
+            )}
+            Filters
+          </Button>
+        }
+      />
 
-      <div className="grid gap-6 md:grid-cols-12 flex-1 items-start">
-        <aside className="hidden md:block md:col-span-3 sticky top-6">
+      <div className="grid items-start gap-6 md:grid-cols-12">
+        <aside className="sticky top-20 hidden md:col-span-4 md:block lg:col-span-3">
           <JobFilters />
         </aside>
 
-        <section className="md:col-span-9 w-full">
-          <div className="md:hidden mb-4">
-            {/* We'd use a Sheet component here for mobile filters, omitted for brevity */}
-            <JobFilters />
-          </div>
+        <section className="min-w-0 md:col-span-8 lg:col-span-9">
+          {/* On a phone the filters stay collapsed: otherwise they fill the first screen and the
+              jobs — the reason for the page — are pushed below the fold. */}
+          {filtersOpen && (
+            <div id="job-filters-mobile" className="mb-4 md:hidden">
+              <JobFilters />
+            </div>
+          )}
 
           <JobList
             jobs={jobs}
             isLoading={isLoading}
             isError={isError}
             error={error as Error}
-            hasNextPage={!!meta?.nextCursor}
-            isFetchingNextPage={false} // Would come from useInfiniteQuery
+            hasNextPage={hasMore}
           />
         </section>
       </div>
-    </div>
+    </>
   );
 }

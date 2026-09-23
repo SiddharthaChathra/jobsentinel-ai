@@ -1,4 +1,4 @@
-import { HttpClient, HttpError, isPrivateAddress, nat64ToV4 } from './http-client';
+import { HttpClient, HttpError, isPrivateAddress, nat64ToV4, redactUrl } from './http-client';
 
 describe('nat64ToV4', () => {
   it('decodes the embedded IPv4', () => {
@@ -155,5 +155,22 @@ describe('HttpClient', () => {
       code: 'INVALID_URL',
     });
     await expect(client.request('ftp://a.example/')).rejects.toMatchObject({ code: 'INVALID_URL' });
+  });
+});
+
+describe('redactUrl (D61)', () => {
+  it('masks credential-bearing query parameters', () => {
+    expect(
+      redactUrl('https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=abc&app_key=SECRET'),
+    ).toBe('https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=abc&app_key=***');
+    expect(redactUrl('https://x.test/a?token=abc&api_key=def&q=python')).toBe(
+      'https://x.test/a?token=***&api_key=***&q=python',
+    );
+  });
+
+  it('leaves ordinary URLs untouched', () => {
+    const url = 'https://boards-api.greenhouse.io/v1/boards/groww/jobs?content=true';
+    expect(redactUrl(url)).toBe(url);
+    expect(redactUrl('not a url')).toBe('not a url');
   });
 });

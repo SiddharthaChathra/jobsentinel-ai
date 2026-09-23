@@ -93,6 +93,9 @@ export async function seed(
           adapter: src.adapter,
           config: src.config,
           companyId,
+          // Re-seed syncs enabled + priority so newly disabled sources get turned off.
+          enabled: src.enabled ?? true,
+          priority: src.priority,
           updatedAt: new Date(),
         },
       });

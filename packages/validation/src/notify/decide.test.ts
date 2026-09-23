@@ -59,8 +59,10 @@ describe('decideNotification', () => {
     ).toBe('NONE');
   });
 
-  it('never notifies about an expired or rejected job', () => {
-    for (const status of ['EXPIRED', 'REJECTED', 'PENDING'] as const) {
+  it('never notifies about an expired, invalid or unvalidated job', () => {
+    // 'REJECTED' is a job status, not a validation status — the validation enum's failure value
+    // is 'INVALID'.
+    for (const status of ['EXPIRED', 'INVALID', 'PENDING'] as const) {
       expect(decideNotification(settings(), job({ validationStatus: status }), now).action).toBe(
         'NONE',
       );
