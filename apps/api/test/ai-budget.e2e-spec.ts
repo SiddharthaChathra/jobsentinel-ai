@@ -54,9 +54,15 @@ describeIf('AI budget and cache (integration)', () => {
   const rowsForThisTest = () =>
     db.select().from(aiCalls).where(eq(aiCalls.promptVersion, promptVersion));
 
+  /** Today's real usage. Budgets below are expressed relative to it, never as absolutes. */
+  let usedToday = 0;
+  /** A budget with room for n more calls than have already been made today. */
+  const roomFor = (n: number) => usedToday + n;
+
   beforeAll(async () => {
     moduleRef = await Test.createTestingModule({ imports: [WorkerModule] }).compile();
     db = moduleRef.get(DB);
+    usedToday = (await new DbBudget(db, 1, 1).usage()).calls;
   }, 60_000);
 
   afterAll(async () => {
@@ -68,7 +74,7 @@ describeIf('AI budget and cache (integration)', () => {
     const provider = new CountingProvider();
     const svc = new AIService(
       [provider],
-      new DbBudget(db, 500, 1_000_000),
+      new DbBudget(db, roomFor(10), 1_000_000_000),
       new DbCache(db, 30),
       silent,
     );
@@ -95,7 +101,7 @@ describeIf('AI budget and cache (integration)', () => {
     const provider = new CountingProvider();
     const svc = new AIService(
       [provider],
-      new DbBudget(db, 500, 1_000_000),
+      new DbBudget(db, roomFor(10), 1_000_000_000),
       new DbCache(db, 30),
       silent,
     );
@@ -114,7 +120,7 @@ describeIf('AI budget and cache (integration)', () => {
 
   it('stops calling the provider once the daily call budget is spent', async () => {
     const provider = new CountingProvider();
-    const budget = new DbBudget(db, 1, 1_000_000); // today's one call was already made above
+    const budget = new DbBudget(db, roomFor(0), 1_000_000_000); // no room left for another call
     const svc = new AIService([provider], budget, new DbCache(db, 30), silent);
 
     const result = await svc.run(request('uncached-b'));
@@ -125,13 +131,18 @@ describeIf('AI budget and cache (integration)', () => {
     const rows = await rowsForThisTest();
     expect(rows.filter((r) => r.status === 'BUDGET_EXCEEDED')).toHaveLength(1);
     const usage = await budget.usage();
-    expect(usage.calls).toBeGreaterThanOrEqual(1);
-    expect(usage.callBudget).toBe(1);
+    expect(usage.calls).toBeGreaterThan(usage.callBudget - 1);
+    expect(usage.callBudget).toBe(roomFor(0));
   }, 60_000);
 
   it('stops on the token budget as well as the call budget', async () => {
     const provider = new CountingProvider();
-    const svc = new AIService([provider], new DbBudget(db, 500, 1), new DbCache(db, 30), silent);
+    const svc = new AIService(
+      [provider],
+      new DbBudget(db, roomFor(10), 1),
+      new DbCache(db, 30),
+      silent,
+    );
     const result = await svc.run(request('uncached-c'));
     expect(result.status).toBe('BUDGET_EXCEEDED');
     expect(provider.calls).toBe(0);
@@ -144,7 +155,7 @@ describeIf('AI budget and cache (integration)', () => {
       .set({ createdAt: sql`now() - interval '2 days'` })
       .where(eq(aiCalls.promptVersion, promptVersion));
 
-    const usage = await new DbBudget(db, 500, 1_000_000).usage();
+    const usage = await new DbBudget(db, roomFor(10), 1_000_000_000).usage();
     const mine = await db
       .select()
       .from(aiCalls)
@@ -160,7 +171,7 @@ describeIf('AI budget and cache (integration)', () => {
     const provider = new CountingProvider();
     const svc = new AIService(
       [provider],
-      new DbBudget(db, 500, 1_000_000),
+      new DbBudget(db, roomFor(10), 1_000_000_000),
       new DbCache(db, 30),
       silent,
     );
