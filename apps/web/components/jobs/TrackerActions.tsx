@@ -10,14 +10,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { JobDetail } from '@/lib/types/jobs';
-import { useSaveJob, useTracker, useViewJob } from '@/hooks/useJobs';
+import { useRemoveApplication, useSaveJob, useTracker, useViewJob } from '@/hooks/useJobs';
 import type { ApplicationStatus } from '@jobsentinel/types';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export function TrackerActions({ job }: { job: JobDetail }) {
   const saveMutation = useSaveJob();
   const trackerMutation = useTracker();
+  const removeMutation = useRemoveApplication();
   const viewMutation = useViewJob();
+
+  // `job` is fetched by the server component that renders this one, so it lives outside React
+  // Query's cache: invalidating query keys cannot update it. Only a router refresh re-runs the
+  // server render, and without it a saved change looks like it silently failed.
+  const router = useRouter();
+  const refresh = { onSuccess: () => router.refresh() };
 
   // Record a view when the component mounts (the user opened the detail page).
   useEffect(() => {
@@ -34,7 +42,7 @@ export function TrackerActions({ job }: { job: JobDetail }) {
         {job.tracker.saved ? (
           <Button
             variant="secondary"
-            onClick={() => saveMutation.mutate({ jobId: job.id, saved: false })}
+            onClick={() => saveMutation.mutate({ jobId: job.id, saved: false }, refresh)}
             disabled={saveMutation.isPending}
           >
             <BookmarkCheck className="mr-2 h-4 w-4" />
@@ -43,7 +51,7 @@ export function TrackerActions({ job }: { job: JobDetail }) {
         ) : (
           <Button
             variant="outline"
-            onClick={() => saveMutation.mutate({ jobId: job.id, saved: true })}
+            onClick={() => saveMutation.mutate({ jobId: job.id, saved: true }, refresh)}
             disabled={saveMutation.isPending}
           >
             <Bookmark className="mr-2 h-4 w-4" />
@@ -56,12 +64,13 @@ export function TrackerActions({ job }: { job: JobDetail }) {
           <Select
             value={job.tracker.status || 'UNTRACKED'}
             onValueChange={(val: string | null) => {
-              if (val && val !== 'UNTRACKED') {
-                trackerMutation.mutate({
-                  jobId: job.id,
-                  status: val as ApplicationStatus,
-                });
+              if (!val) return;
+              if (val === 'UNTRACKED') {
+                // "Not Tracking" has to undo the tracker row, or the option is a dead control.
+                if (job.tracker.status) removeMutation.mutate(job.id, refresh);
+                return;
               }
+              trackerMutation.mutate({ jobId: job.id, status: val as ApplicationStatus }, refresh);
             }}
           >
             <SelectTrigger className="w-[160px]">

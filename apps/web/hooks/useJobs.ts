@@ -125,6 +125,8 @@ export function useSaveJob() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.jobs.all });
+      // `savedJobs` is its own root key, so the `jobs` prefix above does not reach it.
+      qc.invalidateQueries({ queryKey: queryKeys.jobs.saved });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard.summary });
     },
   });
@@ -171,6 +173,7 @@ export function useRemoveApplication() {
       await api.delete(`/applications/${jobId}`);
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.jobs.all });
       qc.invalidateQueries({ queryKey: queryKeys.jobs.applications });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard.summary });
     },

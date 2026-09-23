@@ -12,12 +12,13 @@ import { RelativeTime } from '@/components/common/RelativeTime';
 
 export const metadata: Metadata = { title: 'Job Details' };
 
-export default async function JobDetailPage({ params }: { params: { id: string } }) {
+export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let job: JobDetailType | null = null;
 
   try {
     const api = await serverApi();
-    const res = await api.get<JobDetailType>(`/jobs/${params.id}`);
+    const res = await api.get<JobDetailType>(`/jobs/${id}`);
     job = res.data;
   } catch {
     // 404 or network error → fall through to notFound
