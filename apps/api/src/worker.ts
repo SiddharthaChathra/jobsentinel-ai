@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { loadEnv } from '@jobsentinel/config';
 import { createLogger } from './common/logging/logger';
+import { installProcessGuards } from './common/process-guards';
 import { PinoNestLogger } from './common/logging/nest-logger';
 import { WorkerLoop } from './scheduler/worker-loop';
 import { APP_VERSION } from './version';
@@ -15,6 +16,7 @@ import { WorkerModule } from './worker.module';
 async function bootstrap(): Promise<void> {
   const env = loadEnv();
   const logger = createLogger(env, 'worker');
+  installProcessGuards(logger);
   const args = new Set(process.argv.slice(2));
   const once = args.has('--once');
   const sourcesArg = [...args].find((a) => a.startsWith('--sources='));

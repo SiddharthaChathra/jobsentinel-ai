@@ -47,13 +47,29 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message: Array.isArray(message) ? message.join('; ') : message,
       };
     } else {
-      this.logger.error(
-        exception instanceof Error ? (exception.stack ?? exception.message) : String(exception),
-      );
+      this.logger.error(formatUnexpected(exception));
     }
 
     res.status(status).json({ error: { ...body, requestId } } satisfies ApiErrorBody);
   }
+}
+
+/**
+ * Drizzle wraps every failure in a `DrizzleQueryError` whose message is only the SQL it tried to
+ * run — the reason (a pooler timeout, a constraint name, a socket reset) lives in `cause`. Logging
+ * the stack alone turned a diagnosable 500 into "Failed query: select …" with no explanation (D69).
+ */
+export function formatUnexpected(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const parts = [err.stack ?? err.message];
+  let cause: unknown = err.cause;
+  for (let depth = 0; cause instanceof Error && depth < 4; depth++) {
+    const code = (cause as { code?: unknown }).code;
+    const tag = typeof code === 'string' ? ` [${code}]` : '';
+    parts.push(`caused by${tag}: ${cause.stack ?? cause.message}`);
+    cause = cause.cause;
+  }
+  return parts.join('\n');
 }
 
 function codeFromStatus(status: number): string {

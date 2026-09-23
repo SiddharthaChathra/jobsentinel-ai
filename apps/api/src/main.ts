@@ -5,12 +5,15 @@ import helmet from 'helmet';
 import { loadEnv } from '@jobsentinel/config';
 import { AppModule } from './app.module';
 import { createLogger } from './common/logging/logger';
+import { installProcessGuards } from './common/process-guards';
 import { PinoNestLogger } from './common/logging/nest-logger';
 import { APP_VERSION } from './version';
 
 async function bootstrap(): Promise<void> {
   const env = loadEnv(); // fail fast before Nest boots
   const logger = createLogger(env, 'api');
+
+  installProcessGuards(logger);
 
   const app = await NestFactory.create(AppModule, { logger: new PinoNestLogger(logger) });
   app.setGlobalPrefix('api/v1', { exclude: ['health', 'health/ready'] });
