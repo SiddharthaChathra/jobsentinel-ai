@@ -97,6 +97,10 @@ const COUNTRY_ALIASES: Record<string, string> = {
   brazil: 'Brazil',
   mexico: 'Mexico',
   philippines: 'Philippines',
+  pakistan: 'Pakistan',
+  bangladesh: 'Bangladesh',
+  'sri lanka': 'Sri Lanka',
+  nepal: 'Nepal',
   indonesia: 'Indonesia',
   vietnam: 'Vietnam',
   'south africa': 'South Africa',
@@ -106,6 +110,57 @@ const COUNTRY_ALIASES: Record<string, string> = {
   apac: 'APAC',
   europe: 'Europe',
 };
+
+/**
+ * Indian states and union territories, treated as a country signal. Fresher hiring concentrates in
+ * tier-2 and tier-3 cities that will never all fit in CITY_ALIASES — "Raipur, Chhattisgarh" was a
+ * real SOFTWARE graduate-trainee posting that resolved to no country at all and was filtered out
+ * for being foreign (D73). The state is the reliable part of an Indian address.
+ */
+const INDIAN_STATES = new Set([
+  'andhra pradesh',
+  'arunachal pradesh',
+  'assam',
+  'bihar',
+  'chhattisgarh',
+  'goa',
+  'gujarat',
+  'haryana',
+  'himachal pradesh',
+  'jharkhand',
+  'karnataka',
+  'kerala',
+  'madhya pradesh',
+  'maharashtra',
+  'manipur',
+  'meghalaya',
+  'mizoram',
+  'nagaland',
+  'odisha',
+  'orissa',
+  'punjab',
+  'rajasthan',
+  'sikkim',
+  'tamil nadu',
+  'telangana',
+  'tripura',
+  'uttar pradesh',
+  'uttarakhand',
+  'west bengal',
+  'andaman and nicobar islands',
+  'chandigarh',
+  'dadra and nagar haveli',
+  'daman and diu',
+  'jammu and kashmir',
+  'ladakh',
+  'lakshadweep',
+  'puducherry',
+  'pondicherry',
+  // "Delhi" and "Punjab" also name places elsewhere, but paired with an Indian job board the
+  // false-positive cost is a job shown, not a job lost.
+  'delhi',
+  'new delhi',
+]);
 
 const REMOTE_RE =
   /\b(remote|work from home|wfh|anywhere|distributed|fully remote|remote-first|home based|telecommute)\b/i;
@@ -136,6 +191,16 @@ export function normalizeLocation(
     const k = COUNTRY_ALIASES[part];
     if (k && !country) country = k;
   }
+  // Deliberately a separate pass: an explicit country anywhere in the text must win over a state
+  // name, or "Punjab, Pakistan" resolves to India because the state part is read first.
+  if (!country) {
+    for (const part of parts) {
+      if (INDIAN_STATES.has(part)) {
+        country = 'India';
+        break;
+      }
+    }
+  }
   if (!city) {
     // try substrings for cases like "Bengaluru Office" or "Remote - India"
     for (const [alias, c] of Object.entries(CITY_ALIASES)) {
@@ -154,6 +219,14 @@ export function normalizeLocation(
       }
     }
   }
+  if (!country) {
+    for (const state of INDIAN_STATES) {
+      if (new RegExp(`\\b${state}\\b`, 'i').test(text)) {
+        country = 'India';
+        break;
+      }
+    }
+  }
   return { text, city, country, isRemote };
 }
 
@@ -161,9 +234,11 @@ export function normalizeLocation(
  * True only when the country positively resolves to India. Ambiguous "Remote" with no country
  * signal is not India, and neither is a null location — this answers "is it India?", nothing more.
  *
- * Callers must not use it as a standalone gate: "unknown" is not "no". Classification accepts a
- * job that is in India *or* remote *or* has no stated country, and the user-facing narrowing to
- * their preferred locations lives in the job list query, where it can be lifted (D62, D67).
+ * Classification pairs it with "remote and no stated country" and nothing else. Measured on 3,394
+ * live jobs: of the 531 with a location text but no resolved country, essentially all were foreign
+ * (Palo Alto, Skopje, Luxembourg) — keeping them cost far more than it saved. The one real Indian
+ * job among them was lost to a normalizer gap, fixed by INDIAN_STATES above, not by a looser gate
+ * (D67, revised in D73). User-facing narrowing stays in the job list query, where it lifts (D62).
  */
 export function isIndiaLocation(loc: NormalizedLocation): boolean {
   if (loc.country === 'India') return true;

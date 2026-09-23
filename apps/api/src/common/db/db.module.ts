@@ -25,8 +25,13 @@ const PG_CLIENT = Symbol('PG_CLIENT');
           ssl: 'require',
           prepare: false,
           max: env.NODE_ENV === 'production' ? 8 : 4,
-          idle_timeout: 30,
-          connect_timeout: 10,
+          // A 30 s idle timeout churned the pool: after half a minute of quiet, the next request
+          // paid for a fresh TLS handshake to ap-south-1, and on a residential uplink that
+          // regularly exceeded a 10 s connect timeout — surfacing as a 500 on the first request
+          // after any pause. Hold connections longer and allow the handshake the time it needs;
+          // `idle_in_transaction_session_timeout` below is what actually protects pooler slots (D72).
+          idle_timeout: 300,
+          connect_timeout: 30,
           connection: {
             // Without these, a query abandoned by a killed process pins a pooler slot
             // indefinitely — observed as 13-minute `active` backends after a killed test run.
