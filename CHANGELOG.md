@@ -2,6 +2,17 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 10–12, partial] Reliability and deployment — 2026-09-23
+
+Worked autonomously overnight at the user's request; `apps/web` was taken over from Gemini for the same reason.
+
+- **AI pacing (D58).** Running the worker unattended showed that a daily budget cannot protect a per-**minute** limit: Gemini's free tier allows 15 requests/minute, and one classify/match batch burned it in seconds — after which every remaining call failed 429, and the failures themselves spent more quota. `AIService` now spaces calls by `AI_MIN_REQUEST_GAP_MS` (default 4.5 s ≈ 13/min) and parses the provider's own "retry in Ns" hint into a cooldown that later calls wait out. A tick that previously produced a wall of 429s now completes with none.
+- **Fresher gate (D59).** A real Telegram alert read "at least 2 years · Fresher ✓" — the evidence list had already recorded the parsed years as NEGATIVE while the verdict said fresher-eligible. A stated minimum of 2 years is now decisive: EXPERIENCED on its own, and UNKNOWN (routed to the AI) when the posting also claims to welcome freshers, because believing a phrase over a stated number is the exact failure the fresher gate exists to prevent. 28 jobs were mislabelled, 6 already surfaced; all 28 reclassified to FILTERED_OUT. The 72-posting accuracy gate still passes.
+- **`pnpm clean:test`**: a killed e2e run had left 24 fixture jobs scoring 100 % at the top of the real dashboard, because its `afterAll` never ran. The script removes fixtures by their `<suite>-<timestamp>` tag, deletes children before parents to respect the `ON DELETE RESTRICT` references, and has a `--dry` mode.
+- **Deployment**: a multi-stage `apps/api/Dockerfile` serving both entrypoints from one image, so the API and worker can never drift apart on matching or validation rules; a `render.yaml` blueprint; a GitHub Actions schedule running `--once` ticks; and `docs/deployment.md` as the runbook — including why the worker must not live on Render's sleeping free tier, and why exactly one process may poll Telegram.
+- The Docker image is **written but unbuilt**: Docker is not installed on this machine, so it has never been verified. Build it once before relying on it.
+- `STATUS.md` added as the resume point for a fresh session, and the README now reflects that the system runs end to end.
+
 ## [Phase 9] Notifications — 2026-09-23
 
 - `@jobsentinel/validation`: `decideNotification` — the pure rule that decides instant / digest / nothing, with quiet hours resolved in the user's own timezone (windows crossing midnight and DST transitions included). An unconfirmed job is never pushed; it can only ever be summarised, and only if the user opted in.

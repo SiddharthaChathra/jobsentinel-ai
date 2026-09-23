@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+.git
+.github
+.playwright-mcp
+apps/web
+docs
+*.md
+.env
+.env.*
+!.env.example
+**/coverage
+**/*.log
+**/*.png

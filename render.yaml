@@ -1,0 +1,48 @@
+# Render blueprint — the API on the free tier (docs 14).
+#
+# The worker is deliberately NOT here: Render's free plan sleeps after 15 minutes of no HTTP
+# traffic, which would silently stop the pipeline. The worker belongs on a host that stays awake
+# (an Oracle Always Free VM, a laptop, or GitHub Actions cron running `--once`). See
+# docs/deployment.md.
+services:
+  - type: web
+    name: jobsentinel-api
+    runtime: docker
+    plan: free
+    region: singapore # closest free region to the user; the database is in ap-south-1
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      # Secrets are set in the Render dashboard, never in this file.
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_ISSUER
+        sync: false
+      - key: AI_GEMINI_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: ALLOWED_SIGNUP_EMAILS
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      # The API must not poll Telegram — only the worker owns getUpdates, or the two
+      # would fight over the same update offset.
+      - key: TELEGRAM_POLLING
+        value: 'false'

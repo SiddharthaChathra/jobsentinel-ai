@@ -1,72 +1,68 @@
 # JobSentinel — live status
 
 **Updated:** 2026-09-23, overnight autonomous session.
-**Read this first if you are resuming work.** Say "continue" and work picks up at _Next up_.
+**Resuming work?** Say "continue" and it picks up at _Next up_.
 
 ## Where the project stands
 
-| Phase                        | Owner  | State                                                              |
-| ---------------------------- | ------ | ------------------------------------------------------------------ |
-| 0 Architecture               | Claude | ✅ done                                                            |
-| 1 Project setup              | Claude | ✅ done                                                            |
-| 2 Auth + profile + resume    | Claude | ✅ done                                                            |
-| 3 Database                   | Claude | ✅ done (migrations 0000–0002)                                     |
-| 4 Job ingestion              | Claude | ✅ done — 2,600+ real postings                                     |
-| 5 Fresher classification     | Claude | ✅ done — 100 % agreement on 72 labelled postings                  |
-| 6 Validation                 | Claude | ✅ done — evidence-based, live-verified                            |
-| 7 AI matching                | Claude | ✅ done, pushed                                                    |
-| 8 Jobs/tracker/dashboard API | Claude | ✅ done, pushed                                                    |
-| 8 Web dashboard UI           | Gemini | ✅ builds; typed against `@jobsentinel/types`; **uncommitted**     |
-| 9 Notifications (Telegram)   | Claude | 🟡 **in progress** — pipeline works end to end, tests/docs pending |
-| 10 Reliability               | Claude | ⬜ not started                                                     |
-| 11 UI polish                 | Claude | ⬜ not started (taken over from Gemini, see note)                  |
-| 12 Production readiness      | Claude | ⬜ not started                                                     |
+| Phase                        | Owner  | State                                                |
+| ---------------------------- | ------ | ---------------------------------------------------- |
+| 0 Architecture               | Claude | ✅ done                                              |
+| 1 Project setup              | Claude | ✅ done                                              |
+| 2 Auth + profile + resume    | Claude | ✅ done                                              |
+| 3 Database                   | Claude | ✅ done (migrations 0000–0002)                       |
+| 4 Job ingestion              | Claude | ✅ done — 2,600+ real postings, 32/33 sources active |
+| 5 Fresher classification     | Claude | ✅ done — accuracy gate holds at 100 %               |
+| 6 Validation                 | Claude | ✅ done — evidence-based, live-verified              |
+| 7 AI matching                | Claude | ✅ done, pushed                                      |
+| 8 Jobs/tracker/dashboard API | Claude | ✅ done, pushed                                      |
+| 8 Web dashboard UI           | Gemini | ✅ committed (carried in the Phase 11 commit)        |
+| 9 Notifications (Telegram)   | Claude | ✅ done — real alerts delivered, pushed              |
+| 10 Reliability               | Claude | 🟡 partial — two live defects fixed, matrix pending  |
+| 11 UI shell, theme, inbox    | Claude | ✅ done, pushed                                      |
+| 12 Production readiness      | Claude | 🟡 partial — Docker, Render, Actions, runbook done   |
 
-## Live facts
+## It is running right now
 
-- **Telegram bot is live**: `@SIDJOBSENTINELBOT` ("JOBIIII"), token in root `.env`.
-- **Account linked**: `chatrasiddharth2@gmail.com` (password `Siddu@2005`), user id
-  `0a2f3c69-fc39-4be7-bbef-a5eda8d95149`, Telegram chat `2069167765`.
-- **4 real alerts delivered** on 2026-09-23 — top match Thoughtworks "Developer (Vapasi) – Intern"
-  at 98 %. Phase 9's definition of done is met.
-- **The profile is a PLACEHOLDER.** It was seeded so the pipeline had something to score against.
-  Uploading a real resume in Onboarding bumps `profile_version` and re-scores everything — this is
-  the intended flow, not a workaround.
-- Jobs: 1,651 filtered out · 700 classified · 186 needs-review · 128 matched · 6 valid · 4 notified.
+- **API** on `:4000`, **web** on `:3000`, **worker** ticking continuously.
+- **Telegram bot** `@SIDJOBSENTINELBOT` linked to chat `2069167765`; alerts are arriving.
+- Log in at http://localhost:3000 as `chatrasiddharth2@gmail.com` / `Siddu@2005`.
 
-## Running it locally
+If a server is down: `node apps/api/dist/main.js`, `node apps/api/dist/worker.js`,
+`pnpm --filter @jobsentinel/web dev`.
 
-```bash
-pnpm env:sync                                   # root .env -> apps/api/.env + apps/web/.env.local
-pnpm --filter @jobsentinel/api build
-node apps/api/dist/main.js                      # API on :4000
-pnpm --filter @jobsentinel/web dev              # web on :3000
-```
+## Read this in the morning
 
-Ops scripts (all idempotent, all safe to re-run):
-
-```bash
-pnpm --filter @jobsentinel/api classify         # re-run classification
-pnpm --filter @jobsentinel/api validate         # drain the validation queue
-pnpm --filter @jobsentinel/api match --ai=12    # score jobs against profiles
-pnpm --filter @jobsentinel/api notify           # decide + deliver alerts
-pnpm --filter @jobsentinel/api notify --digest  # force today's digest
-pnpm --filter @jobsentinel/api worker -- --once # one full pipeline tick
-```
+1. **Your profile is a PLACEHOLDER.** I seeded a plausible final-year CS profile so the pipeline
+   had something to score against. Upload your real resume in Onboarding → it bumps
+   `profile_version` and re-scores everything automatically. Nothing needs deleting first.
+2. **One alert was wrong and I fixed the cause.** A Twilio job arrived reading "at least 2 years ·
+   Fresher ✓". The classifier was treating a 2-year minimum as entry-level. 28 jobs were
+   affected; all 28 are now correctly filtered out (D59).
+3. **Job supply is the real limit**, not the matching. Most seeded sources are global companies
+   hiring seniors. To get more fresher roles: add Indian fresher-heavy boards, enable Adzuna
+   (seeded but disabled — needs free API keys), or give me a target-company list.
+4. **Gemini has nothing queued.** I took `apps/web` over at your request; AGENTS.md §4 still
+   records the original split.
 
 ## Next up (in order)
 
-1. **Phase 9 finish**: notifications integration tests (duplicate prevention, digest once per local
-   day, quiet-hours delay), then docs + CHANGELOG + commit.
-2. **Phase 10 reliability**: failure-matrix tests, chaos harness, stage-error parking, alerting.
-3. **Phase 11 UI**: the dashboard works but is plain. Make it genuinely attractive and mobile-first.
-4. **Phase 12 production**: Dockerfile, Render/Vercel config, backups, deployment docs, runbook.
+1. **Phase 12 finish**: the Docker image is written but **unverified — Docker is not installed on
+   this machine**, so it has never been built. Build it once before trusting it. Then Vercel
+   project setup and a final security review.
+2. **Phase 10 completion**: the failure-scenario matrix from docs 13 §3 and a chaos harness.
+3. **UI polish**: filters belong in a sheet on mobile, applications kanban on desktop,
+   Lighthouse/axe pass.
 
-## Open decisions for the user
+## Verified this session
 
-- **Job supply is the real limit.** Only ~18 of 300 scored jobs are a good fresher fit, because the
-  seeded sources are global companies hiring seniors. Options: add Indian fresher-heavy boards,
-  enable Adzuna (seeded but disabled, needs free API keys), or supply a target-company list.
-- **Ownership deviation**: AGENTS.md §4 gives `apps/web` to Gemini. The user asked for the whole
-  project to be finished overnight, so Claude is taking the UI as well. Recorded here deliberately.
-- Gemini's Phase 8 UI work is **uncommitted** in the working tree.
+- 269 unit + 80 e2e tests pass; `pnpm build` green across the workspace.
+- Four real Telegram alerts delivered for real validated jobs (top: Thoughtworks "Developer
+  (Vapasi) – Intern", 98 %), each with a working APPLY button.
+- A worker tick that previously produced a wall of Gemini 429s now completes with none (D58).
+
+## Decisions taken while you slept
+
+D56 Telegram rejects localhost button URLs · D57 a test assumed no real account existed ·
+D58 pace AI calls under the free tier's per-minute limit · D59 a 2-year minimum is never
+fresher-eligible. Full table in `docs/architecture/00-decisions.md`.

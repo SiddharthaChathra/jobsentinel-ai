@@ -2,9 +2,14 @@
 
 Personal AI-powered job **discovery → verification → matching → notification** system for fresher/entry-level engineering roles. It monitors permitted public job sources, verifies that companies, listings and application links are genuine and active, scores each job against your resume, and alerts you on Telegram and a responsive web dashboard — for ₹0/month.
 
-> Status: **Phase 1 (project setup) complete.** See [docs/architecture/16-roadmap.md](docs/architecture/16-roadmap.md) for what comes next and [CHANGELOG.md](CHANGELOG.md) for progress.
+> Status: **running end to end.** Phases 0–9 and 11 are complete: 2,600+ real postings ingested
+> from 32 live sources, classified, validated with evidence, scored against a resume profile, and
+> delivered as real Telegram alerts with working APPLY buttons. Phase 12 (production deployment)
+> is in progress. See [STATUS.md](STATUS.md) for the live picture, [CHANGELOG.md](CHANGELOG.md)
+> for what landed per phase, and [docs/architecture/16-roadmap.md](docs/architecture/16-roadmap.md)
+> for the plan.
 
-## What it does (when complete)
+## What it does
 
 - Scans company ATS boards (Greenhouse, Lever, Ashby, …), RSS feeds and free public job APIs on a smart schedule — never bypassing CAPTCHAs, logins, robots rules or rate limits.
 - Normalizes and de-duplicates listings across sources.
@@ -49,6 +54,9 @@ Quality gates: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test &&
 
 - [docs/README.md](docs/README.md) — index of the architecture package (decisions, database, API contract, sources, scheduler, validation, AI, notifications, security, testing, deployment, roadmap, risks).
 - [AGENTS.md](AGENTS.md) — rules both AI agents (Claude, Gemini) follow when editing this repo.
+- Long-lived operational pages: [database](docs/database.md) · [sources](docs/sources.md) ·
+  [matching](docs/matching.md) · [notifications](docs/notifications.md) ·
+  [deployment and runbook](docs/deployment.md).
 
 ## Monthly cost
 
@@ -62,6 +70,10 @@ Quality gates: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test &&
 | Telegram Bot API           | Free                                                  | ₹0   |
 
 Tier terms verified 2026-09-22; re-check before deploying (docs/architecture/14).
+
+The limit that actually bites is Gemini free tier's **15 requests per minute** — not the daily
+cap. The AI layer paces itself under it and honours the provider's retry hints; see
+[docs/deployment.md](docs/deployment.md).
 
 ## Principles
 

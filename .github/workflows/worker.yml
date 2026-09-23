@@ -1,0 +1,55 @@
+# The worker as a scheduled job — the zero-cost option when no always-on host is available
+# (docs 14). Each run is one full pipeline tick and exits.
+#
+# Trade-off worth knowing: GitHub's schedule is best-effort and can be delayed by 10+ minutes
+# under load, and Telegram long-polling cannot work in short bursts, so bot commands
+# (/status, /pause) will not respond on this deployment. Alerts still go out. For a responsive
+# bot, run the worker continuously on an always-free VM instead.
+name: worker
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # every 30 minutes
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: 'Comma-separated source ids to scan (blank = all due)'
+        required: false
+
+concurrency:
+  # Two ticks at once would contend for the same job leases. They would be safe — leases use
+  # SKIP LOCKED — but pointless, so a run in progress wins.
+  group: worker
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile --filter '!@jobsentinel/web...'
+      - run: pnpm --filter '@jobsentinel/api...' build
+
+      - name: Run one tick
+        working-directory: apps/api
+        env:
+          NODE_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          AI_GEMINI_API_KEY: ${{ secrets.AI_GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_BOT_USERNAME: ${{ secrets.TELEGRAM_BOT_USERNAME }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          # Long polling needs a long-lived process; a scheduled tick has none.
+          TELEGRAM_POLLING: 'false'
+        run: node dist/worker.js --once ${{ inputs.sources && format('--sources={0}', inputs.sources) || '' }}
