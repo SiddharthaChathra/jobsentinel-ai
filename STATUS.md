@@ -1,26 +1,26 @@
 # JobSentinel — live status
 
-**Updated:** 2026-09-23, overnight autonomous session.
+**Updated:** 2026-09-23, after reviewing and testing Gemini's India-source work.
 **Resuming work?** Say "continue" and it picks up at _Next up_.
 
 ## Where the project stands
 
-| Phase                        | Owner  | State                                                |
-| ---------------------------- | ------ | ---------------------------------------------------- |
-| 0 Architecture               | Claude | ✅ done                                              |
-| 1 Project setup              | Claude | ✅ done                                              |
-| 2 Auth + profile + resume    | Claude | ✅ done                                              |
-| 3 Database                   | Claude | ✅ done (migrations 0000–0002)                       |
-| 4 Job ingestion              | Claude | ✅ done — 2,600+ real postings, 32/33 sources active |
-| 5 Fresher classification     | Claude | ✅ done — accuracy gate holds at 100 %               |
-| 6 Validation                 | Claude | ✅ done — evidence-based, live-verified              |
-| 7 AI matching                | Claude | ✅ done, pushed                                      |
-| 8 Jobs/tracker/dashboard API | Claude | ✅ done, pushed                                      |
-| 8 Web dashboard UI           | Gemini | ✅ committed (carried in the Phase 11 commit)        |
-| 9 Notifications (Telegram)   | Claude | ✅ done — real alerts delivered, pushed              |
-| 10 Reliability               | Claude | 🟡 partial — two live defects fixed, matrix pending  |
-| 11 UI shell, theme, inbox    | Claude | ✅ done, pushed                                      |
-| 12 Production readiness      | Claude | 🟡 partial — Docker, Render, Actions, runbook done   |
+| Phase                        | Owner  | State                                                 |
+| ---------------------------- | ------ | ----------------------------------------------------- |
+| 0 Architecture               | Claude | ✅ done                                               |
+| 1 Project setup              | Claude | ✅ done                                               |
+| 2 Auth + profile + resume    | Claude | ✅ done                                               |
+| 3 Database                   | Claude | ✅ done (migrations 0000–0002)                        |
+| 4 Job ingestion              | Claude | ✅ done — 2,600+ real postings, 32/33 sources active  |
+| 5 Fresher classification     | Claude | ✅ done — accuracy gate holds at 100 %                |
+| 6 Validation                 | Claude | ✅ done — evidence-based, live-verified               |
+| 7 AI matching                | Claude | ✅ done, pushed                                       |
+| 8 Jobs/tracker/dashboard API | Claude | ✅ done, pushed                                       |
+| 8 Web dashboard UI           | Gemini | ✅ committed (carried in the Phase 11 commit)         |
+| 9 Notifications (Telegram)   | Claude | ✅ done — real alerts delivered, pushed               |
+| 10 Reliability               | Claude | 🟡 partial — seven live defects fixed, matrix pending |
+| 11 UI shell, theme, inbox    | Claude | ✅ done, pushed                                       |
+| 12 Production readiness      | Claude | 🟡 partial — Docker, Render, Actions, runbook done    |
 
 ## It is running right now
 
@@ -39,9 +39,9 @@ If a server is down: `node apps/api/dist/main.js`, `node apps/api/dist/worker.js
 2. **One alert was wrong and I fixed the cause.** A Twilio job arrived reading "at least 2 years ·
    Fresher ✓". The classifier was treating a 2-year minimum as entry-level. 28 jobs were
    affected; all 28 are now correctly filtered out (D59).
-3. **Job supply is the real limit**, not the matching. Most seeded sources are global companies
-   hiring seniors. To get more fresher roles: add Indian fresher-heavy boards, enable Adzuna
-   (seeded but disabled — needs free API keys), or give me a target-company list.
+3. **Job supply is largely solved.** Gemini re-verified every board by counted India postings,
+   disabled the ones with no India presence, added Razorpay, and wired up Adzuna — which has
+   28,000+ India software roles. A scan now ingests 100 India jobs at a time.
 4. **Gemini has nothing queued.** I took `apps/web` over at your request; AGENTS.md §4 still
    records the original split.
 
