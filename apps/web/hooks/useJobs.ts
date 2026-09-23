@@ -156,6 +156,28 @@ export function useTracker() {
       const { data } = await api.put<ApplicationItem>(`/applications/${jobId}`, body);
       return data;
     },
+    onMutate: async (variables) => {
+      await qc.cancelQueries({ queryKey: queryKeys.jobs.detail(variables.jobId) });
+      const previousJob = qc.getQueryData<JobDetail>(queryKeys.jobs.detail(variables.jobId));
+
+      if (previousJob) {
+        qc.setQueryData<JobDetail>(queryKeys.jobs.detail(variables.jobId), {
+          ...previousJob,
+          tracker: {
+            ...(previousJob.tracker ?? {}),
+            status: variables.status,
+          },
+        });
+      }
+
+      return { previousJob };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousJob) {
+        qc.setQueryData(queryKeys.jobs.detail(variables.jobId), context.previousJob);
+      }
+      alert('Failed to update application status.');
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.jobs.all });
       qc.invalidateQueries({ queryKey: queryKeys.jobs.applications });

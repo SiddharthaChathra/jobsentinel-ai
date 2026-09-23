@@ -51,6 +51,42 @@ export function JobFilters() {
         </div>
 
         <div className="space-y-2">
+          <Label>Date Posted</Label>
+          <Select
+            value={(() => {
+              if (!query.postedAfter) return '60d';
+              const days = Math.round(
+                (Date.now() - new Date(query.postedAfter).getTime()) / 86400000,
+              );
+              if (days <= 7) return '7d';
+              if (days <= 30) return '30d';
+              return '60d';
+            })()}
+            onValueChange={(val) => {
+              if (val === '60d') updateFilter('postedAfter', undefined);
+              else if (val === '30d') {
+                const date = new Date();
+                date.setDate(date.getDate() - 30);
+                updateFilter('postedAfter', date.toISOString());
+              } else if (val === '7d') {
+                const date = new Date();
+                date.setDate(date.getDate() - 7);
+                updateFilter('postedAfter', date.toISOString());
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Date Posted" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+              <SelectItem value="60d">Last 60 days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label>Status</Label>
           <Select
             value={query.status || 'ACTIVE'}

@@ -60,10 +60,10 @@ export function JobCard({ job }: { job: JobCardType }) {
               <MapPin className="size-3.5 shrink-0" />
               {place}
             </span>
-            {job.salary?.text && (
+            {job.salary && (
               <span className="inline-flex items-center gap-1.5">
                 <Banknote className="size-3.5 shrink-0" />
-                {job.salary.text}
+                {job.salary.disclosed && job.salary.text ? job.salary.text : 'Not disclosed'}
               </span>
             )}
           </div>

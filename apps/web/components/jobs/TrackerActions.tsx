@@ -13,7 +13,7 @@ import type { JobDetail } from '@/lib/types/jobs';
 import { useRemoveApplication, useSaveJob, useTracker, useViewJob } from '@/hooks/useJobs';
 import type { ApplicationStatus } from '@jobsentinel/types';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useOptimistic, startTransition } from 'react';
 
 export function TrackerActions({ job }: { job: JobDetail }) {
   const saveMutation = useSaveJob();
@@ -23,9 +23,16 @@ export function TrackerActions({ job }: { job: JobDetail }) {
 
   // `job` is fetched by the server component that renders this one, so it lives outside React
   // Query's cache: invalidating query keys cannot update it. Only a router refresh re-runs the
-  // server render, and without it a saved change looks like it silently failed.
+  // server render, and without it a saved change looks like it silently failed (D70).
   const router = useRouter();
   const refresh = { onSuccess: () => router.refresh() };
+
+  // The refresh above is a server round-trip, so the control would sit on its old value until it
+  // lands. `useOptimistic` covers that gap and reverts by itself if the transition fails.
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic(
+    job.tracker.status || 'UNTRACKED',
+    (_state, newStatus: string) => newStatus,
+  );
 
   // Record a view when the component mounts (the user opened the detail page).
   useEffect(() => {
@@ -62,9 +69,12 @@ export function TrackerActions({ job }: { job: JobDetail }) {
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Status:</span>
           <Select
-            value={job.tracker.status || 'UNTRACKED'}
+            value={optimisticStatus}
             onValueChange={(val: string | null) => {
               if (!val) return;
+              startTransition(() => {
+                setOptimisticStatus(val);
+              });
               if (val === 'UNTRACKED') {
                 // "Not Tracking" has to undo the tracker row, or the option is a dead control.
                 if (job.tracker.status) removeMutation.mutate(job.id, refresh);
