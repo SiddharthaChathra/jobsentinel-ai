@@ -71,6 +71,12 @@ describeIf('classification stage (integration)', () => {
         status: 'DISCOVERED',
         // dated in the past so the FIFO classification batch always picks the test's own jobs first
         firstSeenAt: new Date('2020-01-01T00:00:00Z'),
+        // These cases exercise the fresher/category rules, not the location gate, so they need a
+        // location the gate accepts. No real posting arrives with no location at all — measured
+        // 0 of 3,394 — so leaving it unset was testing a state that does not occur (D73).
+        locationCity: 'Bengaluru',
+        locationCountry: 'India',
+        locationText: 'Bengaluru, India',
         ...extra,
       })
       .returning({ id: jobs.id });
@@ -261,6 +267,42 @@ describeIf('classification stage (integration)', () => {
     const job = await statusOf(id);
     expect(job.status).toBe('CLASSIFIED');
     expect(job.experienceLevel).toBe('UNKNOWN');
+  }, 60_000);
+
+  it('keeps an India or country-less remote job and filters a foreign one (D73)', async () => {
+    // Same proven fresher/SOFTWARE title and description for all four, so that location is the
+    // only variable — a place name in the title steers the category classifier on its own.
+    const desc = 'Join our GET programme. 0-1 years. B.E. 2027 batch. Java, SQL and REST APIs.';
+    const indian = await seedJob('Graduate Software Engineer One', desc, {
+      locationCity: null,
+      locationCountry: 'India',
+      locationText: 'Raipur, Chhattisgarh',
+    });
+    const remoteAnywhere = await seedJob('Graduate Software Engineer Two', desc, {
+      isRemote: true,
+      locationCity: null,
+      locationCountry: null,
+      locationText: 'Remote',
+    });
+    const foreign = await seedJob('Graduate Software Engineer Three', desc, {
+      locationCity: 'Berlin',
+      locationCountry: 'Germany',
+      locationText: 'Berlin, Germany',
+    });
+    const remoteForeign = await seedJob('Graduate Software Engineer Four', desc, {
+      isRemote: true,
+      locationCity: null,
+      locationCountry: 'United States',
+      locationText: 'Remote - United States',
+    });
+
+    await service.classifyPending({ batch: 500, maxAiCalls: 0 });
+
+    expect((await statusOf(indian)).status).toBe('CLASSIFIED');
+    expect((await statusOf(remoteAnywhere)).status).toBe('CLASSIFIED');
+    // Filtered, not deleted — a preferences change can requeue them (docs 02 §8).
+    expect((await statusOf(foreign)).status).toBe('FILTERED_OUT');
+    expect((await statusOf(remoteForeign)).status).toBe('FILTERED_OUT');
   }, 60_000);
 
   it('requeues classified jobs so a preferences change can be re-applied', async () => {

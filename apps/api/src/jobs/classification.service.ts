@@ -176,18 +176,19 @@ export class ClassificationService {
       }
     }
 
-    // Location gate. This one is permanent — a FILTERED_OUT job is never validated, matched or
-    // alerted — so it only drops postings pinned to a known office somewhere else. India, remote
-    // roles and postings that state no location all pass: "unknown" is not "no" (docs 08), and
-    // 832 remote plus 528 unlocated jobs would otherwise be destroyed outright. Narrowing the
-    // list to the user's preferred places is the jobs query's job, where it is reversible (D67).
+    // Location gate: India, or remote with no country named. A remote role that states a foreign
+    // country is not takeable from here, and a posting whose country never resolved is foreign in
+    // practice — measured across 3,394 live jobs, 530 of the 531 such postings were (D73). The one
+    // that was not lost to a normalizer gap, which is where that class of bug belongs. FILTERED_OUT
+    // is recoverable by a preferences change; narrowing to the user's preferred places is the jobs
+    // query's job, where it can be lifted per request (D62).
     const inIndia = isIndiaLocation({
       text: job.locationText,
       city: job.locationCity,
       country: job.locationCountry,
       isRemote: job.isRemote,
     });
-    const indiaOk = inIndia || job.isRemote || job.locationCountry === null;
+    const indiaOk = inIndia || (job.isRemote && job.locationCountry === null);
 
     const jobBatchYear = extractJobBatchYear(job.description);
     const isBatchCompatible = Array.from(prefs.graduationYears).some((gy) =>
@@ -195,6 +196,9 @@ export class ClassificationService {
     );
 
     if (!isBatchCompatible) {
+      // Not `level = 'EXPERIENCED'`: a "2025 batch only" posting is a fresher role for a different
+      // batch, and relabelling it experienced would make the detail page and the alert state
+      // something untrue about the job. The mismatch filters it on its own, below.
       fresherEligible = false;
       const profileYears = Array.from(prefs.graduationYears)
         .filter((y) => y !== null)
@@ -209,9 +213,10 @@ export class ClassificationService {
     // Filtered out only when nobody monitors the category, or it is definitely too senior.
     const tooSenior = prefs.fresherOnlyForAll && level === 'EXPERIENCED';
     const unknownExcluded = !prefs.includeUnknownExperience && level === 'UNKNOWN';
+    const batchExcluded = prefs.fresherOnlyForAll && !isBatchCompatible;
     const status = !indiaOk
       ? 'FILTERED_OUT'
-      : !monitored || tooSenior || unknownExcluded
+      : !monitored || tooSenior || unknownExcluded || batchExcluded
         ? 'FILTERED_OUT'
         : 'CLASSIFIED';
 
@@ -237,7 +242,9 @@ export class ClassificationService {
             ? 'experienced role, fresher-only mode'
             : unknownExcluded
               ? 'unknown experience excluded'
-              : category.reason,
+              : batchExcluded
+                ? `targets the ${jobBatchYear} batch`
+                : category.reason,
     };
   }
 
@@ -307,6 +314,9 @@ export class ClassificationService {
         ]),
         fresherOnlyForAll: false,
         includeUnknownExperience: true,
+        // `null` means "no batch constraint", which is what an absent profile actually tells us.
+        // Substituting a literal year here would invent a filter the user never asked for, and
+        // would silently become the wrong year every August.
         graduationYears: new Set<number | null>([null]),
       };
     }
@@ -314,7 +324,7 @@ export class ClassificationService {
     const graduationYears = new Set<number | null>();
     for (const r of rows) {
       for (const c of r.categories) categories.add(c);
-      graduationYears.add(r.graduationYear);
+      graduationYears.add(r.graduationYear); // null stays null — see above
     }
     return {
       categories,

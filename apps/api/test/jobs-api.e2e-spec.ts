@@ -110,15 +110,18 @@ describeIf('jobs API (integration)', () => {
       .returning({ id: companies.id });
     companyId = c!.id;
 
+    // Relative, not absolute: the list carries a hard 60-day recency ceiling (D73), so fixtures
+    // dated 2020 would simply not be listed. The ordering they exist to test is preserved.
+    const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
     freshId = await seedJob('Graduate Software Engineer');
     olderId = await seedJob('Associate Backend Engineer', {
-      firstSeenAt: new Date('2020-01-02T00:00:00Z'),
+      firstSeenAt: daysAgo(10),
     });
     remoteId = await seedJob('Remote Platform Engineer', {
       isRemote: true,
       locationCity: null,
       locationCountry: null,
-      firstSeenAt: new Date('2020-01-01T00:00:00Z'),
+      firstSeenAt: daysAgo(20),
     });
     // A job the user must not see by default: unconfirmed validation.
     await seedJob('Unverified Listing', {
@@ -364,6 +367,26 @@ describeIf('jobs API (integration)', () => {
       api().get(`/api/v1/jobs?companyId=${companyId}&limit=50&anywhere=true`),
     ).expect(200);
     expect((all.body as { data: JobCard[] }).data.map((j) => j.id)).toContain(abroadId);
+  }, 60_000);
+
+  it('never lists a posting older than 60 days, however wide the filter (D73)', async () => {
+    const ancientId = await seedJob('Ancient Graduate Engineer', {
+      firstSeenAt: new Date(Date.now() - 200 * 86_400_000),
+      postedAt: new Date(Date.now() - 200 * 86_400_000),
+    });
+
+    const wide = await auth(
+      api().get(
+        // Explicitly asking for two years of history must not reopen the ceiling: a posting that
+        // old is filled, and showing it costs the user a wasted application.
+        `/api/v1/jobs?companyId=${companyId}&limit=50&anywhere=true&postedAfter=${new Date(Date.now() - 730 * 86_400_000).toISOString()}`,
+      ),
+    ).expect(200);
+    expect((wide.body as { data: JobCard[] }).data.map((j) => j.id)).not.toContain(ancientId);
+
+    // …but the job itself is kept, never deleted (docs 02 §8).
+    const still = await db.query.jobs.findFirst({ where: eq(jobs.id, ancientId) });
+    expect(still).toBeDefined();
   }, 60_000);
 
   it('summarises the dashboard', async () => {

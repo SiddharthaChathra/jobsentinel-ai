@@ -147,9 +147,9 @@ export class JobsQueryService {
       });
       where.push(
         or(
-          eq(jobs.isRemote, true),
           sql`${jobs.locationCity} is null and ${jobs.locationCountry} is null and ${jobs.locationText} is null`,
           ...matchers,
+          and(eq(jobs.isRemote, true), sql`${jobs.locationCountry} is null`),
         ),
       );
     }
@@ -165,7 +165,17 @@ export class JobsQueryService {
     if (q.remote !== undefined) where.push(eq(jobs.isRemote, q.remote));
     if (q.fresherOnly) where.push(eq(jobs.fresherEligible, true));
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
-    if (q.postedAfter) where.push(gte(jobs.postedAt, new Date(q.postedAfter)));
+    // A posting older than 60 days is almost always filled, so the ceiling applies even when the
+    // caller asks for more; a narrower `postedAfter` still narrows it further. `posted_at` is null
+    // for boards that do not publish a date, hence the fall back to when we first saw the job.
+    // The comparison is written out rather than built with `gte`: a raw `sql` chunk gives drizzle
+    // no column to derive an encoder from, so the Date has to be an ISO string with a cast (D55).
+    const hardLimit = new Date(Date.now() - 60 * 86_400_000);
+    const requested = q.postedAfter ? new Date(q.postedAfter) : null;
+    const effectivePostedAfter = requested && requested > hardLimit ? requested : hardLimit;
+    where.push(
+      sql`coalesce(${jobs.postedAt}, ${jobs.firstSeenAt}) >= ${effectivePostedAfter.toISOString()}::timestamptz`,
+    );
     if (q.salaryMin !== undefined) where.push(gte(jobs.salaryMin, String(q.salaryMin)));
     if (q.sourceId) {
       where.push(
@@ -325,13 +335,13 @@ function toCard(row: Row): JobCard {
 }
 
 function salaryOf(j: Row['job']): JobCard['salary'] {
-  if (j.salaryMin === null && j.salaryMax === null && !j.salaryText) return null;
   return {
     min: j.salaryMin === null ? null : Number(j.salaryMin),
     max: j.salaryMax === null ? null : Number(j.salaryMax),
     currency: j.salaryCurrency,
     period: j.salaryPeriod,
     text: j.salaryText,
+    disclosed: j.salaryDisclosed,
   };
 }
 
