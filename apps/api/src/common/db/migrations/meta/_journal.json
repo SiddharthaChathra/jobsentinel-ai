@@ -22,6 +22,13 @@
       "when": 1790109559810,
       "tag": "0002_romantic_korg",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790176845190,
+      "tag": "0003_elite_mikhail_rasputin",
+      "breakpoints": true
     }
   ]
 }

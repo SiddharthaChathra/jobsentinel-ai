@@ -133,14 +133,13 @@ export const preferences = pgTable(
     userId: uuid('user_id')
       .primaryKey()
       .references(() => users.id, { onDelete: 'cascade' }),
-    locations: text('locations').array().notNull().default(['India', 'Remote']),
+    locations: text('locations').array().notNull().default(['India']),
     remotePreference: remotePreferenceEnum('remote_preference').notNull().default('ANY'),
-    // Internships and traineeships are the point for a final-year student, so they stay in the
-    // default. (Changing this also needs a migration — the live default is set in SQL, not here.)
+    // The user explicitly requested to only see FULL_TIME jobs by default.
     employmentTypes: employmentTypeEnum('employment_types')
       .array()
       .notNull()
-      .default(['FULL_TIME', 'INTERNSHIP', 'TRAINEE']),
+      .default(['FULL_TIME']),
     categories: jobCategoryEnum('categories')
       .array()
       .notNull()

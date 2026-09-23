@@ -156,3 +156,17 @@ export function normalizeLocation(
   }
   return { text, city, country, isRemote };
 }
+
+/**
+ * True only when the country positively resolves to India. Ambiguous "Remote" with no country
+ * signal is not India, and neither is a null location — this answers "is it India?", nothing more.
+ *
+ * Callers must not use it as a standalone gate: "unknown" is not "no". Classification accepts a
+ * job that is in India *or* remote *or* has no stated country, and the user-facing narrowing to
+ * their preferred locations lives in the job list query, where it can be lifted (D62, D67).
+ */
+export function isIndiaLocation(loc: NormalizedLocation): boolean {
+  if (loc.country === 'India') return true;
+  // Everything else — non-India country, null country, ambiguous remote — fails.
+  return false;
+}

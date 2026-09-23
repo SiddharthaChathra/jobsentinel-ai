@@ -5,6 +5,9 @@ import type { ExperienceLevel, JobCategory } from '@jobsentinel/types';
 import {
   classifyCategory,
   classifyExperience,
+  isIndiaLocation,
+  extractJobBatchYear,
+  isBatchYearCompatible,
   type ExperienceEvidence,
 } from '@jobsentinel/validation';
 import { AI_SERVICE } from '../common/ai/ai.module';
@@ -43,6 +46,7 @@ interface MonitoringPrefs {
   categories: Set<JobCategory>;
   fresherOnlyForAll: boolean;
   includeUnknownExperience: boolean;
+  graduationYears: Set<number | null>;
 }
 
 const AI_CONFIDENCE_FLOOR = 0.6;
@@ -172,10 +176,44 @@ export class ClassificationService {
       }
     }
 
+    // Location gate. This one is permanent — a FILTERED_OUT job is never validated, matched or
+    // alerted — so it only drops postings pinned to a known office somewhere else. India, remote
+    // roles and postings that state no location all pass: "unknown" is not "no" (docs 08), and
+    // 832 remote plus 528 unlocated jobs would otherwise be destroyed outright. Narrowing the
+    // list to the user's preferred places is the jobs query's job, where it is reversible (D67).
+    const inIndia = isIndiaLocation({
+      text: job.locationText,
+      city: job.locationCity,
+      country: job.locationCountry,
+      isRemote: job.isRemote,
+    });
+    const indiaOk = inIndia || job.isRemote || job.locationCountry === null;
+
+    const jobBatchYear = extractJobBatchYear(job.description);
+    const isBatchCompatible = Array.from(prefs.graduationYears).some((gy) =>
+      isBatchYearCompatible(jobBatchYear, gy),
+    );
+
+    if (!isBatchCompatible) {
+      fresherEligible = false;
+      const profileYears = Array.from(prefs.graduationYears)
+        .filter((y) => y !== null)
+        .join(', ');
+      evidence.push({
+        code: 'BATCH_YEAR_MISMATCH',
+        detail: `Job targets ${jobBatchYear} batch, profile is ${profileYears}`,
+        weight: 'NEGATIVE',
+      });
+    }
+
     // Filtered out only when nobody monitors the category, or it is definitely too senior.
     const tooSenior = prefs.fresherOnlyForAll && level === 'EXPERIENCED';
     const unknownExcluded = !prefs.includeUnknownExperience && level === 'UNKNOWN';
-    const status = !monitored || tooSenior || unknownExcluded ? 'FILTERED_OUT' : 'CLASSIFIED';
+    const status = !indiaOk
+      ? 'FILTERED_OUT'
+      : !monitored || tooSenior || unknownExcluded
+        ? 'FILTERED_OUT'
+        : 'CLASSIFIED';
 
     return {
       jobId: job.id,
@@ -191,13 +229,15 @@ export class ClassificationService {
       experienceText: rules.experienceText ?? job.experienceText,
       usedAi,
       aiUnavailable,
-      reason: !monitored
-        ? 'category not monitored'
-        : tooSenior
-          ? 'experienced role, fresher-only mode'
-          : unknownExcluded
-            ? 'unknown experience excluded'
-            : category.reason,
+      reason: !indiaOk
+        ? `location outside India (${job.locationCountry ?? 'unknown'})`
+        : !monitored
+          ? 'category not monitored'
+          : tooSenior
+            ? 'experienced role, fresher-only mode'
+            : unknownExcluded
+              ? 'unknown experience excluded'
+              : category.reason,
     };
   }
 
@@ -248,6 +288,7 @@ export class ClassificationService {
         categories: preferences.categories,
         fresherOnly: preferences.fresherOnly,
         includeUnknown: preferences.includeUnknownExperience,
+        graduationYear: preferences.graduationYear,
       })
       .from(preferences);
     if (rows.length === 0) {
@@ -266,14 +307,20 @@ export class ClassificationService {
         ]),
         fresherOnlyForAll: false,
         includeUnknownExperience: true,
+        graduationYears: new Set<number | null>([null]),
       };
     }
     const categories = new Set<JobCategory>();
-    for (const r of rows) for (const c of r.categories) categories.add(c);
+    const graduationYears = new Set<number | null>();
+    for (const r of rows) {
+      for (const c of r.categories) categories.add(c);
+      graduationYears.add(r.graduationYear);
+    }
     return {
       categories,
       fresherOnlyForAll: rows.every((r) => r.fresherOnly),
       includeUnknownExperience: rows.some((r) => r.includeUnknown),
+      graduationYears,
     };
   }
 

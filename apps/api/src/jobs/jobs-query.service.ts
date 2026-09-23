@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, gte, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
 import type {
   ApplicationStatus,
+  EmploymentType,
   JobCard,
   JobsQuery,
   JobSort,
@@ -46,10 +47,10 @@ export class JobsQueryService {
     const profileVersion = await this.profileVersion(userId);
     const prefs = await this.db.query.preferences.findFirst({
       where: eq(preferences.userId, userId),
-      columns: { locations: true },
+      columns: { locations: true, employmentTypes: true },
     });
 
-    const where = this.buildWhere(query, prefs?.locations ?? []);
+    const where = this.buildWhere(query, prefs?.locations ?? [], prefs?.employmentTypes ?? []);
     const cursor = decodeCursor(query.cursor);
     const rows = await this.select(userId, profileVersion, [
       ...where,
@@ -99,7 +100,11 @@ export class JobsQueryService {
       .where(and(...where.filter(Boolean)));
   }
 
-  private buildWhere(q: JobsQuery, userLocations: string[] = []): (SQL | undefined)[] {
+  private buildWhere(
+    q: JobsQuery,
+    userLocations: string[] = [],
+    userEmploymentTypes: string[] = [],
+  ): (SQL | undefined)[] {
     const where: (SQL | undefined)[] = [inArray(jobs.status, [...LISTABLE])];
 
     // Validation status defaults to VALID only: a job we could not confirm is opt-in (docs 08).
@@ -148,6 +153,15 @@ export class JobsQueryService {
         ),
       );
     }
+
+    if (userEmploymentTypes.length > 0) {
+      // Include UNKNOWN so we don't accidentally drop valid jobs just because the source didn't state the type,
+      // but strictly filter out INTERNSHIP, TRAINEE etc. if they are not in the user's preferences.
+      where.push(
+        inArray(jobs.employmentType, [...userEmploymentTypes, 'UNKNOWN'] as EmploymentType[]),
+      );
+    }
+
     if (q.remote !== undefined) where.push(eq(jobs.isRemote, q.remote));
     if (q.fresherOnly) where.push(eq(jobs.fresherEligible, true));
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
