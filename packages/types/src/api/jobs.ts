@@ -88,6 +88,7 @@ export interface JobSalary {
   currency: string | null;
   period: string | null;
   text: string | null;
+  disclosed: boolean;
 }
 
 export interface JobValidationSummary {

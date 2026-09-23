@@ -15,6 +15,9 @@ import {
 } from './format';
 import { TelegramClient, TelegramError, type InlineButton } from './telegram.client';
 
+import { HTTP_CLIENT } from '../common/http/http.module';
+import type { HttpClientPort } from '../common/http/http-client';
+
 export interface DispatchResult {
   claimed: number;
   sent: number;
@@ -40,8 +43,20 @@ export class DispatcherService {
   constructor(
     @Inject(DB) private readonly db: Db,
     @Inject(ENV) private readonly env: Env,
+    @Inject(HTTP_CLIENT) private readonly http: HttpClientPort,
     private readonly telegram: TelegramClient,
   ) {}
+
+  private async isUrlBroken(url: string): Promise<boolean> {
+    try {
+      const res = await this.http.request(url, { method: 'HEAD', timeoutMs: 4000, retries: 0 });
+      return isBrokenApplicationStatus(res.status);
+    } catch {
+      // A timeout or a refused connection is indistinguishable from a dead link here, and the
+      // fallback costs the user nothing: the source listing reaches the same posting.
+      return true;
+    }
+  }
 
   async dispatchPending(opts: { batch?: number } = {}): Promise<DispatchResult> {
     const batch = opts.batch ?? 50;
@@ -72,6 +87,30 @@ export class DispatcherService {
       }
 
       try {
+        if (row.type === 'INSTANT') {
+          const job = row.payload as JobAlertData & { fallbackNote?: boolean };
+          if (job.sourceUrl && job.applicationUrl !== job.sourceUrl) {
+            if (await this.isUrlBroken(job.applicationUrl)) {
+              row.payload = { ...job, applicationUrl: job.sourceUrl, fallbackNote: true };
+            }
+          }
+        } else if (row.type === 'DIGEST') {
+          const digest = row.payload as DigestData;
+          const jobs = await Promise.all(
+            (digest.jobs ?? []).map(async (j) => {
+              if (
+                j.sourceUrl &&
+                j.applicationUrl !== j.sourceUrl &&
+                (await this.isUrlBroken(j.applicationUrl))
+              ) {
+                return { ...j, applicationUrl: j.sourceUrl };
+              }
+              return j;
+            }),
+          );
+          row.payload = { ...digest, jobs };
+        }
+
         const { text, buttons } = this.render(row);
         await this.telegram.sendMessage({ chatId, text, buttons });
         await this.markSent(row.id, row.jobId);
@@ -127,8 +166,11 @@ export class DispatcherService {
   } {
     const dashboard = this.env.APP_BASE_URL ?? 'http://localhost:3000';
     if (row.type === 'INSTANT') {
-      const job = reviveAlert(row.payload as JobAlertData);
-      return { text: formatInstant(job), buttons: instantButtons(job, dashboard) };
+      const job = reviveAlert(row.payload as JobAlertData & { fallbackNote?: boolean });
+      return {
+        text: formatInstant(job, new Date(), job.fallbackNote),
+        buttons: instantButtons(job, dashboard),
+      };
     }
     if (row.type === 'DIGEST') {
       const digest = row.payload as DigestData;
@@ -219,10 +261,20 @@ export class DispatcherService {
 }
 
 /** JSON round-trips dates to strings; the formatters need real `Date`s. */
-function reviveAlert(job: JobAlertData): JobAlertData {
+function reviveAlert<T extends JobAlertData>(job: T): T {
   return {
     ...job,
     postedAt: job.postedAt ? new Date(job.postedAt) : null,
     deadline: job.deadline ? new Date(job.deadline) : null,
   };
+}
+
+/**
+ * Whether a HEAD response means the apply link is genuinely dead, as opposed to an ATS that simply
+ * dislikes automated requests. 403 and 405 are how bot-protected boards answer a HEAD they are
+ * perfectly willing to serve to a browser — treating those as broken would replace a working
+ * direct apply link with the slower source listing on most of the biggest boards (docs 10 §3).
+ */
+export function isBrokenApplicationStatus(status: number): boolean {
+  return status >= 400 && status !== 405 && status !== 403;
 }

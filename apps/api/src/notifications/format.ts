@@ -14,6 +14,8 @@ export interface JobAlertData {
   isRemote: boolean;
   experienceText: string | null;
   fresherEligible: boolean | null;
+  salaryText: string | null;
+  salaryDisclosed: boolean;
   score: number;
   priority: PriorityBand;
   matchedSkills: string[];
@@ -21,6 +23,7 @@ export interface JobAlertData {
   companyVerified: boolean;
   applicationVerified: boolean;
   applicationUrl: string;
+  sourceUrl: string;
   applicationHost: string | null;
   postedAt: Date | null;
   deadline: Date | null;
@@ -56,13 +59,19 @@ export function esc(value: string): string {
 }
 
 /** Instant alert body (docs 10 §3). */
-export function formatInstant(job: JobAlertData, now: Date = new Date()): string {
+export function formatInstant(
+  job: JobAlertData,
+  now: Date = new Date(),
+  fallbackNote = false,
+): string {
   const lines: string[] = [];
   lines.push(`🚨 <b>NEW FRESHER JOB</b> — ${esc(job.title)}`);
 
   const facts = [`🏢 ${esc(job.company)}`];
   const place = job.isRemote ? 'Remote' : job.location;
   if (place) facts.push(`📍 ${esc(place)}`);
+  if (job.salaryDisclosed && job.salaryText) facts.push(`💰 ${esc(job.salaryText)}`);
+  else facts.push(`💰 Not disclosed`);
   if (job.experienceText) facts.push(`🧑‍🎓 ${esc(job.experienceText)}`);
   if (job.fresherEligible) facts.push('Fresher ✓');
   lines.push(facts.join(' · '));
@@ -98,11 +107,17 @@ export function formatInstant(job: JobAlertData, now: Date = new Date()): string
   if (job.deadline) timing.push(`Deadline: ${formatDay(job.deadline)}`);
   if (timing.length) lines.push(timing.join(' · '));
 
+  if (fallbackNote) {
+    lines.push(
+      `\n⚠️ <i>Direct apply link was unreachable. The button below will take you to the original source listing.</i>`,
+    );
+  }
+
   return truncate(lines.join('\n'));
 }
 
 export function instantButtons(job: JobAlertData, dashboardUrl: string): InlineButton[][] {
-  const top: InlineButton[] = [{ text: '🔗 APPLY NOW', url: job.applicationUrl }];
+  const top: InlineButton[] = [{ text: '🔗 APPLY NOW', url: encodeURI(job.applicationUrl) }];
   // Telegram rejects a keyboard containing a non-public URL and drops the entire message, so a
   // local dashboard costs us the View button rather than the whole alert (D56).
   if (isPublicUrl(dashboardUrl)) {

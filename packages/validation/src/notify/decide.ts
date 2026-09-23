@@ -24,6 +24,7 @@ export interface NotifyCandidate {
   priority: PriorityBand;
   validationStatus: ValidationStatus;
   firstSeenAt: Date;
+  fresherEligible: boolean | null;
 }
 
 export type NotifyDecision =
@@ -57,6 +58,11 @@ export function decideNotification(
   }
   if (job.validationStatus !== 'VALID') {
     return { action: 'NONE', reason: `validation status ${job.validationStatus}` };
+  }
+
+  // Ambiguous/UNKNOWN classifications must default to EXCLUDED from instant Telegram notification.
+  if (job.fresherEligible === null) {
+    return { action: 'DIGEST', reason: 'ambiguous experience level, digest only' };
   }
 
   if (settings.mode === 'DIGEST') return { action: 'DIGEST', reason: 'digest-only mode' };

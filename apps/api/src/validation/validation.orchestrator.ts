@@ -122,7 +122,7 @@ export class ValidationOrchestrator {
     for (const { job } of due) {
       const url = job.finalApplicationUrl ?? job.applicationUrl ?? job.sourceUrl;
       const probe = await this.urlProbe.probe(url);
-      const stale = job.firstSeenAt.getTime() < Date.now() - 45 * 86_400_000;
+      const stale = job.firstSeenAt.getTime() < Date.now() - 60 * 86_400_000;
       const closed =
         probe.closedMarkers.length > 0 ||
         probe.urlStatus === 'NOT_FOUND' ||
@@ -159,7 +159,7 @@ export class ValidationOrchestrator {
             detail: {
               reason: closed
                 ? (probe.closedMarkers[0]?.code ?? probe.urlStatus)
-                : 'stale: older than 45 days',
+                : 'stale: older than 60 days',
               httpStatus: probe.httpStatus,
             },
           });

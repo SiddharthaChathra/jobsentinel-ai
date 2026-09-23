@@ -33,6 +33,7 @@ export interface UserNotifyContext {
   userId: string;
   profileVersion: number;
   settings: NotifySettings;
+  fresherOnly: boolean;
   chatId: bigint | null;
 }
 
@@ -79,6 +80,7 @@ export class NotificationsService {
             inArray(jobs.status, [...ALERTABLE]),
             gte(jobs.firstSeenAt, freshCutoff),
             sql`${jobs.closedAt} is null`,
+            ctx.fresherOnly ? eq(jobs.fresherEligible, true) : undefined,
             sql`not exists (select 1 from ${notifications} n
                  where n.user_id = ${ctx.userId} and n.job_id = ${jobs.id} and n.type = 'INSTANT')`,
           ),
@@ -96,6 +98,7 @@ export class NotificationsService {
             priority: row.match.priority,
             validationStatus: row.job.validationStatus,
             firstSeenAt: row.job.firstSeenAt,
+            fresherEligible: row.job.fresherEligible,
           },
           now,
         );
@@ -219,6 +222,7 @@ export class NotificationsService {
         pausedUntil: notificationSettings.pausedUntil,
         digestHourLocal: notificationSettings.digestHourLocal,
         timezone: preferences.timezone,
+        fresherOnly: preferences.fresherOnly,
         chatId: telegramLinks.chatId,
       })
       .from(users)
@@ -241,6 +245,7 @@ export class NotificationsService {
         pausedUntil: r.pausedUntil,
         timezone: r.timezone ?? 'Asia/Kolkata',
       },
+      fresherOnly: r.fresherOnly ?? false,
     }));
   }
 
@@ -276,6 +281,8 @@ export function toAlertData(row: AlertRow): JobAlertData {
     isRemote: row.job.isRemote,
     experienceText: row.job.experienceText,
     fresherEligible: row.job.fresherEligible,
+    salaryText: row.job.salaryText,
+    salaryDisclosed: row.job.salaryDisclosed,
     score: row.match.overallScore,
     priority: row.match.priority as JobAlertData['priority'],
     matchedSkills: row.match.matchedSkills,
@@ -283,6 +290,7 @@ export function toAlertData(row: AlertRow): JobAlertData {
     companyVerified: row.company.verified === 'VERIFIED',
     applicationVerified: row.job.validationStatus === 'VALID',
     applicationUrl: url,
+    sourceUrl: row.job.sourceUrl,
     applicationHost: hostOf(url),
     postedAt: row.job.postedAt,
     deadline: row.job.deadline,

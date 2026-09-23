@@ -27,6 +27,7 @@ const job = (over: Partial<NotifyCandidate> = {}): NotifyCandidate => ({
   priority: 'VERY_HIGH',
   validationStatus: 'VALID',
   firstSeenAt: new Date('2026-09-22T10:00:00Z'),
+  fresherEligible: true,
   ...over,
 });
 
@@ -143,5 +144,19 @@ describe('local time helpers', () => {
     // Across a DST boundary in a zone that observes it, the local hour still holds.
     const ny = utcForLocalHour(new Date('2026-11-02T12:00:00Z'), 'America/New_York', 8);
     expect(localParts(ny, 'America/New_York').hour).toBe(8);
+  });
+});
+
+describe('an unresolved fresher verdict never becomes an instant alert', () => {
+  it('sends a job with unknown fresher eligibility to the digest instead', () => {
+    // `fresherEligible: null` means the rules and the AI both declined to commit. Pushing that to
+    // Telegram as a "NEW FRESHER JOB" would state something we do not know (docs 10 §3).
+    const decision = decideNotification(settings(), job({ fresherEligible: null }), now);
+    expect(decision.action).toBe('DIGEST');
+  });
+
+  it('still sends a confirmed fresher job instantly', () => {
+    const decision = decideNotification(settings(), job({ fresherEligible: true }), now);
+    expect(decision.action).toBe('INSTANT');
   });
 });

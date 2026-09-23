@@ -63,6 +63,7 @@ export const jobs = pgTable(
     salaryCurrency: text('salary_currency'),
     salaryPeriod: text('salary_period'),
     salaryText: text('salary_text'),
+    salaryDisclosed: boolean('salary_disclosed').notNull().default(false),
     postedAt: timestamp('posted_at', { withTimezone: true }),
     firstSeenAt: timestamp('first_seen_at', { withTimezone: true }).notNull().defaultNow(),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),

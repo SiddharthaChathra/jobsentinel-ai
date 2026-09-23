@@ -44,6 +44,7 @@ export interface NormalizedJob {
   salaryCurrency: string | null;
   salaryPeriod: string | null;
   salaryText: string | null;
+  salaryDisclosed: boolean;
   postedAt: Date | null;
   deadline: Date | null;
   sourceUrl: string;
@@ -161,6 +162,7 @@ export function normalizeRawJob(raw: RawJob, opts: NormalizeOptions = {}): Norma
     salaryCurrency: salary.currency,
     salaryPeriod: salary.period,
     salaryText: salary.text,
+    salaryDisclosed: salary.text !== null || (salary.min !== null && salary.min > 0),
     postedAt: raw.postedAt ?? raw.updatedAt ?? null,
     deadline: raw.deadline ?? null,
     sourceUrl,

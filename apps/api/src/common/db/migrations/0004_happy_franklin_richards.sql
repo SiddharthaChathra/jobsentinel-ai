@@ -1,0 +1,1 @@
+ALTER TABLE "jobs" ADD COLUMN "salary_disclosed" boolean DEFAULT false NOT NULL;
