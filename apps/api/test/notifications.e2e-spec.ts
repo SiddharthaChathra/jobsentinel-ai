@@ -20,7 +20,7 @@ import { DispatcherService } from '../src/notifications/dispatcher.service';
 import { NotificationsService } from '../src/notifications/notifications.service';
 import { TelegramClient } from '../src/notifications/telegram.client';
 import { WorkerModule } from '../src/worker.module';
-import { FakeHttpClient } from './helpers/fake-http';
+import { FakeHttpClient, type FakeRoute } from './helpers/fake-http';
 
 /**
  * The two promises of the notification layer (docs 10 §2, §5), against the live database:
@@ -60,6 +60,8 @@ describeIf('notifications (integration)', () => {
   let userId: string;
   let companyId: string;
   let goodJobId: string;
+  /** Mutable so a test can script the apply-link HEAD probe the dispatcher makes (D76). */
+  const httpRoutes: Record<string, FakeRoute | FakeRoute[]> = {};
 
   const seedJob = async (title: string, over: Partial<typeof jobs.$inferInsert> = {}) => {
     const [row] = await db
@@ -109,7 +111,7 @@ describeIf('notifications (integration)', () => {
     telegram = new FakeTelegram();
     moduleRef = await Test.createTestingModule({ imports: [WorkerModule] })
       .overrideProvider(HTTP_CLIENT)
-      .useValue(new FakeHttpClient({}))
+      .useValue(new FakeHttpClient(httpRoutes))
       .overrideProvider(TelegramClient)
       .useValue(telegram)
       .compile();
@@ -283,6 +285,61 @@ describeIf('notifications (integration)', () => {
     expect(first).toBe(true);
     expect(second).toBe(false); // one per type per 6 h
   }, 120_000);
+
+  it('keeps the direct apply link when it answers, and falls back when it is dead (D76)', async () => {
+    // Alive: the APPLY NOW button must point at the employer's apply URL, with no warning note.
+    const liveId = await seedJob('Apply Link Alive Engineer');
+    await seedMatch(liveId, 95);
+    httpRoutes['https://boards.example/'] = { status: 200 };
+    telegram.sent = [];
+    await service.enqueuePending({ userIds: [userId] });
+    await dispatcher.dispatchPending({ batch: 20 });
+
+    const alive = telegram.sent.find((m) => m.text.includes('Apply Link Alive Engineer'));
+    expect(alive).toBeDefined();
+    const aliveButtons = alive!.buttons as { text: string; url: string }[][];
+    expect(aliveButtons[0]![0]!.url).toContain('/apply');
+    expect(alive!.text).not.toContain('unreachable');
+
+    // Dead: the button falls back to the source listing and the message says why, so the alert
+    // still reaches the posting rather than a 404.
+    const deadId = await seedJob('Apply Link Dead Engineer');
+    await seedMatch(deadId, 95);
+    httpRoutes['https://boards.example/'] = { status: 404 };
+    telegram.sent = [];
+    await service.enqueuePending({ userIds: [userId] });
+    await dispatcher.dispatchPending({ batch: 20 });
+
+    const dead = telegram.sent.find((m) => m.text.includes('Apply Link Dead Engineer'));
+    expect(dead).toBeDefined();
+    const deadButtons = dead!.buttons as { text: string; url: string }[][];
+    expect(deadButtons[0]![0]!.url).not.toContain('/apply');
+    expect(dead!.text).toContain('unreachable');
+
+    delete httpRoutes['https://boards.example/'];
+  }, 180_000);
+
+  it('escapes and encodes the apply URL rather than dropping the whole message (D56)', async () => {
+    // Telegram rejects a keyboard containing a malformed URL and drops the entire message, so a
+    // space in an employer's URL must not cost the user the alert.
+    const spacedId = await seedJob('Apply Link Spaced Engineer', {
+      applicationUrl: 'https://boards.example/spaced apply/here',
+      sourceUrl: 'https://boards.example/spaced apply/here',
+    });
+    await seedMatch(spacedId, 95);
+    httpRoutes['https://boards.example/'] = { status: 200 };
+    telegram.sent = [];
+    await service.enqueuePending({ userIds: [userId] });
+    await dispatcher.dispatchPending({ batch: 20 });
+
+    const sent = telegram.sent.find((m) => m.text.includes('Apply Link Spaced Engineer'));
+    expect(sent).toBeDefined();
+    const buttons = sent!.buttons as { text: string; url: string }[][];
+    expect(buttons[0]![0]!.url).not.toContain(' ');
+    expect(buttons[0]![0]!.url).toContain('%20');
+
+    delete httpRoutes['https://boards.example/'];
+  }, 180_000);
 
   const countFor = async (jobId: string) => {
     const rows = await db

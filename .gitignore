@@ -14,3 +14,8 @@ playwright-report/
 test-results/
 .turbo/
 .playwright-mcp/
+
+# `tsc` without --outDir emits next to the sources; 86 such files once shadowed src/ (D75).
+apps/api/src/**/*.js
+apps/*/test-*.ts
+apps/*/test-*.js

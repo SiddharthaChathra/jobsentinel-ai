@@ -10,7 +10,7 @@
  * Linux and macOS have no such thing, so this is a no-op off Windows.
  */
 import { execSync } from 'node:child_process';
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -52,8 +52,36 @@ if (hidden.length === 0) process.exit(0);
 
 console.error(
   `\n${hidden.length} tracked file(s) are OneDrive placeholders and are INVISIBLE to Jest:\n` +
-    hidden.map((f) => '  ' + relative(root, f)).join('\n') +
-    '\n\nThe test run would pass while skipping them. To fix, open each in an editor and save it,' +
-    '\nor right-click the folder in Explorer and choose "Always keep on this device", then re-run.\n',
+    hidden.map((f) => '  ' + relative(root, f)).join('\n'),
 );
-process.exit(1);
+
+if (!process.argv.includes('--fix')) {
+  console.error(
+    '\nThe test run would pass while skipping them.' +
+      '\nRun `pnpm fix:files` to rewrite them as ordinary local files, then re-run.\n',
+  );
+  process.exit(1);
+}
+
+// Reading the file hydrates it but leaves the reparse-point attribute set, and that attribute is
+// what `readdir` reports as a symlink. Writing the bytes to a temp name and renaming over the
+// original replaces the directory entry itself, which is the only thing that clears it.
+let fixed = 0;
+for (const file of hidden) {
+  const bytes = readFileSync(file);
+  if (bytes.length === 0) {
+    console.error(`  skipped (empty, refusing to rewrite): ${relative(root, file)}`);
+    continue;
+  }
+  const tmp = `${file}.onedrive-fix`;
+  writeFileSync(tmp, bytes);
+  if (readFileSync(tmp).length !== bytes.length) {
+    unlinkSync(tmp);
+    console.error(`  skipped (copy mismatch): ${relative(root, file)}`);
+    continue;
+  }
+  renameSync(tmp, file);
+  fixed++;
+}
+console.error(`\nrewrote ${fixed} file(s) in place, byte for byte. Re-run the tests.\n`);
+process.exit(fixed === hidden.length ? 0 : 1);

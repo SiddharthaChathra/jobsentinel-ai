@@ -26,7 +26,8 @@
     "prepare": "git config core.hooksPath .githooks || exit 0",
     "env:sync": "node scripts/sync-env.mjs",
     "check:files": "node scripts/check-local-files.mjs",
-    "pretest": "node scripts/check-local-files.mjs"
+    "pretest": "node scripts/check-local-files.mjs",
+    "fix:files": "node scripts/check-local-files.mjs --fix"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
