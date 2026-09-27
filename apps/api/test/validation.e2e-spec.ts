@@ -145,7 +145,7 @@ describeIf('validation engine (integration)', () => {
       'https://boards.greenhouse.io/acmepay/jobs/1',
       'Build our payments platform. 0-2 years.',
     );
-    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0 });
+    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0, jobIds: [id] });
 
     const job = await jobOf(id);
     expect(job).toMatchObject({ status: 'VALID', validationStatus: 'VALID' });
@@ -179,7 +179,7 @@ describeIf('validation engine (integration)', () => {
     'a %s application page makes the job EXPIRED and stops re-checks',
     async (name, url) => {
       const id = await seedJob(companyIds.AcmePay!, `Engineer ${name}`, url, 'Build things.');
-      await orchestrator.validatePending({ batch: 5, maxAiCalls: 0 });
+      await orchestrator.validatePending({ batch: 5, maxAiCalls: 0, jobIds: [id] });
       const job = await jobOf(id);
       expect(job).toMatchObject({ status: 'EXPIRED', validationStatus: 'EXPIRED' });
       expect(job.nextCheckAt).toBeNull();
@@ -198,7 +198,7 @@ describeIf('validation engine (integration)', () => {
       'https://random-jobs.xyz/apply/9',
       'Pay a registration fee of Rs 750 to confirm your seat. Direct joining, no interview required. Share your Aadhaar and bank account details.',
     );
-    await orchestrator.validatePending({ batch: 5, maxAiCalls: 3 });
+    await orchestrator.validatePending({ batch: 5, maxAiCalls: 3, jobIds: [id] });
 
     const job = await jobOf(id);
     expect(job.status).toBe('SUSPICIOUS');
@@ -216,7 +216,7 @@ describeIf('validation engine (integration)', () => {
       'https://careers.unknownco.example/job/5',
       'Join our team to build services.',
     );
-    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0 });
+    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0, jobIds: [id] });
     const job = await jobOf(id);
     expect(job.status).toBe('NEEDS_REVIEW');
     const v = await validationOf(id);
@@ -233,7 +233,7 @@ describeIf('validation engine (integration)', () => {
       'https://boards.greenhouse.io/acmepay/jobs/1',
       'Anything.',
     );
-    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0 });
+    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0, jobIds: [id] });
     expect((await jobOf(id)).status).toBe('REJECTED');
   }, 60_000);
 
@@ -244,7 +244,7 @@ describeIf('validation engine (integration)', () => {
       'https://acmepay.example/careers/honest',
       'We never charge any registration fee at any stage. We will never ask for your bank details.',
     );
-    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0 });
+    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0, jobIds: [id] });
     const v = await validationOf(id);
     expect(v.suspiciousFlags).not.toContain('FEE_REQUEST');
     expect((await jobOf(id)).status).toBe('VALID');
@@ -257,7 +257,7 @@ describeIf('validation engine (integration)', () => {
       'https://boards.greenhouse.io/acmepay/jobs/1',
       'Build things.',
     );
-    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0 });
+    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0, jobIds: [id] });
     expect((await jobOf(id)).status).toBe('VALID');
 
     // the posting closes, and the re-check becomes due
@@ -281,5 +281,29 @@ describeIf('validation engine (integration)', () => {
       .where(and(eq(jobEvents.jobId, id), eq(jobEvents.type, 'EXPIRED')));
     expect(events).toHaveLength(1);
     routes['https://boards.greenhouse.io/acmepay/jobs/1'] = { body: page('open-greenhouse.html') };
+  }, 60_000);
+
+  it('never validates a job outside the jobIds it was given (D77)', async () => {
+    // This suite runs against the shared live database with a fake HTTP client, so an unscoped
+    // batch validates real postings and writes the fake's error into their evidence. Eight such
+    // calls poisoned 256 production records before this was caught; the scope is the guard.
+    const mine = await seedJob(
+      companyIds.AcmePay!,
+      'Scoped Only Engineer',
+      'https://boards.greenhouse.io/acmepay/jobs/1',
+      'Build things.',
+    );
+    const other = await seedJob(
+      companyIds.AcmePay!,
+      'Untouched Engineer',
+      'https://boards.greenhouse.io/acmepay/jobs/1',
+      'Build other things.',
+    );
+
+    await orchestrator.validatePending({ batch: 50, maxAiCalls: 0, jobIds: [mine] });
+
+    expect((await jobOf(mine)).status).toBe('VALID');
+    expect((await jobOf(other)).status).toBe('CLASSIFIED'); // still pending, never looked at
+    expect(await validationOf(other)).toBeUndefined();
   }, 60_000);
 });

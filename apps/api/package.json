@@ -23,7 +23,8 @@
     "clean:test": "node dist/scripts/clean-test-data.js",
     "apply-resume": "node dist/scripts/apply-resume-profile.js",
     "repair:status": "node dist/scripts/repair-job-status.js",
-    "renormalize:locations": "node dist/scripts/renormalize-locations.js"
+    "renormalize:locations": "node dist/scripts/renormalize-locations.js",
+    "repair:validation": "node dist/scripts/repair-poisoned-validation.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",

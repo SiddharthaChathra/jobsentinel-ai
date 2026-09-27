@@ -49,8 +49,15 @@ export class ValidationOrchestrator {
   ) {}
 
   /** Validates jobs waiting in CLASSIFIED, plus any due for a re-check. */
+  /**
+   * `jobIds` restricts the run to specific jobs. The worker never passes it; an integration test
+   * must, because this runs against the shared live database — eight unscoped `batch: 5` calls in
+   * the e2e suite validated real postings with the fake HTTP client, writing its "unscripted
+   * request" error into 256 production validation records and demoting them all to NEEDS_REVIEW
+   * (D77). Same reasoning, and same fix, as `recheckDue`.
+   */
   async validatePending(
-    opts: { batch?: number; maxAiCalls?: number; timeBudgetMs?: number } = {},
+    opts: { batch?: number; maxAiCalls?: number; timeBudgetMs?: number; jobIds?: string[] } = {},
   ): Promise<ValidateResult> {
     const batch = opts.batch ?? 20;
     const maxAiCalls = opts.maxAiCalls ?? 10;
@@ -68,7 +75,13 @@ export class ValidationOrchestrator {
       .select({ job: jobs, company: companies })
       .from(jobs)
       .innerJoin(companies, eq(companies.id, jobs.companyId))
-      .where(and(eq(jobs.status, 'CLASSIFIED'), sql`${jobs.stageAttempts} < 5`))
+      .where(
+        and(
+          eq(jobs.status, 'CLASSIFIED'),
+          sql`${jobs.stageAttempts} < 5`,
+          ...(opts.jobIds ? [inArray(jobs.id, opts.jobIds)] : []),
+        ),
+      )
       .orderBy(jobs.firstSeenAt)
       .limit(batch);
 
