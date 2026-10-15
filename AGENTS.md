@@ -129,7 +129,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Outbound HTTP only through `HttpClient` (SSRF guard, timeouts, body caps, UA, per-host rate limit).
 - Job HTML sanitized server-side with a fixed allowlist; UI never renders unsanitized HTML.
 - Uploads: PDF/DOCX, ≤ 5 MB, magic-byte check, private bucket, signed URLs.
-- Sign-up gated by `ALLOWED_SIGNUP_EMAILS`.
+- Sign-up is open to anyone by default (`ALLOWED_SIGNUP_EMAILS=*`); a comma list restricts it. Shared resources are capped per user — e.g. AI resume analyses (D93).
 
 ## 12. Job-source rules (docs/architecture/06-job-sources.md)
 

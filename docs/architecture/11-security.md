@@ -9,7 +9,7 @@ Assets: resume text and profile (PII), Supabase service key, AI keys, Telegram b
 ### Authentication & authorization
 
 - Supabase Auth issues JWTs; API verifies signature (JWKS, cached, key rotation tolerant), `exp`, `aud`, `iss`. No custom password handling anywhere.
-- Sign-up gate: `ALLOWED_SIGNUP_EMAILS` (comma list or `*`) enforced at bootstrap; disallowed users get 403 and no rows created.
+- Sign-up gate: `ALLOWED_SIGNUP_EMAILS` (comma list or `*`) enforced at bootstrap; disallowed users get 403 and no rows created. The deployed instance is open (`*`, D93), so anything every account shares is capped per user: AI resume analyses (5 per rolling 24 h, then the deterministic draft), stored resumes (10), and the API's request throttles.
 - Ownership check in every service (`user_id = currentUser.id`); admin-only routes (`sources`, `companies`, `system/logs`) behind `AdminGuard` (`users.is_admin`, set for the first user / `ADMIN_EMAILS`).
 - RLS enabled on all user-owned tables (defense in depth; doc 02 §6).
 - Supabase **anon key** is the only key in the browser; **service role key** exists only in API/worker env.

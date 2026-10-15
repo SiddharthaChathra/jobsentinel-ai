@@ -67,7 +67,7 @@ NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=JobSentinelBot
 # ───────── API ─────────
 PORT=4000
 WEB_ORIGIN=http://localhost:3000   # CORS: comma-separated origins, e.g. https://jobsentinel-ai.vercel.app,http://localhost:3000
-ALLOWED_SIGNUP_EMAILS=you@example.com         # comma list or *
+ALLOWED_SIGNUP_EMAILS=*                       # * = anyone may sign up, or a comma list to restrict
 ADMIN_EMAILS=you@example.com
 ENABLE_API_DOCS=true
 LOG_LEVEL=info

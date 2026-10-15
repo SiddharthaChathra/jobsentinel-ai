@@ -2,6 +2,13 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Open sign-up — 2026-10-16
+
+- **Anyone can create an account** on the deployed site (D93); `ALLOWED_SIGNUP_EMAILS` still restricts an instance when set to a list.
+- **Per-user AI limit.** The AI budget is shared by every account, so each user may cause at most 5 real AI resume analyses per rolling 24 hours; after that the resume is analysed by the deterministic rules. Calls are now attributed to the user in `ai_calls`, so deleting and re-uploading does not reset the count.
+- Sign-up and error wording no longer describe the site as private.
+- Tests: API e2e +2 (`resume-limits.e2e-spec`).
+
 ## [Phase 12] Faster page loads — 2026-10-16
 
 - **Render no longer sleeps (D92).** The free API instance slept after 15 idle minutes, so the first visit afterwards hung for 30-60 s; a GitHub Actions job now pings `/health` every 10 minutes.
