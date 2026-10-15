@@ -15,7 +15,7 @@
     "dev:worker": "pnpm --filter @jobsentinel/api dev:worker",
     "worker": "pnpm --filter @jobsentinel/api worker",
     "build": "pnpm -r build",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && pnpm --filter @jobsentinel/web lint --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r typecheck",

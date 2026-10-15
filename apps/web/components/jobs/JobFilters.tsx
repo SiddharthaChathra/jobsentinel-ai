@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useFilterParams } from '@/hooks/useFilterParams';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,8 @@ import { Switch } from '@/components/ui/switch';
 
 export function JobFilters() {
   const { query, updateFilter, setQuery } = useFilterParams();
+  // Captured once, in a state initializer, so render stays pure.
+  const [mountedAt] = useState(() => Date.now());
 
   return (
     <Card className="w-full">
@@ -55,8 +58,11 @@ export function JobFilters() {
           <Select
             value={(() => {
               if (!query.postedAfter) return '60d';
+              // `mountedAt`, not `Date.now()`: reading the clock during render is impure, and the
+              // only use here is bucketing into 7/30/60, where a few hours of drift cannot change
+              // the answer.
               const days = Math.round(
-                (Date.now() - new Date(query.postedAfter).getTime()) / 86400000,
+                (mountedAt - new Date(query.postedAfter).getTime()) / 86400000,
               );
               if (days <= 7) return '7d';
               if (days <= 30) return '30d';
@@ -101,6 +107,36 @@ export function JobFilters() {
               <SelectItem value="EXPIRED">Expired Jobs</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Verification</Label>
+          <Select
+            value={
+              (query.validationStatus ?? []).includes('NEEDS_REVIEW')
+                ? 'INCLUDE_UNCONFIRMED'
+                : 'VERIFIED'
+            }
+            onValueChange={(val) =>
+              // Omitting the param falls back to the API's default of VALID only (docs 03 §3).
+              updateFilter(
+                'validationStatus',
+                val === 'VERIFIED' ? undefined : ['VALID', 'NEEDS_REVIEW'],
+              )
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Verification" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="VERIFIED">Verified only</SelectItem>
+              <SelectItem value="INCLUDE_UNCONFIRMED">Include unconfirmed</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Unconfirmed jobs are usually real — their careers page blocked our check. Each one shows
+            the evidence we gathered.
+          </p>
         </div>
 
         <div className="flex items-center space-x-2">

@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { Loader2, X } from 'lucide-react';
-import type { JobCategory, PreferencesInput, RemotePreference } from '@jobsentinel/types';
+import type {
+  EmploymentType,
+  JobCategory,
+  PreferencesInput,
+  RemotePreference,
+} from '@jobsentinel/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +34,19 @@ const CATEGORIES: { value: JobCategory; label: string }[] = [
   { value: 'MECHANICAL', label: 'Mechanical' },
   { value: 'CIVIL', label: 'Civil' },
   { value: 'OTHER_ENGINEERING', label: 'Other engineering' },
+];
+
+/**
+ * `UNKNOWN` is deliberately offered: most boards never state a contract type, so excluding it
+ * hides the majority of real postings rather than a minority of odd ones.
+ */
+const EMPLOYMENT: { value: EmploymentType; label: string }[] = [
+  { value: 'FULL_TIME', label: 'Full time' },
+  { value: 'INTERNSHIP', label: 'Internship' },
+  { value: 'TRAINEE', label: 'Trainee' },
+  { value: 'CONTRACT', label: 'Contract' },
+  { value: 'PART_TIME', label: 'Part time' },
+  { value: 'UNKNOWN', label: 'Not stated' },
 ];
 
 const REMOTE: { value: RemotePreference; label: string }[] = [
@@ -72,6 +90,18 @@ export default function PreferencesPage() {
     setForm({
       ...form,
       categories: has ? form.categories.filter((c) => c !== value) : [...form.categories, value],
+    });
+  };
+
+  const toggleEmployment = (value: EmploymentType) => {
+    const has = form.employmentTypes.includes(value);
+    // The contract requires at least one, and none would mean no jobs at all.
+    if (has && form.employmentTypes.length === 1) return;
+    setForm({
+      ...form,
+      employmentTypes: has
+        ? form.employmentTypes.filter((t) => t !== value)
+        : [...form.employmentTypes, value],
     });
   };
 
@@ -201,6 +231,35 @@ export default function PreferencesPage() {
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <Label>Contract types</Label>
+              <div className="flex flex-wrap gap-2">
+                {EMPLOYMENT.map((t) => {
+                  const on = form.employmentTypes.includes(t.value);
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleEmployment(t.value)}
+                      className={cn(
+                        'rounded-full border px-3 py-1.5 text-sm transition-colors',
+                        on
+                          ? 'border-primary/40 bg-primary/10 font-medium text-primary'
+                          : 'border-border text-muted-foreground hover:bg-accent',
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Internships and traineeships are where much of the fresher hiring is, so leaving
+                them off narrows the list a long way.
+              </p>
+            </div>
+
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium">Fresher roles only</p>
@@ -258,6 +317,46 @@ export default function PreferencesPage() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Most postings never state pay, so this hides more than you would expect.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="salaryCurrency">Salary currency</Label>
+                <Input
+                  id="salaryCurrency"
+                  maxLength={3}
+                  placeholder="INR"
+                  value={form.salaryCurrency}
+                  onChange={(e) =>
+                    setForm({ ...form, salaryCurrency: e.target.value.toUpperCase() })
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="timezone">Timezone</Label>
+                <Input
+                  id="timezone"
+                  placeholder="Asia/Kolkata"
+                  value={form.timezone}
+                  onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quiet hours and the daily digest follow this, not the server&apos;s clock.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="instantMinScore">Instant alert at match score</Label>
+                <Input
+                  id="instantMinScore"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={form.instantMinScore}
+                  onChange={(e) =>
+                    setForm({ ...form, instantMinScore: Number(e.target.value || 0) })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Below this a match still arrives, in the daily digest instead of straight away.
                 </p>
               </div>
             </div>
