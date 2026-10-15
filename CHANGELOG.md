@@ -9,7 +9,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 - `/auth/callback` also handles `token_hash` links and Supabase's error redirects, and reports why it failed; the login page shows that reason and switches to "Send magic link". It previously sent every failure back to a blank form.
 - `docs/deployment.md` also notes that the API's `WEB_ORIGIN` (CORS) must be the deployed web URL.
 - **GitHub Actions had stopped working (D88).** Every scheduled worker tick failed at install/build since web began depending on `@jobsentinel/types` (the worker's `!@jobsentinel/web...` filter skipped zod), so nothing was scanned on the free-tier setup; CI failed at pnpm setup (version given twice). Fixed both, plus two faults that were hidden behind them: CI's web build now has placeholder public Supabase values, and `db.e2e-spec` skips instead of crashing without secrets.
-- Tests: web 15 (was 3).
+- **Render deploys failed and CORS stayed on localhost (D89).** The API refused to boot with a `WEB_ORIGIN` lacking `https://`, and a trailing slash would have booted but blocked every browser request. Origins are now normalized (scheme defaulted, slash and path dropped, comma-separated list allowed), and `render.yaml` asks for `WEB_ORIGIN` instead of the unused `CORS_ORIGINS`. Reproduced and verified by replaying the Dockerfile on Linux.
+- Tests: web 15 (was 3), config 19 (was 10).
 
 ## [Phase 10] End-to-end pass — 2026-10-15
 
