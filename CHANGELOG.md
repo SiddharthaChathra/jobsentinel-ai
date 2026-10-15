@@ -2,6 +2,14 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Magic-link sign-in on the deployed site — 2026-10-15
+
+- **Cause (D87):** Supabase falls back to the project's Site URL whenever `emailRedirectTo` is not on its Redirect URLs allow-list. The Site URL was `https://jobsentinel.vercel.app` — not this site (`jobsentinel-ai.vercel.app`) and an unclaimed Vercel subdomain — so every magic link, with its one-time token, went to a dead domain anyone could claim. Fix: set the Site URL and Redirect URLs in Supabase (now step 3 of `docs/deployment.md`).
+- The proxy forwards an auth `code`, `token_hash` or Supabase `error` that lands outside `/auth/callback` (e.g. on the Site URL root) instead of discarding it on the way to `/login`.
+- `/auth/callback` also handles `token_hash` links and Supabase's error redirects, and reports why it failed; the login page shows that reason and switches to "Send magic link". It previously sent every failure back to a blank form.
+- `docs/deployment.md` also notes that the API's `WEB_ORIGIN` (CORS) must be the deployed web URL.
+- Tests: web 15 (was 3).
+
 ## [Phase 10] End-to-end pass — 2026-10-15
 
 A full browser walkthrough (sign-in → onboarding → dashboard → jobs → tracker → resume → system) as a throwaway user, plus one live worker tick. The automated suites were green before and after; every defect below was found only by using the product.

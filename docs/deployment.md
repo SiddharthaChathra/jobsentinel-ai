@@ -27,8 +27,9 @@ Render's free web services sleep after 15 minutes without HTTP traffic. A sleepi
 1. **Database.** `pnpm --filter @jobsentinel/api db:migrate`, then `db:seed`. Migrations are never applied automatically — they run deliberately, before the code that needs them.
 2. **API → Render.** Point it at `render.yaml`, then set every `sync: false` secret in the dashboard. Health check is `/health/ready`, which also checks the database, so a deploy with a broken `DATABASE_URL` fails to go live rather than serving errors.
 3. **Web → Vercel.** Root directory `apps/web`. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_API_BASE_URL` (the Render URL) and `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`.
+   - **Supabase → Authentication → URL Configuration.** Set **Site URL** to the web URL (`https://jobsentinel-ai.vercel.app`) and add **Redirect URLs** `https://jobsentinel-ai.vercel.app/**` and `http://localhost:3000/**`. Supabase sends a magic link only to an allow-listed `emailRedirectTo` and otherwise falls back to the Site URL _without saying so_ — a Site URL naming an unclaimed `*.vercel.app` subdomain sent every link (and its one-time token) to a domain anyone could register (D87). Verify with `generateLink` + a manual-redirect fetch: the `Location` must start with the web URL.
 4. **Worker.** Same image or repo, `node dist/worker.js`. Set `TELEGRAM_POLLING=true` here and **nowhere else** — two pollers would fight over one `getUpdates` offset and lose messages.
-5. **Set `APP_BASE_URL`** to the real web URL. Telegram rejects inline buttons pointing at `localhost`, so alerts lose their "View" button until this is a public URL (D56).
+5. **Set `APP_BASE_URL` and `WEB_ORIGIN`** to the real web URL on the API (`WEB_ORIGIN` is the CORS origin; left at localhost, every browser call from the deployed site fails). Telegram rejects inline buttons pointing at `localhost`, so alerts lose their "View" button until this is a public URL (D56).
 
 ## Environment
 

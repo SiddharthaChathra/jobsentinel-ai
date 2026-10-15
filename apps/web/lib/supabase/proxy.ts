@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { strayAuthRedirect } from '@/lib/auth-redirect';
 import { isSupabaseConfigured, publicEnv } from '@/lib/env';
 
 const PUBLIC_PATHS = ['/login', '/signup', '/auth'];
@@ -10,6 +11,11 @@ const PUBLIC_PATHS = ['/login', '/signup', '/auth'];
  * Real authorization happens in the API; this only shapes navigation.
  */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
+  // A sign-in link that landed on the Site URL instead of the callback (its redirect was not on
+  // Supabase's allow-list) would otherwise be redirected to /login with its code thrown away (D87).
+  const stray = strayAuthRedirect(request.nextUrl);
+  if (stray) return NextResponse.redirect(stray);
+
   let response = NextResponse.next({ request });
   if (!isSupabaseConfigured()) return response; // Phase 1 / local dev without Supabase
 

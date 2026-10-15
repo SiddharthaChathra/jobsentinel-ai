@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { authErrorMessage, CALLBACK_PATH, safeNextPath } from '@/lib/auth-redirect';
 import { createClient } from '@/lib/supabase/client';
 
 type Mode = 'password' | 'magic';
@@ -19,11 +20,16 @@ type Status = { kind: 'idle' | 'busy' | 'sent' | 'error'; message?: string };
 export function LoginForm({ configured }: { configured: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
-  const nextPath = params.get('next') ?? '/dashboard';
-  const [mode, setMode] = useState<Mode>('password');
+  const nextPath = safeNextPath(params.get('next'));
+  // Arriving from a failed link, the useful next step is another link.
+  const [mode, setMode] = useState<Mode>(params.get('error') ? 'magic' : 'password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState<Status>({ kind: 'idle' });
+  // A failed magic link comes back as `?error=<reason>`; say why instead of silently resetting.
+  const callbackError = authErrorMessage(params.get('error'));
+  const [status, setStatus] = useState<Status>(
+    callbackError ? { kind: 'error', message: callbackError } : { kind: 'idle' },
+  );
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -39,7 +45,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
       return;
     }
 
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
+    const redirectTo = `${window.location.origin}${CALLBACK_PATH}?next=${encodeURIComponent(nextPath)}`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo: redirectTo },
@@ -116,7 +122,10 @@ export function LoginForm({ configured }: { configured: boolean }) {
         <button
           type="button"
           className="mt-4 w-full text-center text-sm text-muted-foreground underline-offset-4 hover:underline"
-          onClick={() => setMode(mode === 'password' ? 'magic' : 'password')}
+          onClick={() => {
+            setMode(mode === 'password' ? 'magic' : 'password');
+            setStatus({ kind: 'idle' });
+          }}
         >
           {mode === 'password' ? 'Email me a magic link instead' : 'Use password instead'}
         </button>
