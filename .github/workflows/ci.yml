@@ -35,9 +35,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Packages first: the type-aware lint rules resolve @jobsentinel/* through their built
+      # `dist` typings. Linted before the build, every import is an error type (1121 errors on a
+      # fresh checkout; a dev machine only passes because its packages are already built).
+      - run: pnpm -r --filter './packages/*' build
       - run: pnpm lint
       - run: pnpm format:check
-      - run: pnpm -r --filter './packages/*' build
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm --filter @jobsentinel/api test:e2e
