@@ -6,7 +6,7 @@ import type { AIRequest, AIResult, AIService } from '@jobsentinel/ai';
 import { normalizeCompanyName } from '@jobsentinel/validation';
 import { AI_SERVICE } from '../src/common/ai/ai.module';
 import { DB, type Db } from '../src/common/db/db.module';
-import { companies, jobEvents, jobs, preferences, users } from '../src/common/db/schema';
+import { companies, jobEvents, jobs, preferences, savedJobs, users } from '../src/common/db/schema';
 import { HTTP_CLIENT } from '../src/common/http/http.module';
 import { ClassificationService } from '../src/jobs/classification.service';
 import { WorkerModule } from '../src/worker.module';
@@ -327,5 +327,37 @@ describeIf('classification stage (integration)', () => {
     const requeued = await service.requeueFiltered(1000, mineIds);
     expect(requeued).toBe(before);
     expect((await mine(['DISCOVERED'])).length).toBe(before);
+  }, 60_000);
+
+  it('re-filters listed jobs that fail the current gates, never one the user saved (D86)', async () => {
+    const senior = 'Senior Staff Software Engineer, Platform';
+    const seniorText = 'You have 8+ years of professional experience building distributed systems.';
+    const listedSenior = await seedJob(senior, seniorText, { status: 'MATCHED' });
+    const savedSenior = await seedJob(`${senior} (saved)`, seniorText, { status: 'VALID' });
+    const fresher = await seedJob(
+      'Software Engineer - Fresher',
+      'Freshers welcome. 0-1 years of experience. Graduates of any batch may apply.',
+      { status: 'VALID' },
+    );
+    await db.insert(savedJobs).values({ userId, jobId: savedSenior });
+    const ids = [listedSenior, savedSenior, fresher];
+
+    // A dry run reports without writing.
+    const dry = await service.refilterListed({ apply: false, jobIds: ids });
+    expect(dry.checked).toBe(2); // the saved job is not even considered
+    expect(dry.filtered.map((f) => f.id)).toEqual([listedSenior]);
+    expect((await statusOf(listedSenior)).status).toBe('MATCHED');
+
+    await service.refilterListed({ apply: true, jobIds: ids });
+    expect((await statusOf(listedSenior)).status).toBe('FILTERED_OUT');
+    expect((await statusOf(savedSenior)).status).toBe('VALID');
+    expect((await statusOf(fresher)).status).toBe('VALID');
+    const events = await db
+      .select({ detail: jobEvents.detail })
+      .from(jobEvents)
+      .where(and(eq(jobEvents.jobId, listedSenior), eq(jobEvents.type, 'FILTERED_OUT')));
+    expect(JSON.stringify(events)).toContain('re-filtered');
+
+    await db.delete(savedJobs).where(eq(savedJobs.jobId, savedSenior));
   }, 60_000);
 });

@@ -51,6 +51,18 @@ interface MonitoringPrefs {
 
 const AI_CONFIDENCE_FLOOR = 0.6;
 
+/** Statuses a job reaches only after passing classification, and before it is closed. */
+const REFILTERABLE = [
+  'VALIDATING',
+  'VALID',
+  'SUSPICIOUS',
+  'NEEDS_REVIEW',
+  'MATCHED',
+  'AI_PENDING',
+  'NOTIFY_PENDING',
+  'NOTIFIED',
+] as const;
+
 /**
  * Pipeline stage DISCOVERED → CLASSIFIED | FILTERED_OUT (docs 09 §4, spec §7).
  * Rules decide first; the AI is asked only for genuinely ambiguous jobs that survive the
@@ -259,6 +271,57 @@ export class ClassificationService {
                 ? `targets the ${jobBatchYear} batch`
                 : category.reason,
     };
+  }
+
+  /**
+   * Re-applies today's gates to jobs that already passed classification (D86).
+   *
+   * Classification runs once, so a job admitted before a gate existed (India-only, D73; the
+   * stated-years rule, D59; batch years) stays listed, scored and alertable forever. This runs the
+   * same `decide()` with the same preferences, but rules-only: without the AI a job can only come
+   * out *as or more* visible than the live pipeline would leave it, so this can filter a job but
+   * never un-filter one. Jobs anyone saved or is tracking past "viewed" are left alone — a
+   * reclassification must not take a job out from under the user.
+   *
+   * `jobIds` scopes the run; an integration test must pass it (D77).
+   */
+  async refilterListed(
+    opts: { apply: boolean; jobIds?: string[]; batch?: number } = { apply: false },
+  ): Promise<{ checked: number; filtered: { id: string; title: string; reason: string }[] }> {
+    const prefs = await this.monitoringPrefs();
+    const batch = opts.batch ?? 200;
+    const filtered: { id: string; title: string; reason: string }[] = [];
+    let checked = 0;
+    let after = '00000000-0000-0000-0000-000000000000';
+    for (;;) {
+      const page = await this.db
+        .select()
+        .from(jobs)
+        .where(
+          and(
+            inArray(jobs.status, [...REFILTERABLE]),
+            sql`${jobs.id} > ${after}::uuid`,
+            sql`not exists (select 1 from saved_jobs s where s.job_id = ${jobs.id})`,
+            sql`not exists (select 1 from applications a where a.job_id = ${jobs.id} and a.status <> 'VIEWED')`,
+            ...(opts.jobIds ? [inArray(jobs.id, opts.jobIds)] : []),
+          ),
+        )
+        .orderBy(jobs.id)
+        .limit(batch);
+      if (page.length === 0) break;
+      after = page[page.length - 1]!.id;
+      checked += page.length;
+
+      const decisions: JobDecision[] = [];
+      for (const job of page) {
+        const decision = await this.decide(job, prefs, false);
+        if (decision.status !== 'FILTERED_OUT') continue;
+        decisions.push({ ...decision, reason: `re-filtered: ${decision.reason}` });
+        filtered.push({ id: job.id, title: job.title, reason: decision.reason });
+      }
+      if (opts.apply && decisions.length > 0) await this.persist(decisions);
+    }
+    return { checked, filtered };
   }
 
   /** Two statements per batch (one UPDATE ... FROM VALUES, one bulk event insert), in one transaction. */

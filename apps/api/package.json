@@ -26,7 +26,8 @@
     "renormalize:locations": "node dist/scripts/renormalize-locations.js",
     "repair:validation": "node dist/scripts/repair-poisoned-validation.js",
     "repair:domains": "node dist/scripts/repair-borrowed-domains.js",
-    "repair:adzuna-locations": "node dist/scripts/repair-adzuna-locations.js"
+    "repair:adzuna-locations": "node dist/scripts/repair-adzuna-locations.js",
+    "refilter": "node dist/scripts/refilter-listed.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",
