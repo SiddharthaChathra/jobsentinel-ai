@@ -38,9 +38,12 @@ services:
         sync: false
       - key: ALLOWED_SIGNUP_EMAILS
         sync: false
+      # The deployed web URL, e.g. https://jobsentinel-ai.vercel.app (links in Telegram alerts).
       - key: APP_BASE_URL
         sync: false
-      - key: CORS_ORIGINS
+      # Browser origins allowed by CORS — the deployed web URL, comma-separated if several. This
+      # used to be listed as CORS_ORIGINS, which nothing reads, so CORS stayed on localhost (D89).
+      - key: WEB_ORIGIN
         sync: false
       # The API must not poll Telegram — only the worker owns getUpdates, or the two
       # would fight over the same update offset.

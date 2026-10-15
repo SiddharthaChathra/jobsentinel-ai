@@ -1,4 +1,4 @@
-import { assertEnv, loadEnv, parseEmailList } from './env';
+import { assertEnv, loadEnv, parseEmailList, toOrigin } from './env';
 
 describe('loadEnv', () => {
   it('applies defaults when variables are absent', () => {
@@ -66,5 +66,41 @@ describe('parseEmailList', () => {
   });
   it('dedupes and lowercases', () => {
     expect(parseEmailList('A@x.com,a@x.com,b@x.com')).toEqual(['a@x.com', 'b@x.com']);
+  });
+});
+
+// D89: Render refused to boot on a WEB_ORIGIN without a scheme, and a trailing slash would have
+// booted but blocked every CORS request.
+describe('web origins', () => {
+  it.each([
+    ['jobsentinel-ai.vercel.app', 'https://jobsentinel-ai.vercel.app'],
+    ['https://jobsentinel-ai.vercel.app/', 'https://jobsentinel-ai.vercel.app'],
+    ['  https://jobsentinel-ai.vercel.app/login ', 'https://jobsentinel-ai.vercel.app'],
+    ['HTTPS://JobSentinel-AI.vercel.app', 'https://jobsentinel-ai.vercel.app'],
+    ['http://localhost:3000', 'http://localhost:3000'],
+    ['localhost:3000', 'https://localhost:3000'],
+  ])('%s -> %s', (raw, origin) => {
+    expect(toOrigin(raw)).toBe(origin);
+  });
+
+  it('rejects things that are not web addresses', () => {
+    expect(toOrigin('ftp://example.com')).toBeNull();
+    expect(toOrigin('not a url')).toBeNull();
+    expect(toOrigin('')).toBeNull();
+  });
+
+  it('accepts a comma-separated WEB_ORIGIN list and normalizes APP_BASE_URL', () => {
+    const env = loadEnv({
+      WEB_ORIGIN:
+        'jobsentinel-ai.vercel.app/, http://localhost:3000,https://jobsentinel-ai.vercel.app',
+      APP_BASE_URL: 'https://jobsentinel-ai.vercel.app/',
+    });
+    expect(env.WEB_ORIGIN).toEqual(['https://jobsentinel-ai.vercel.app', 'http://localhost:3000']);
+    expect(env.APP_BASE_URL).toBe('https://jobsentinel-ai.vercel.app');
+    expect(loadEnv({}).WEB_ORIGIN).toEqual(['http://localhost:3000']);
+  });
+
+  it('still fails clearly on a value that cannot be an origin', () => {
+    expect(() => loadEnv({ WEB_ORIGIN: 'https://ok.example, not a url' })).toThrow(/WEB_ORIGIN/);
   });
 });

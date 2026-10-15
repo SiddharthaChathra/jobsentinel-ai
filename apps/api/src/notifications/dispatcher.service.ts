@@ -164,7 +164,7 @@ export class DispatcherService {
     text: string;
     buttons?: InlineButton[][];
   } {
-    const dashboard = this.env.APP_BASE_URL ?? 'http://localhost:3000';
+    const dashboard = this.env.APP_BASE_URL;
     if (row.type === 'INSTANT') {
       const job = reviveAlert(row.payload as JobAlertData & { fallbackNote?: boolean });
       return {

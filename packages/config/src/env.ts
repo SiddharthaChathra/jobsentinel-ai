@@ -43,6 +43,59 @@ const optUrl = () => z.preprocess(emptyToUndefined, z.url().optional());
 const strDefault = (d: string) => z.preprocess(emptyToUndefined, z.string().min(1).default(d));
 const urlDefault = (d: string) => z.preprocess(emptyToUndefined, z.url().default(d));
 
+/**
+ * A site address as people paste it — `example.com`, `https://example.com/`, ` https://x.com/a ` —
+ * reduced to the bare origin (`https://example.com`), or null when it is not an http(s) address.
+ *
+ * Origins are compared byte-for-byte by browsers, so `https://site/` (trailing slash) silently
+ * blocks every CORS request, and a value without a scheme failed validation and stopped the API
+ * from booting at all on Render (D89).
+ */
+export function toOrigin(raw: string): string | null {
+  const s = raw.trim();
+  if (!s) return null;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(s) ? s : `https://${s}`;
+  try {
+    const url = new URL(withScheme);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+const originDefault = (d: string) =>
+  z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .default(d)
+      .transform((s, ctx) => {
+        const origin = toOrigin(s);
+        if (origin) return origin;
+        ctx.addIssue({ code: 'custom', message: `not a web address: "${s}"` });
+        return z.NEVER;
+      }),
+  );
+
+/** Comma-separated origins (e.g. the deployed site and localhost), each normalized by `toOrigin`. */
+const originList = (d: string) =>
+  z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .default(d)
+      .transform((s, ctx) => {
+        const parts = s.split(',').filter((p) => p.trim() !== '');
+        const origins = parts.map(toOrigin);
+        const bad = parts.filter((_, i) => origins[i] === null);
+        if (bad.length > 0 || parts.length === 0) {
+          ctx.addIssue({ code: 'custom', message: `not a web address: "${bad.join('", "')}"` });
+          return z.NEVER;
+        }
+        return [...new Set(origins as string[])];
+      }),
+  );
+
 /** `*` (anyone) or a deduplicated, lowercased list of emails. */
 export type EmailList = '*' | string[];
 
@@ -76,7 +129,7 @@ export const envSchema = z
       emptyToUndefined,
       z.enum(['development', 'test', 'production']).default('development'),
     ),
-    APP_BASE_URL: urlDefault('http://localhost:3000'),
+    APP_BASE_URL: originDefault('http://localhost:3000'),
     API_BASE_URL: urlDefault('http://localhost:4000'),
     LOG_LEVEL: z.preprocess(
       emptyToUndefined,
@@ -94,7 +147,8 @@ export const envSchema = z
 
     // ── API ─────────────────────────────────────────────────────────────────
     PORT: int(4000, { min: 1, max: 65535 }),
-    WEB_ORIGIN: urlDefault('http://localhost:3000'),
+    // Browser origins allowed by CORS: comma-separated, e.g. the Vercel URL and localhost (D89).
+    WEB_ORIGIN: originList('http://localhost:3000'),
     ALLOWED_SIGNUP_EMAILS: emailList('*'),
     ADMIN_EMAILS: emailList([]),
     ENABLE_API_DOCS: bool(false),
