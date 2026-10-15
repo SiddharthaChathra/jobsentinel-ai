@@ -48,7 +48,10 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
   }
-  if (user && (pathname === '/login' || pathname === '/signup')) {
+  // Not while an error is shown: a page that rejects this session sends it to /login, and
+  // bouncing it back to /dashboard from here made an endless redirect loop (D90).
+  const showingError = request.nextUrl.searchParams.has('error');
+  if (user && !showingError && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     url.search = '';

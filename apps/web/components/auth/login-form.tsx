@@ -6,7 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { authErrorMessage, CALLBACK_PATH, safeNextPath } from '@/lib/auth-redirect';
+import {
+  authErrorMessage,
+  CALLBACK_PATH,
+  requestLinkErrorMessage,
+  safeNextPath,
+} from '@/lib/auth-redirect';
 import { createClient } from '@/lib/supabase/client';
 
 type Mode = 'password' | 'magic';
@@ -48,9 +53,11 @@ export function LoginForm({ configured }: { configured: boolean }) {
     const redirectTo = `${window.location.origin}${CALLBACK_PATH}?next=${encodeURIComponent(nextPath)}`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: redirectTo },
+      // Sign-in only: without this, any email typed here created a Supabase account, which the
+      // API then refused (ALLOWED_SIGNUP_EMAILS) — accounts for strangers, and a confusing dead end.
+      options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
     });
-    if (error) return setStatus({ kind: 'error', message: error.message });
+    if (error) return setStatus({ kind: 'error', message: requestLinkErrorMessage(error) });
     setStatus({ kind: 'sent', message: 'Check your inbox for a sign-in link.' });
   }
 

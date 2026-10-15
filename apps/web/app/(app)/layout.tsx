@@ -17,7 +17,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       const { data: me } = await api.get<Me>('/me');
       if (!me.onboardingCompleted) redirect('/onboarding');
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) redirect('/login?error=not_allowed');
+      if (err instanceof ApiError && err.status === 403)
+        redirect('/auth/signout?error=not_allowed');
       if (!(err instanceof ApiError)) throw err; // redirect() throws; let it propagate
       // API down: render the shell anyway so the user sees an error state instead of a loop.
     }

@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
       if (me.onboardingCompleted) redirect('/dashboard');
     } catch (err) {
       if (!(err instanceof ApiError)) throw err;
-      if (err.status === 403) redirect('/login?error=not_allowed');
+      if (err.status === 403) redirect('/auth/signout?error=not_allowed');
     }
   }
   return (

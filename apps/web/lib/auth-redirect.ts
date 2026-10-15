@@ -10,7 +10,8 @@
 
 export const CALLBACK_PATH = '/auth/callback';
 
-export type AuthFailure = 'link_expired' | 'different_browser' | 'link_invalid' | 'unknown';
+export type AuthFailure =
+  'link_expired' | 'different_browser' | 'link_invalid' | 'not_allowed' | 'unknown';
 
 /** Same-origin relative paths only: `next` comes from a URL anyone can craft. */
 export function safeNextPath(next: string | null | undefined, fallback = '/dashboard'): string {
@@ -74,13 +75,33 @@ const MESSAGES: Record<AuthFailure, string> = {
   different_browser:
     'Open the sign-in link in the same browser you requested it from, or request a new link here.',
   link_invalid: 'That sign-in link is not valid any more. Request a new one below.',
+  not_allowed:
+    'This email is not allowed to use this JobSentinel. Sign in with the account it was set up for.',
   unknown: 'Sign-in could not be completed. Request a new link, or use your password.',
 };
+
+export function isAuthFailure(value: string): value is AuthFailure {
+  return value in MESSAGES;
+}
 
 /** Message for the login page's `?error=` parameter; null when there is nothing to show. */
 export function authErrorMessage(reason: string | null): string | null {
   if (!reason) return null;
-  if (reason in MESSAGES) return MESSAGES[reason as AuthFailure];
+  if (isAuthFailure(reason)) return MESSAGES[reason];
   // Older callback builds used a single generic code.
   return MESSAGES.unknown;
+}
+
+/**
+ * Message for an error returned while *requesting* a link. With `shouldCreateUser: false`,
+ * Supabase answers an unknown email with "Signups not allowed for otp", which reads as a fault.
+ */
+export function requestLinkErrorMessage(error: { code?: string | null; message: string }): string {
+  if (error.code === 'otp_disabled' || /signups not allowed/i.test(error.message)) {
+    return 'No JobSentinel account uses this email. Check the address, or sign in with your password.';
+  }
+  if (error.code === 'over_email_send_rate_limit' || /rate limit/i.test(error.message)) {
+    return 'Too many sign-in emails were sent. Wait a few minutes, then try again.';
+  }
+  return error.message;
 }

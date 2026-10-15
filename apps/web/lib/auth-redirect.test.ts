@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   authErrorMessage,
   classifyAuthFailure,
+  requestLinkErrorMessage,
   safeNextPath,
   strayAuthRedirect,
 } from './auth-redirect';
@@ -74,10 +75,26 @@ describe('classifyAuthFailure', () => {
   });
 
   it('gives every reason, and the legacy generic code, a message', () => {
-    for (const r of ['link_expired', 'different_browser', 'link_invalid', 'unknown']) {
+    for (const r of [
+      'link_expired',
+      'different_browser',
+      'link_invalid',
+      'not_allowed',
+      'unknown',
+    ]) {
       expect(authErrorMessage(r)).toBeTruthy();
     }
     expect(authErrorMessage('auth_callback_failed')).toBeTruthy();
     expect(authErrorMessage(null)).toBeNull();
+  });
+});
+
+describe('requestLinkErrorMessage', () => {
+  it('explains an unknown email instead of echoing Supabase', () => {
+    expect(
+      requestLinkErrorMessage({ code: 'otp_disabled', message: 'Signups not allowed for otp' }),
+    ).toMatch(/No JobSentinel account/);
+    expect(requestLinkErrorMessage({ message: 'email rate limit exceeded' })).toMatch(/Too many/);
+    expect(requestLinkErrorMessage({ message: 'Something else' })).toBe('Something else');
   });
 });
