@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Faster page loads — 2026-10-16
+
+- **Render no longer sleeps (D92).** The free API instance slept after 15 idle minutes, so the first visit afterwards hung for 30-60 s; a GitHub Actions job now pings `/health` every 10 minutes.
+- **Vercel renders in Mumbai.** Server code ran in US East by default while the user, API and database are in Asia; `apps/web/vercel.json` pins it to `bom1`.
+
 ## [Phase 12] Sign-up and password reset — 2026-10-16
 
 - **`/signup`** creates an account (email, password, confirmation; 8+ characters). It asks the API's new public `POST /auth/signup-check` first, so an email outside `ALLOWED_SIGNUP_EMAILS` is refused before Supabase creates anything. A confirmation email follows; its link signs the user in and continues to onboarding (D91).
