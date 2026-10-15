@@ -40,8 +40,10 @@ export function JobCard({ job }: { job: JobCardType }) {
         </span>
       )}
 
-      <div className="flex items-start gap-3 sm:gap-4">
-        <div className="min-w-0 flex-1">
+      {/* Wraps rather than shrinks: in a narrow column (the Applications board) a `min-w-0` title
+          beside the score would be squeezed to nothing and its clamped text would vanish. */}
+      <div className="flex flex-wrap items-start gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1 basis-40">
           <Link
             href={`/jobs/${job.id}`}
             className="line-clamp-2 text-base font-semibold leading-snug tracking-tight hover:text-primary sm:text-[17px]"
@@ -120,7 +122,7 @@ export function JobCard({ job }: { job: JobCardType }) {
         )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
         <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
           {job.postedAt ? <RelativeTime date={job.postedAt} /> : 'Date unknown'}

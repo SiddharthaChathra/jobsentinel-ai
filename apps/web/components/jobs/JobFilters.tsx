@@ -15,6 +15,40 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+// One list per control feeds both the options and Base UI's `items`, which is what lets the
+// closed trigger show "Newest First" instead of the raw value `newest`.
+const SORT_ITEMS = [
+  { value: 'newest', label: 'Newest First' },
+  { value: 'score', label: 'Best Match' },
+  { value: 'posted', label: 'Recently Posted' },
+];
+const POSTED_ITEMS = [
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '60d', label: 'Last 60 days' },
+];
+const STATUS_ITEMS = [
+  { value: 'ACTIVE', label: 'Active Jobs' },
+  { value: 'ALL', label: 'All Jobs' },
+  { value: 'EXPIRED', label: 'Expired Jobs' },
+];
+const VERIFICATION_ITEMS = [
+  { value: 'VERIFIED', label: 'Verified only' },
+  { value: 'INCLUDE_UNCONFIRMED', label: 'Include unconfirmed' },
+];
+
+function Options({ items }: { items: { value: string; label: string }[] }) {
+  return (
+    <SelectContent>
+      {items.map((item) => (
+        <SelectItem key={item.value} value={item.value}>
+          {item.label}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  );
+}
+
 export function JobFilters() {
   const { query, updateFilter, setQuery } = useFilterParams();
   // Captured once, in a state initializer, so render stays pure.
@@ -40,22 +74,23 @@ export function JobFilters() {
         </div>
 
         <div className="space-y-2">
-          <Label>Sort By</Label>
-          <Select value={query.sort || 'newest'} onValueChange={(val) => updateFilter('sort', val)}>
-            <SelectTrigger>
+          <Label htmlFor="filter-sort">Sort By</Label>
+          <Select
+            items={SORT_ITEMS}
+            value={query.sort || 'newest'}
+            onValueChange={(val) => updateFilter('sort', val)}
+          >
+            <SelectTrigger id="filter-sort" className="w-full">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="score">Best Match</SelectItem>
-              <SelectItem value="posted">Recently Posted</SelectItem>
-            </SelectContent>
+            <Options items={SORT_ITEMS} />
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Date Posted</Label>
+          <Label htmlFor="filter-posted">Date Posted</Label>
           <Select
+            items={POSTED_ITEMS}
             value={(() => {
               if (!query.postedAfter) return '60d';
               // `mountedAt`, not `Date.now()`: reading the clock during render is impure, and the
@@ -81,37 +116,31 @@ export function JobFilters() {
               }
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger id="filter-posted" className="w-full">
               <SelectValue placeholder="Date Posted" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="60d">Last 60 days</SelectItem>
-            </SelectContent>
+            <Options items={POSTED_ITEMS} />
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Status</Label>
+          <Label htmlFor="filter-status">Status</Label>
           <Select
+            items={STATUS_ITEMS}
             value={query.status || 'ACTIVE'}
             onValueChange={(val) => updateFilter('status', val)}
           >
-            <SelectTrigger>
+            <SelectTrigger id="filter-status" className="w-full">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ACTIVE">Active Jobs</SelectItem>
-              <SelectItem value="ALL">All Jobs</SelectItem>
-              <SelectItem value="EXPIRED">Expired Jobs</SelectItem>
-            </SelectContent>
+            <Options items={STATUS_ITEMS} />
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Verification</Label>
+          <Label htmlFor="filter-verification">Verification</Label>
           <Select
+            items={VERIFICATION_ITEMS}
             value={
               (query.validationStatus ?? []).includes('NEEDS_REVIEW')
                 ? 'INCLUDE_UNCONFIRMED'
@@ -125,13 +154,10 @@ export function JobFilters() {
               )
             }
           >
-            <SelectTrigger>
+            <SelectTrigger id="filter-verification" className="w-full">
               <SelectValue placeholder="Verification" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="VERIFIED">Verified only</SelectItem>
-              <SelectItem value="INCLUDE_UNCONFIRMED">Include unconfirmed</SelectItem>
-            </SelectContent>
+            <Options items={VERIFICATION_ITEMS} />
           </Select>
           <p className="text-xs text-muted-foreground">
             Unconfirmed jobs are usually real — their careers page blocked our check. Each one shows

@@ -17,9 +17,11 @@ export function useSystemStatus() {
   });
 }
 
-export function useSources() {
+/** `GET /sources` is admin-only (403 otherwise), so callers pass whether the user is an admin. */
+export function useSources(enabled = true) {
   const api = useApi();
   return useQuery({
+    enabled,
     queryKey: queryKeys.system.sources,
     queryFn: async () => {
       const { data } = await api.get<SourceSummary[]>('/sources');

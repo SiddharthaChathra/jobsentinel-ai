@@ -12,6 +12,8 @@ export const queryKeys = {
   user: {
     all: ['user'] as const,
     profile: ['user', 'profile'] as const,
+    /** `GET /profile` — the confirmed resume profile (`profile` above is `GET /me`). */
+    resumeProfile: ['user', 'resume-profile'] as const,
     preferences: ['user', 'preferences'] as const,
     settings: ['user', 'settings'] as const,
     resume: ['user', 'resume'] as const,

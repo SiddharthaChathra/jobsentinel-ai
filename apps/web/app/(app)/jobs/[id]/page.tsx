@@ -29,7 +29,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 space-y-6">
+    // AppShell already renders the page <main> and its padding; a second one nests landmarks.
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <header className="space-y-4 pb-4 border-b">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="space-y-2">
@@ -87,6 +88,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

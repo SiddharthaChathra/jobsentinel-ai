@@ -1,6 +1,7 @@
 'use client';
 
 import { useSystemStatus, useSources, useTriggerScan } from '@/hooks/useSystem';
+import { useMe } from '@/hooks/useUser';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,11 +9,14 @@ import { Loader2, Activity, Database, Server, RefreshCw } from 'lucide-react';
 import { RelativeTime } from '@/components/common/RelativeTime';
 
 export default function SystemPage() {
+  const { data: me, isLoading: meLoading } = useMe();
+  const isAdmin = me?.user.isAdmin === true;
+  const { data: sources, isLoading: sourcesLoading } = useSources(isAdmin);
   const { data: status, isLoading: statusLoading } = useSystemStatus();
-  const { data: sources, isLoading: sourcesLoading } = useSources();
   const scanMutation = useTriggerScan();
 
-  if (statusLoading || sourcesLoading) {
+  // `isLoading` is false for a disabled query, so a non-admin never waits on the sources table.
+  if (statusLoading || meLoading || sourcesLoading) {
     return (
       <div className="p-8 flex justify-center">
         <Loader2 className="animate-spin h-6 w-6" />
@@ -96,70 +100,73 @@ export default function SystemPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Sources Configuration</CardTitle>
-          <CardDescription>Managed job boards and career pages.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <div className="relative w-full overflow-auto">
-              <table className="w-full caption-bottom text-sm">
-                <thead className="[&_tr]:border-b bg-muted/50">
-                  <tr className="border-b transition-colors">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Name
-                    </th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Status
-                    </th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Last Scan
-                    </th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Failures
-                    </th>
-                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="[&_tr:last-child]:border-0">
-                  {sources?.map((source) => (
-                    <tr key={source.id} className="border-b transition-colors hover:bg-muted/50">
-                      <td className="p-4 align-middle font-medium">{source.name}</td>
-                      <td className="p-4 align-middle">
-                        <Badge variant={source.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                          {source.status}
-                        </Badge>
-                      </td>
-                      <td className="p-4 align-middle">
-                        {source.lastSuccessfulScan ? (
-                          <RelativeTime date={source.lastSuccessfulScan} />
-                        ) : (
-                          'Never'
-                        )}
-                      </td>
-                      <td className="p-4 align-middle">{source.consecutiveFailures}</td>
-                      <td className="p-4 align-middle text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => scanMutation.mutate(source.id)}
-                          disabled={scanMutation.isPending || !source.enabled}
-                        >
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Scan Now
-                        </Button>
-                      </td>
+      {/* Source management is admin-only in the API; anyone else would just see an empty table. */}
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sources Configuration</CardTitle>
+            <CardDescription>Managed job boards and career pages.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <div className="relative w-full overflow-auto">
+                <table className="w-full caption-bottom text-sm">
+                  <thead className="[&_tr]:border-b bg-muted/50">
+                    <tr className="border-b transition-colors">
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        Name
+                      </th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        Last Scan
+                      </th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        Failures
+                      </th>
+                      <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="[&_tr:last-child]:border-0">
+                    {sources?.map((source) => (
+                      <tr key={source.id} className="border-b transition-colors hover:bg-muted/50">
+                        <td className="p-4 align-middle font-medium">{source.name}</td>
+                        <td className="p-4 align-middle">
+                          <Badge variant={source.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                            {source.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 align-middle">
+                          {source.lastSuccessfulScan ? (
+                            <RelativeTime date={source.lastSuccessfulScan} />
+                          ) : (
+                            'Never'
+                          )}
+                        </td>
+                        <td className="p-4 align-middle">{source.consecutiveFailures}</td>
+                        <td className="p-4 align-middle text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => scanMutation.mutate(source.id)}
+                            disabled={scanMutation.isPending || !source.enabled}
+                          >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Scan Now
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

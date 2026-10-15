@@ -42,7 +42,7 @@ export default function ApplicationsPage() {
       />
 
       {isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {STATUS_COLUMNS.map((c) => (
             <div
               key={c.id}
@@ -69,7 +69,7 @@ export default function ApplicationsPage() {
       )}
 
       {!isLoading && total > 0 && (
-        <div className="grid gap-4 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {byStatus.map((col) => (
             <section key={col.id} className="min-w-0">
               <header className="mb-2 flex items-baseline justify-between gap-2">

@@ -15,6 +15,21 @@ import type { ApplicationStatus } from '@jobsentinel/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useOptimistic, startTransition } from 'react';
 
+// Feeds both the options and Base UI's `items`, so the closed trigger shows "Not Tracking" rather
+// than the raw value `UNTRACKED`. NOT_INTERESTED is set elsewhere but must still have a label.
+const STATUS_ITEMS = [
+  { value: 'UNTRACKED', label: 'Not Tracking' },
+  { value: 'VIEWED', label: 'Viewed' },
+  { value: 'APPLIED', label: 'Applied' },
+  { value: 'INTERVIEW', label: 'Interview' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'SELECTED', label: 'Selected' },
+];
+const STATUS_LABELS: Record<string, string> = {
+  ...Object.fromEntries(STATUS_ITEMS.map((i) => [i.value, i.label])),
+  NOT_INTERESTED: 'Not interested',
+};
+
 export function TrackerActions({ job }: { job: JobDetail }) {
   const saveMutation = useSaveJob();
   const trackerMutation = useTracker();
@@ -36,8 +51,10 @@ export function TrackerActions({ job }: { job: JobDetail }) {
 
   // Record a view when the component mounts (the user opened the detail page).
   useEffect(() => {
+    // The server records VIEWED, so refresh like every other tracker change; otherwise the status
+    // control keeps saying "Not Tracking" for a job the Applications board lists as Viewed.
     if (job.isNew) {
-      viewMutation.mutate(job.id);
+      viewMutation.mutate(job.id, refresh);
     }
     // Only fire once on mount — not when job changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,8 +84,11 @@ export function TrackerActions({ job }: { job: JobDetail }) {
         )}
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Status:</span>
+          <span id="tracker-status-label" className="text-sm text-muted-foreground">
+            Status:
+          </span>
           <Select
+            items={STATUS_LABELS}
             value={optimisticStatus}
             onValueChange={(val: string | null) => {
               if (!val) return;
@@ -83,16 +103,15 @@ export function TrackerActions({ job }: { job: JobDetail }) {
               trackerMutation.mutate({ jobId: job.id, status: val as ApplicationStatus }, refresh);
             }}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[160px]" aria-labelledby="tracker-status-label">
               <SelectValue placeholder="Update Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="UNTRACKED">Not Tracking</SelectItem>
-              <SelectItem value="VIEWED">Viewed</SelectItem>
-              <SelectItem value="APPLIED">Applied</SelectItem>
-              <SelectItem value="INTERVIEW">Interview</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-              <SelectItem value="SELECTED">Selected</SelectItem>
+              {STATUS_ITEMS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
