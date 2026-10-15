@@ -7,6 +7,7 @@ import {
   contentHash,
   extractSkills,
   htmlToText,
+  isSameCompany,
   normalizeCompanyName,
   normalizeLocation,
   normalizeTitle,
@@ -119,6 +120,12 @@ export function normalizeRawJob(raw: RawJob, opts: NormalizeOptions = {}): Norma
   const companyName = (raw.companyName ?? opts.fallbackCompanyName ?? '')
     .replace(/\s+/g, ' ')
     .trim();
+  // The source's domain belongs to the source's company only. A keyword search ("Adzuna: Cisco
+  // India") also returns other employers' postings, and lending them cisco.com let company
+  // verification "verify" Brillio against Cisco's website (D83).
+  const sameAsSource =
+    !raw.companyName ||
+    (!!opts.fallbackCompanyName && isSameCompany(raw.companyName, opts.fallbackCompanyName));
   const sourceUrl = cleanUrl(raw.sourceUrl);
   if (!title) throw new Error('normalize: empty title');
   if (!companyName) throw new Error('normalize: unknown company');
@@ -144,7 +151,7 @@ export function normalizeRawJob(raw: RawJob, opts: NormalizeOptions = {}): Norma
     category: role.category,
     companyName,
     normalizedCompany: normalizeCompanyName(companyName),
-    companyDomain: raw.companyDomain ?? opts.fallbackCompanyDomain ?? null,
+    companyDomain: raw.companyDomain ?? (sameAsSource ? opts.fallbackCompanyDomain : null) ?? null,
     description: text,
     descriptionHtml: null,
     requirements: extractRequirements(text),

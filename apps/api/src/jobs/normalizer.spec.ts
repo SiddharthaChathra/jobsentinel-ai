@@ -73,6 +73,25 @@ describe('normalizeRawJob', () => {
     );
     expect(j.companyName).toBe('Groww');
     expect(j.companyDomain).toBe('groww.in');
+    // A keyword search ("Adzuna: Cisco India") returns other employers' postings; giving them the
+    // source's domain verified Brillio as cisco.com.
+    const other = normalizeRawJob(
+      { ...raw, companyName: 'Brillio' },
+      { fallbackCompanyName: 'Cisco', fallbackCompanyDomain: 'cisco.com' },
+    );
+    expect(other.companyName).toBe('Brillio');
+    expect(other.companyDomain).toBeNull();
+    const same = normalizeRawJob(
+      { ...raw, companyName: 'Cisco Systems' },
+      { fallbackCompanyName: 'Cisco', fallbackCompanyDomain: 'cisco.com' },
+    );
+    expect(same.companyDomain).toBe('cisco.com');
+    // The same employer under its full name keeps the domain (Adzuna: HPE India).
+    const alias = normalizeRawJob(
+      { ...raw, companyName: 'Hewlett Packard Enterprise' },
+      { fallbackCompanyName: 'HPE', fallbackCompanyDomain: 'hpe.com' },
+    );
+    expect(alias.companyDomain).toBe('hpe.com');
     expect(() => normalizeRawJob({ ...raw, companyName: undefined })).toThrow(/unknown company/);
     expect(() => normalizeRawJob({ ...raw, title: '   ' })).toThrow(/empty title/);
     expect(() => normalizeRawJob({ ...raw, sourceUrl: 'javascript:void(0)' })).toThrow(
