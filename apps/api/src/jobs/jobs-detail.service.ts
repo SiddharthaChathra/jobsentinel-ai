@@ -91,7 +91,7 @@ export class JobsDetailService {
         urlStatus: validation?.urlStatus ?? null,
         httpStatus: validation?.httpStatus ?? null,
         finalUrl: validation?.finalUrl ?? null,
-        evidence: (validation?.evidence ?? []) as JobValidationDetail['evidence'],
+        evidence: toEvidenceItems(validation?.evidence),
         suspiciousFlags: validation?.suspiciousFlags ?? [],
         aiAssessment: (validation?.aiAssessment ?? null) as JobValidationDetail['aiAssessment'],
         checkedAt: validation?.validatedAt?.toISOString() ?? null,
@@ -199,6 +199,26 @@ export class JobsDetailService {
     });
     if (!row) throw AppError.notFound('JOB_NOT_FOUND');
   }
+}
+
+/**
+ * The validation engine stores its evidence as `{ check, passed, weight, detail }` (packages/
+ * validation `Evidence`), but the API contract names the identifier `code` (docs 03 §3). Passing
+ * the jsonb straight through left `code` undefined, so every evidence line rendered without its
+ * label. Rows written before or after either shape are accepted, and anything malformed is dropped
+ * rather than shown as a blank line.
+ */
+export function toEvidenceItems(stored: unknown): JobValidationDetail['evidence'] {
+  if (!Array.isArray(stored)) return [];
+  return stored.flatMap((raw: unknown) => {
+    if (typeof raw !== 'object' || raw === null) return [];
+    const e = raw as Record<string, unknown>;
+    const code = typeof e.check === 'string' ? e.check : e.code;
+    if (typeof code !== 'string' || typeof e.weight !== 'number') return [];
+    return [
+      { code, weight: e.weight, ...(typeof e.detail === 'string' ? { detail: e.detail } : {}) },
+    ];
+  });
 }
 
 /** Appends one entry to the jsonb history array without reading it back first. */
