@@ -10,20 +10,30 @@ import {
   type SourceValidation,
 } from '../job-source';
 
-export const AdzunaConfig = z.object({
-  country: z.string().min(2).max(2).default('in'),
-  what: z.string().optional(),
-  where: z.string().optional(),
-  company: z.string().optional(),
-  maxDaysOld: z.number().optional(),
-  /**
-   * Pages to walk per scan, 50 jobs each. Adzuna's free tier allows ~250 requests a DAY across
-   * every query, and a broad search like "software engineer" in India matches 28 000+ postings —
-   * without this bound one scan would spend 20 requests and a handful of scans would exhaust the
-   * day's quota (D63). Two pages of the newest results is plenty at an hourly cadence.
-   */
-  maxPages: z.number().int().min(1).max(10).default(2),
-});
+export const AdzunaConfig = z
+  .object({
+    country: z.string().min(2).max(2).default('in'),
+    /**
+     * Adzuna's `/search` endpoint has no company filter — a `company` parameter makes it answer
+     * HTTP 400 outright, with or without a `what` alongside it (verified against the live API).
+     * Five seeded "Enterprise ATS" sources carried one and had failed every scan since they were
+     * added. To follow one employer, put its name in `what`: that is a keyword match over the
+     * posting rather than a true company filter, and the validation stage verifies the employer
+     * independently (D79). `.strict()` below makes a stray `company` fail loudly instead of being
+     * silently stripped, which would quietly widen the search to every job in the country.
+     */
+    what: z.string().optional(),
+    where: z.string().optional(),
+    maxDaysOld: z.number().optional(),
+    /**
+     * Pages to walk per scan, 50 jobs each. Adzuna's free tier allows ~250 requests a DAY across
+     * every query, and a broad search like "software engineer" in India matches 28 000+ postings —
+     * without this bound one scan would spend 20 requests and a handful of scans would exhaust the
+     * day's quota (D63). Two pages of the newest results is plenty at an hourly cadence.
+     */
+    maxPages: z.number().int().min(1).max(10).default(2),
+  })
+  .strict();
 export type AdzunaConfig = z.infer<typeof AdzunaConfig>;
 
 /**
@@ -71,7 +81,6 @@ export class AdzunaAdapter implements JobSource<AdzunaConfig> {
     url.searchParams.set('results_per_page', '50');
     if (config.what) url.searchParams.set('what', config.what);
     if (config.where) url.searchParams.set('where', config.where);
-    if (config.company) url.searchParams.set('company', config.company);
     if (config.maxDaysOld) url.searchParams.set('max_days_old', String(config.maxDaysOld));
     return url;
   }

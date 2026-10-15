@@ -152,12 +152,14 @@ export const STARTER_SOURCES: StarterSource[] = [
     config: { country: 'in', what: 'graduate engineer', maxDaysOld: 7 },
     priority: 'LOW',
   },
-  // Enterprise ATS Targets via Adzuna
+  // Single-employer Adzuna searches. Adzuna has no company filter — a `company` parameter is
+  // answered with HTTP 400 — so the employer name goes in `what`, which is a keyword match over
+  // the posting. Validation verifies the employer independently (D79).
   {
     name: 'Adzuna: Cisco India',
     type: 'PUBLIC_API',
     adapter: 'adzuna',
-    config: { country: 'in', company: 'Cisco', maxDaysOld: 7 },
+    config: { country: 'in', what: 'Cisco', maxDaysOld: 7 },
     priority: 'HIGH',
     company: { name: 'Cisco', domain: 'cisco.com' },
   },
@@ -165,7 +167,7 @@ export const STARTER_SOURCES: StarterSource[] = [
     name: 'Adzuna: Cohesity India',
     type: 'PUBLIC_API',
     adapter: 'adzuna',
-    config: { country: 'in', company: 'Cohesity', maxDaysOld: 7 },
+    config: { country: 'in', what: 'Cohesity', maxDaysOld: 7 },
     priority: 'HIGH',
     company: { name: 'Cohesity', domain: 'cohesity.com' },
   },
@@ -173,7 +175,7 @@ export const STARTER_SOURCES: StarterSource[] = [
     name: 'Adzuna: Nutanix India',
     type: 'PUBLIC_API',
     adapter: 'adzuna',
-    config: { country: 'in', company: 'Nutanix', maxDaysOld: 7 },
+    config: { country: 'in', what: 'Nutanix', maxDaysOld: 7 },
     priority: 'HIGH',
     company: { name: 'Nutanix', domain: 'nutanix.com' },
   },
@@ -181,7 +183,7 @@ export const STARTER_SOURCES: StarterSource[] = [
     name: 'Adzuna: Juniper India',
     type: 'PUBLIC_API',
     adapter: 'adzuna',
-    config: { country: 'in', company: 'Juniper', maxDaysOld: 7 },
+    config: { country: 'in', what: 'Juniper', maxDaysOld: 7 },
     priority: 'HIGH',
     company: { name: 'Juniper Networks', domain: 'juniper.net' },
   },
@@ -189,7 +191,7 @@ export const STARTER_SOURCES: StarterSource[] = [
     name: 'Adzuna: HPE India',
     type: 'PUBLIC_API',
     adapter: 'adzuna',
-    config: { country: 'in', company: 'HPE', maxDaysOld: 7 },
+    config: { country: 'in', what: 'HPE', maxDaysOld: 7 },
     priority: 'HIGH',
     company: { name: 'HPE', domain: 'hpe.com' },
   },

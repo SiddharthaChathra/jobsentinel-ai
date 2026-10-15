@@ -65,8 +65,15 @@ export class ClassificationService {
     @Inject(AI_SERVICE) private readonly ai: AIService | null,
   ) {}
 
+  /**
+   * `jobIds` restricts the run to specific jobs. The worker never passes it; an integration test
+   * must, for the same reason `validatePending` must (D77): these suites share one live database,
+   * so an unscoped `batch: 500` sweeps up whatever real postings happen to be DISCOVERED and the
+   * assertions then depend on what the scanner ingested minutes earlier. That made the
+   * classification suite pass or fail depending on the hour (D80).
+   */
   async classifyPending(
-    opts: { batch?: number; maxAiCalls?: number; aiTimeBudgetMs?: number } = {},
+    opts: { batch?: number; maxAiCalls?: number; aiTimeBudgetMs?: number; jobIds?: string[] } = {},
   ): Promise<ClassifyResult> {
     const batch = opts.batch ?? 50;
     const maxAiCalls = opts.maxAiCalls ?? 25;
@@ -85,7 +92,13 @@ export class ClassificationService {
     const pending = await this.db
       .select()
       .from(jobs)
-      .where(and(eq(jobs.status, 'DISCOVERED'), sql`${jobs.stageAttempts} < 5`))
+      .where(
+        and(
+          eq(jobs.status, 'DISCOVERED'),
+          sql`${jobs.stageAttempts} < 5`,
+          ...(opts.jobIds ? [inArray(jobs.id, opts.jobIds)] : []),
+        ),
+      )
       .orderBy(jobs.firstSeenAt)
       .limit(batch);
     if (pending.length === 0) return result;
@@ -335,11 +348,23 @@ export class ClassificationService {
   }
 
   /** Re-classify jobs after a preferences change (docs 09 §4): FILTERED_OUT ⇄ CLASSIFIED. */
-  async requeueFiltered(limit = 500): Promise<number> {
+  /**
+   * Global on purpose — a preferences change has to re-evaluate every job, so the worker and
+   * `pnpm classify --requeue` pass no `jobIds`. A test must, because "the first `limit` rows of a
+   * shared table" is not a set it can reason about: once the project held a few thousand filtered
+   * postings, a `limit` of 1 000 stopped reaching the suite's own fixtures and the assertion began
+   * failing on data volume rather than on behaviour (D80).
+   */
+  async requeueFiltered(limit = 500, jobIds?: string[]): Promise<number> {
     const rows = await this.db
       .select({ id: jobs.id })
       .from(jobs)
-      .where(or(eq(jobs.status, 'FILTERED_OUT'), eq(jobs.status, 'CLASSIFIED')))
+      .where(
+        and(
+          or(eq(jobs.status, 'FILTERED_OUT'), eq(jobs.status, 'CLASSIFIED')),
+          ...(jobIds ? [inArray(jobs.id, jobIds)] : []),
+        ),
+      )
       .limit(limit);
     if (rows.length === 0) return 0;
     await this.db

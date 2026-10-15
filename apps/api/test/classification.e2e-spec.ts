@@ -148,7 +148,7 @@ describeIf('classification stage (integration)', () => {
       'Senior Software Engineer',
       'You have 8+ years of experience with distributed systems.',
     );
-    const result = await service.classifyPending({ batch: 500 });
+    const result = await service.classifyPending({ batch: 500, jobIds: [fresherId, seniorId] });
 
     expect(result.processed).toBeGreaterThanOrEqual(2);
     expect(fakeAi.calls).toHaveLength(0);
@@ -198,7 +198,10 @@ describeIf('classification stage (integration)', () => {
         )
       : null;
 
-    await service.classifyPending({ batch: 500 });
+    await service.classifyPending({
+      batch: 500,
+      jobIds: [salesId, ...(dataId ? [dataId] : [])],
+    });
 
     // A non-engineering posting is filtered whatever the preferences say.
     expect(await statusOf(salesId)).toMatchObject({
@@ -225,7 +228,7 @@ describeIf('classification stage (integration)', () => {
       'Software Engineer',
       'Join the platform team and help us build great products for our customers.',
     );
-    await service.classifyPending({ batch: 500, maxAiCalls: 5 });
+    await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
 
     expect(fakeAi.calls).toHaveLength(1);
     expect(fakeAi.calls[0]!.purpose).toBe('FRESHER_CLASSIFY');
@@ -249,7 +252,7 @@ describeIf('classification stage (integration)', () => {
       'Backend Engineer',
       'Work with our team on services and APIs for our growing platform.',
     );
-    await service.classifyPending({ batch: 500, maxAiCalls: 5 });
+    await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
     const job = await statusOf(id);
     expect(job.experienceLevel).toBe('UNKNOWN');
     expect(job.status).toBe('CLASSIFIED'); // unknown experience is still monitored, not hidden
@@ -262,7 +265,7 @@ describeIf('classification stage (integration)', () => {
       'Support Engineer',
       'Help customers with technical issues across our products every day.',
     );
-    const result = await service.classifyPending({ batch: 500, maxAiCalls: 5 });
+    const result = await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
     expect(result.aiUnavailable).toBeGreaterThanOrEqual(1);
     const job = await statusOf(id);
     expect(job.status).toBe('CLASSIFIED');
@@ -296,7 +299,11 @@ describeIf('classification stage (integration)', () => {
       locationText: 'Remote - United States',
     });
 
-    await service.classifyPending({ batch: 500, maxAiCalls: 0 });
+    await service.classifyPending({
+      batch: 500,
+      maxAiCalls: 0,
+      jobIds: [indian, remoteAnywhere, foreign, remoteForeign],
+    });
 
     expect((await statusOf(indian)).status).toBe('CLASSIFIED');
     expect((await statusOf(remoteAnywhere)).status).toBe('CLASSIFIED');
@@ -312,10 +319,13 @@ describeIf('classification stage (integration)', () => {
         .from(jobs)
         .where(and(eq(jobs.companyId, companyId), inArray(jobs.status, status)));
 
-    const before = (await mine(['CLASSIFIED', 'FILTERED_OUT'])).length;
+    const mineIds = (await mine(['CLASSIFIED', 'FILTERED_OUT'])).map((r) => r.id);
+    const before = mineIds.length;
     expect(before).toBeGreaterThan(0);
-    const requeued = await service.requeueFiltered(1000);
-    expect(requeued).toBeGreaterThanOrEqual(before);
+    // Scoped to this suite's own fixtures: the global form takes the first `limit` rows of a
+    // table holding thousands of real postings, which may not include any of ours (D80).
+    const requeued = await service.requeueFiltered(1000, mineIds);
+    expect(requeued).toBe(before);
     expect((await mine(['DISCOVERED'])).length).toBe(before);
   }, 60_000);
 });
