@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import {
   CALLBACK_PATH,
   requestLinkErrorMessage,
   safeNextPath,
+  signInErrorMessage,
 } from '@/lib/auth-redirect';
 import { createClient } from '@/lib/supabase/client';
 
@@ -44,7 +46,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
 
     if (mode === 'password') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return setStatus({ kind: 'error', message: error.message });
+      if (error) return setStatus({ kind: 'error', message: signInErrorMessage(error) });
       router.replace(nextPath);
       router.refresh();
       return;
@@ -95,7 +97,15 @@ export function LoginForm({ configured }: { configured: boolean }) {
           </div>
           {mode === 'password' && (
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -136,6 +146,12 @@ export function LoginForm({ configured }: { configured: boolean }) {
         >
           {mode === 'password' ? 'Email me a magic link instead' : 'Use password instead'}
         </button>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          New here?{' '}
+          <Link href="/signup" className="underline underline-offset-4 hover:text-foreground">
+            Create an account
+          </Link>
+        </p>
       </CardContent>
     </Card>
   );

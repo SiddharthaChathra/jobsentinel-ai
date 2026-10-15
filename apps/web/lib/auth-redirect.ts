@@ -71,10 +71,10 @@ export function classifyAuthFailure(error: {
 }
 
 const MESSAGES: Record<AuthFailure, string> = {
-  link_expired: 'That sign-in link has expired or was already used. Request a new one below.',
+  link_expired: 'That link has expired or was already used. Request a new one below.',
   different_browser:
-    'Open the sign-in link in the same browser you requested it from, or request a new link here.',
-  link_invalid: 'That sign-in link is not valid any more. Request a new one below.',
+    'Open the link in the same browser you requested it from, or request a new one here.',
+  link_invalid: 'That link is not valid any more. Request a new one below.',
   not_allowed:
     'This email is not allowed to use this JobSentinel. Sign in with the account it was set up for.',
   unknown: 'Sign-in could not be completed. Request a new link, or use your password.',
@@ -104,4 +104,47 @@ export function requestLinkErrorMessage(error: { code?: string | null; message: 
     return 'Too many sign-in emails were sent. Wait a few minutes, then try again.';
   }
   return error.message;
+}
+
+export const PASSWORD_MIN_LENGTH = 8;
+
+/** Client-side check before Supabase sees the password; null when acceptable. */
+export function passwordProblem(password: string, confirm: string): string | null {
+  if (password.length < PASSWORD_MIN_LENGTH) {
+    return `Use at least ${PASSWORD_MIN_LENGTH} characters.`;
+  }
+  if (password !== confirm) return 'The two passwords do not match.';
+  return null;
+}
+
+/** Message for a Supabase error from sign-up or a password change. */
+export function accountErrorMessage(error: { code?: string | null; message: string }): string {
+  if (error.code === 'same_password') {
+    return 'Choose a password different from your current one.';
+  }
+  if (error.code === 'weak_password') return `That password is too weak. ${error.message}`;
+  if (error.code === 'user_already_exists') return EXISTING_ACCOUNT;
+  return requestLinkErrorMessage(error);
+}
+
+export const EXISTING_ACCOUNT =
+  'An account with this email already exists. Sign in, or reset your password if you have forgotten it.';
+
+/**
+ * Where a failed callback should land: a broken password-reset link belongs on the page that can
+ * send a new one, everything else on the sign-in page.
+ */
+export function callbackFailurePath(next: string): string {
+  return next.startsWith('/reset-password') ? '/forgot-password' : '/login';
+}
+
+/** Message for a failed email + password sign-in. */
+export function signInErrorMessage(error: { code?: string | null; message: string }): string {
+  if (error.code === 'email_not_confirmed' || /email not confirmed/i.test(error.message)) {
+    return 'Confirm your email first: open the link we sent when you created the account.';
+  }
+  if (error.code === 'invalid_credentials' || /invalid login credentials/i.test(error.message)) {
+    return 'Wrong email or password.';
+  }
+  return requestLinkErrorMessage(error);
 }

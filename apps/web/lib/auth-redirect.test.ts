@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  accountErrorMessage,
   authErrorMessage,
+  callbackFailurePath,
   classifyAuthFailure,
+  passwordProblem,
+  signInErrorMessage,
   requestLinkErrorMessage,
   safeNextPath,
   strayAuthRedirect,
@@ -96,5 +100,40 @@ describe('requestLinkErrorMessage', () => {
     ).toMatch(/No JobSentinel account/);
     expect(requestLinkErrorMessage({ message: 'email rate limit exceeded' })).toMatch(/Too many/);
     expect(requestLinkErrorMessage({ message: 'Something else' })).toBe('Something else');
+  });
+});
+
+describe('sign-up and password reset helpers (D91)', () => {
+  it('checks length first, then that both passwords match', () => {
+    expect(passwordProblem('short', 'short')).toMatch(/at least 8/);
+    expect(passwordProblem('long-enough-1', 'long-enough-2')).toMatch(/do not match/);
+    expect(passwordProblem('long-enough-1', 'long-enough-1')).toBeNull();
+  });
+
+  it('explains the Supabase account errors a person can act on', () => {
+    expect(accountErrorMessage({ code: 'same_password', message: 'x' })).toMatch(/different/);
+    expect(accountErrorMessage({ code: 'user_already_exists', message: 'x' })).toMatch(
+      /already exists/,
+    );
+    expect(accountErrorMessage({ code: 'weak_password', message: 'Include a digit.' })).toMatch(
+      /too weak. Include a digit/,
+    );
+  });
+
+  it('sends a broken reset link back to the page that can send a new one', () => {
+    expect(callbackFailurePath('/reset-password')).toBe('/forgot-password');
+    expect(callbackFailurePath('/dashboard')).toBe('/login');
+    expect(callbackFailurePath('/onboarding')).toBe('/login');
+  });
+});
+
+describe('signInErrorMessage', () => {
+  it('rewords the two sign-in failures people hit', () => {
+    expect(
+      signInErrorMessage({ code: 'email_not_confirmed', message: 'Email not confirmed' }),
+    ).toMatch(/Confirm your email first/);
+    expect(
+      signInErrorMessage({ code: 'invalid_credentials', message: 'Invalid login credentials' }),
+    ).toBe('Wrong email or password.');
   });
 });

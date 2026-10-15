@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { strayAuthRedirect } from '@/lib/auth-redirect';
 import { isSupabaseConfigured, publicEnv } from '@/lib/env';
 
-const PUBLIC_PATHS = ['/login', '/signup', '/auth'];
+// /reset-password is public so an expired link can say so, rather than bouncing to /login.
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password', '/auth'];
 
 /**
  * Refreshes the Supabase session cookie on every request and performs the optimistic

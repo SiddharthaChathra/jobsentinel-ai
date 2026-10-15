@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import { classifyAuthFailure, safeNextPath, type AuthFailure } from '@/lib/auth-redirect';
+import {
+  callbackFailurePath,
+  classifyAuthFailure,
+  safeNextPath,
+  type AuthFailure,
+} from '@/lib/auth-redirect';
 
 const OTP_TYPES: readonly EmailOtpType[] = [
   'magiclink',
@@ -23,7 +28,9 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const next = safeNextPath(searchParams.get('next'));
   const fail = (reason: AuthFailure) =>
-    NextResponse.redirect(`${origin}/login?error=${reason}&next=${encodeURIComponent(next)}`);
+    NextResponse.redirect(
+      `${origin}${callbackFailurePath(next)}?error=${reason}&next=${encodeURIComponent(next)}`,
+    );
 
   const supabaseError = searchParams.get('error');
   if (supabaseError) {
