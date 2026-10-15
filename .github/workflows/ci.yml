@@ -30,9 +30,12 @@ jobs:
       # No `version:` here: package.json's `packageManager` pins pnpm, and action-setup refuses to
       # run when both are given ("Multiple versions of pnpm specified"), which failed every run.
       - uses: pnpm/action-setup@v4
+      # 24, not 22: htmlparser2 (via sanitize-html) ships ESM only, and Jest can load ESM from a
+      # CommonJS test only on Node >= 24.9 — on 22 two API suites fail to load. The runtime images
+      # stay on 22, where Node itself loads it (Render serves this code on 22).
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # Packages first: the type-aware lint rules resolve @jobsentinel/* through their built
