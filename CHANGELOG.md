@@ -2,6 +2,17 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 10] End-to-end pass — 2026-10-15
+
+A full browser walkthrough (sign-in → onboarding → dashboard → jobs → tracker → resume → system) as a throwaway user, plus one live worker tick. The automated suites were green before and after; every defect below was found only by using the product.
+
+- **Company domains borrowed across employers (D83).** The normalizer gave every job from a single-company source that source's domain, even when the posting named another employer. Keyword searches such as "Adzuna: Cisco India" return many employers, so Brillio was verified against cisco.com. New jobs take the fallback domain only when `isSameCompany` agrees (exact name, acronym, or whole-word prefix — so HPE's "Hewlett Packard Enterprise" postings keep hpe.com). `pnpm repair:domains` cleared 116 borrowed domains and re-queued 22 live jobs for validation.
+- **India-only gate dropped Indian towns (D84).** Adzuna's `display_name` names only the town ("Chandgad, Kolhapur"), so the country never resolved and Graduate Engineer Trainee roles from the India board were filtered as "outside India (unknown)". The adapter now appends the country from `location.area`; `pnpm repair:adzuna-locations` recovered 8 stored jobs from their raw payload.
+- **Verification evidence rendered without labels.** The engine stores `{ check }`, the contract says `{ code }`; the API passed the jsonb through with a cast. `toEvidenceItems` maps it at the boundary.
+- **Re-uploading a resume never updated the profile (D85).** The Resume page uploaded and stopped, so matching kept the old profile. It now reuses the onboarding review step (`PUT /profile`) and shows the confirmed profile.
+- Web: the whole UI rendered in the browser's serif fallback (`--font-sans` referenced itself); selects showed raw values (`UNTRACKED`, `60d`) instead of labels; job titles vanished in the five-column Applications board; System requested the admin-only `/sources` for every user (403); eight pages had no title; the job page nested two `<main>` landmarks; the tracker kept "Not Tracking" after the server recorded "Viewed".
+- Tests: 359 unit (101 api, 228 validation, 30 in the other packages and web) + 86 e2e.
+
 ## [Phase 10–12, partial] Reliability and deployment — 2026-09-23
 
 Worked autonomously overnight at the user's request; `apps/web` was taken over from Gemini for the same reason.
