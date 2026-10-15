@@ -76,7 +76,7 @@ const MESSAGES: Record<AuthFailure, string> = {
     'Open the link in the same browser you requested it from, or request a new one here.',
   link_invalid: 'That link is not valid any more. Request a new one below.',
   not_allowed:
-    'This email is not allowed to use this JobSentinel. Sign in with the account it was set up for.',
+    'This email is not allowed to use this JobSentinel. Sign in with a different account.',
   unknown: 'Sign-in could not be completed. Request a new link, or use your password.',
 };
 

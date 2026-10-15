@@ -21,7 +21,7 @@ type Status = { kind: 'idle' | 'busy' | 'sent' | 'error'; message?: string };
 
 /**
  * Email + password and magic-link sign-in via Supabase Auth.
- * Sign-up is gated server-side (ALLOWED_SIGNUP_EMAILS); this form only signs in.
+ * Sign-in only: accounts are created on /signup (the API may restrict who, via ALLOWED_SIGNUP_EMAILS).
  * Phase 1 scaffold — Gemini owns visual polish in Phases 8/11.
  */
 export function LoginForm({ configured }: { configured: boolean }) {
@@ -55,8 +55,8 @@ export function LoginForm({ configured }: { configured: boolean }) {
     const redirectTo = `${window.location.origin}${CALLBACK_PATH}?next=${encodeURIComponent(nextPath)}`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      // Sign-in only: without this, any email typed here created a Supabase account, which the
-      // API then refused (ALLOWED_SIGNUP_EMAILS) — accounts for strangers, and a confusing dead end.
+      // Sign-in only: without this, any email typed here silently created an account with no
+      // password. Accounts are created on /signup, which checks the address and sets a password.
       options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
     });
     if (error) return setStatus({ kind: 'error', message: requestLinkErrorMessage(error) });

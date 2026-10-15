@@ -21,9 +21,9 @@ import { createClient } from '@/lib/supabase/client';
 type Status = { kind: 'idle' | 'busy' | 'sent' | 'error'; message?: string };
 
 /**
- * Account creation (D91). The API's allow-list is asked first, so an email this instance will
- * never accept is refused here — before Supabase creates an account and sends a confirmation
- * email that could only end on "this instance is private".
+ * Account creation (D91). Open to anyone by default (D93). The API's allow-list is still asked
+ * first, so an instance restricted with ALLOWED_SIGNUP_EMAILS refuses an email here — before
+ * Supabase creates an account and sends a confirmation email that could only end in a refusal.
  */
 export function SignupForm({ configured }: { configured: boolean }) {
   const router = useRouter();
@@ -45,7 +45,7 @@ export function SignupForm({ configured }: { configured: boolean }) {
       if (!data.allowed) {
         return setStatus({
           kind: 'error',
-          message: 'This JobSentinel is private, and this email is not on its list of accounts.',
+          message: 'Sign-up is currently limited, and this email is not on the list of accounts.',
         });
       }
     } catch (err) {
@@ -82,7 +82,7 @@ export function SignupForm({ configured }: { configured: boolean }) {
     <Card>
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
-        <CardDescription>Use the email this JobSentinel was set up for.</CardDescription>
+        <CardDescription>Free. Get verified fresher jobs matched to your resume.</CardDescription>
       </CardHeader>
       <CardContent>
         {status.kind === 'sent' ? (
