@@ -2,6 +2,14 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Sign-up and password reset — 2026-10-16
+
+- **`/signup`** creates an account (email, password, confirmation; 8+ characters). It asks the API's new public `POST /auth/signup-check` first, so an email outside `ALLOWED_SIGNUP_EMAILS` is refused before Supabase creates anything. A confirmation email follows; its link signs the user in and continues to onboarding (D91).
+- **`/forgot-password`** emails a reset link and answers the same whether or not an account exists. **`/reset-password`** sets the new password from that link, refuses a mismatch or the current password, and explains an expired or reused link. The login page links to both.
+- Sign-in errors are in plain words ("Wrong email or password.", "Confirm your email first…").
+- Tested end to end against the live Supabase project: account confirmation, password sign-in before and after confirming, reset with old/new password checks, reused and missing links, and refusal of a non-allowed email (which never reached Supabase). Supabase's built-in email sender allows only a few emails per hour — `docs/deployment.md` now says to configure SMTP for real use.
+- Tests: web 20, API e2e +3 (`auth.e2e-spec`).
+
 ## [Phase 12] Magic-link sign-in on the deployed site — 2026-10-15
 
 - **Cause (D87):** Supabase falls back to the project's Site URL whenever `emailRedirectTo` is not on its Redirect URLs allow-list. The Site URL was `https://jobsentinel.vercel.app` — not this site (`jobsentinel-ai.vercel.app`) and an unclaimed Vercel subdomain — so every magic link, with its one-time token, went to a dead domain anyone could claim. Fix: set the Site URL and Redirect URLs in Supabase (now step 3 of `docs/deployment.md`).
