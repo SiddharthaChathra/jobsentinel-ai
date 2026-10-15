@@ -71,7 +71,11 @@ export function JobList({
 
   if (isLoading) {
     return (
-      <div className="space-y-3" aria-busy="true" aria-label="Loading jobs">
+      // Distinct keys on this wrapper and the list's: both are a <div> at the same position, and the
+      // skeletons' keys 0-3 match the first rows', so React would otherwise reuse the measured row
+      // nodes as skeletons — stripping `data-index` while the virtualizer's ResizeObserver still
+      // watches them ("Missing attribute name 'data-index'" on every filter change).
+      <div key="loading" className="space-y-3" aria-busy="true" aria-label="Loading jobs">
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
@@ -99,7 +103,12 @@ export function JobList({
   }
 
   return (
-    <div ref={listRef} className="relative" style={{ height: virtualizer.getTotalSize() }}>
+    <div
+      key="rows"
+      ref={listRef}
+      className="relative"
+      style={{ height: virtualizer.getTotalSize() }}
+    >
       {items.map((virtualItem) => {
         const isLoaderRow = virtualItem.index > jobs.length - 1;
         const job = jobs[virtualItem.index];
