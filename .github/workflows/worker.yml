@@ -53,6 +53,9 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_BOT_USERNAME: ${{ secrets.TELEGRAM_BOT_USERNAME }}
           APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          # Without these the Adzuna adapter disables itself, and with it most India sources.
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           # Long polling needs a long-lived process; a scheduled tick has none.
           TELEGRAM_POLLING: 'false'
         run: node dist/worker.js --once ${{ inputs.sources && format('--sources={0}', inputs.sources) || '' }}
