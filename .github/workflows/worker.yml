@@ -35,7 +35,10 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile --filter '!@jobsentinel/web...'
+      # `@jobsentinel/api...` = the API and what it depends on. The old `!@jobsentinel/web...` also
+      # excluded everything web depends on — which now includes @jobsentinel/types — so zod was
+      # never installed and every scheduled tick failed at the build (D88).
+      - run: pnpm install --frozen-lockfile --filter '@jobsentinel/api...'
       - run: pnpm --filter '@jobsentinel/api...' build
 
       - name: Run one tick

@@ -27,9 +27,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      # No `version:` here: package.json's `packageManager` pins pnpm, and action-setup refuses to
+      # run when both are given ("Multiple versions of pnpm specified"), which failed every run.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 12
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -44,3 +44,8 @@ jobs:
       - run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # Public, non-secret placeholders. Without a Supabase URL the app pages are prerendered
+          # statically and the browser client throws at build time; any well-formed value keeps
+          # them dynamic, exactly as on Vercel. Nothing connects to it during the build.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
