@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { and, eq, sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../src/common/db/schema';
 import {
@@ -18,19 +18,20 @@ import {
  * unique notification per (user, job, channel, type), idempotent source mappings,
  * FOR UPDATE SKIP LOCKED leasing, updated_at trigger, and RLS isolation for a real user token.
  */
-const hasDb = Boolean(process.env.DATABASE_DIRECT_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+const hasDb = Boolean(
+  process.env.DATABASE_DIRECT_URL &&
+  process.env.SUPABASE_URL &&
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+);
 const describeIf = hasDb ? describe : describe.skip;
 
 describeIf('database guarantees (integration)', () => {
-  const client = postgres(process.env.DATABASE_DIRECT_URL!, {
-    ssl: 'require',
-    max: 4,
-    prepare: false,
-  });
-  const db = drizzle(client, { schema });
-  const admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-    auth: { persistSession: false },
-  });
+  // Created in beforeAll, not here: Jest runs a skipped describe's body to collect its tests, so
+  // constructing clients here crashed the suite in an environment without secrets (CI) instead of
+  // skipping it like every other e2e suite.
+  let client: ReturnType<typeof postgres>;
+  let db: PostgresJsDatabase<typeof schema>;
+  let admin: SupabaseClient;
   const tag = `dbtest-${Date.now()}`;
   let userId: string;
   let otherUserId: string;
@@ -40,6 +41,11 @@ describeIf('database guarantees (integration)', () => {
   let jobId: string;
 
   beforeAll(async () => {
+    client = postgres(process.env.DATABASE_DIRECT_URL!, { ssl: 'require', max: 4, prepare: false });
+    db = drizzle(client, { schema });
+    admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      auth: { persistSession: false },
+    });
     const password = `Db-${Math.random().toString(36).slice(2)}-Pass1!`;
     const u1 = await admin.auth.admin.createUser({
       email: `${tag}-a@jobsentinel.test`,
