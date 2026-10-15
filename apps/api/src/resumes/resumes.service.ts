@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gte, ne } from 'drizzle-orm';
 import {
   type AIService,
   buildResumeProfileRequest,
@@ -11,7 +11,7 @@ import { ResumeProfileDraft, type Resume, type ResumeAnalysis } from '@jobsentin
 import { extractGraduationYear, extractSkills } from '@jobsentinel/validation';
 import { AI_SERVICE } from '../common/ai/ai.module';
 import { DB, type Db } from '../common/db/db.module';
-import { resumes } from '../common/db/schema';
+import { aiCalls, resumes } from '../common/db/schema';
 import { AppError } from '../common/errors/app-error';
 import { parseResume, redactForAi, sniffResumeMime } from './parsers';
 import { FILE_STORAGE, type FileStoragePort } from './storage';
@@ -22,6 +22,13 @@ export interface UploadInput {
 }
 
 const MAX_RESUMES_PER_USER = 10;
+/**
+ * Real AI resume analyses one user may cause per rolling 24 hours (D93). The AI budget is shared
+ * by every account, so with open sign-up one user re-uploading resumes could spend it for all.
+ * Beyond the limit the deterministic draft is used, exactly as when no provider is available.
+ * Identical resume text is served from the AI cache without a call, so it never counts.
+ */
+export const RESUME_AI_PER_USER_PER_DAY = 5;
 
 /** Upload → private storage → text extraction → AI draft → activate (docs 01 §4.1, 09 §3). */
 @Injectable()
@@ -125,10 +132,21 @@ export class ResumesService {
     let model = 'skills-dictionary';
     let deterministicFallback = true;
 
-    if (this.ai) {
-      const result = await this.ai.run(
-        buildResumeProfileRequest({ resumeText: redactForAi(row.extractedText) }),
+    const overLimit =
+      this.ai !== null && (await this.aiAnalysesToday(userId)) >= RESUME_AI_PER_USER_PER_DAY;
+    if (overLimit) {
+      this.logger.warn(
+        { userId, resumeId: id },
+        'resume AI limit reached; using deterministic draft',
       );
+    }
+
+    if (this.ai && !overLimit) {
+      const result = await this.ai.run({
+        ...buildResumeProfileRequest({ resumeText: redactForAi(row.extractedText) }),
+        // Recorded on the ai_calls row, which is what the per-user limit counts.
+        meta: { userId },
+      });
       if (result.status === 'OK') {
         draft = mergeWithDeterministic(result.data, row.extractedText);
         provider = result.provider;
@@ -167,6 +185,19 @@ export class ResumesService {
       deterministicFallback,
       analyzedAt: analyzedAt.toISOString(),
     };
+  }
+
+  /** Provider calls this user's resume analyses made in the last 24 hours (cache hits excluded). */
+  private aiAnalysesToday(userId: string): Promise<number> {
+    return this.db.$count(
+      aiCalls,
+      and(
+        eq(aiCalls.userId, userId),
+        eq(aiCalls.purpose, 'RESUME_PROFILE'),
+        ne(aiCalls.status, 'BUDGET_EXCEEDED'),
+        gte(aiCalls.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)),
+      ),
+    );
   }
 
   async getAnalysis(userId: string, id: string): Promise<ResumeAnalysis> {
