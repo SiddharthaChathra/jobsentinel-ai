@@ -49,7 +49,8 @@ interface AdzunaJob {
   redirect_url: string;
   created?: string;
   company?: { display_name?: string };
-  location?: { display_name?: string };
+  /** `area` runs country → region → city → locality, e.g. `['India', 'Maharashtra', 'Kolhapur']`. */
+  location?: { display_name?: string; area?: string[] };
   contract_type?: string;
   category?: { tag?: string };
 }
@@ -129,7 +130,7 @@ export class AdzunaAdapter implements JobSource<AdzunaConfig> {
           externalId: String(job.id),
           title: job.title,
           companyName: job.company?.display_name,
-          locationText: job.location?.display_name,
+          locationText: adzunaLocationText(job.location),
           descriptionText: job.description,
           postedAt: parseDate(job.created),
           sourceUrl: job.redirect_url,
@@ -144,6 +145,21 @@ export class AdzunaAdapter implements JobSource<AdzunaConfig> {
       page++;
     }
   }
+}
+
+/**
+ * Adzuna's `display_name` names only the town ("Chandgad, Kolhapur"), which the normalizer cannot
+ * place in a country, and the India-only gate drops a job whose country is unknown (D73) — so
+ * fresher postings from small towns were being filtered out of an India board. The country is in
+ * `area[0]`; appending it when the display name does not already carry it lets the normalizer
+ * resolve the location without a list of every town in the country.
+ */
+export function adzunaLocationText(location: AdzunaJob['location']): string | undefined {
+  const name = location?.display_name?.trim();
+  const country = location?.area?.[0]?.trim();
+  if (!country) return name || undefined;
+  if (!name) return country;
+  return name.toLowerCase().includes(country.toLowerCase()) ? name : `${name}, ${country}`;
 }
 
 /**

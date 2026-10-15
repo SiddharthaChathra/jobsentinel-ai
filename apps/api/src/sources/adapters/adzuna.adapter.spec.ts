@@ -1,4 +1,5 @@
-import { AdzunaAdapter, AdzunaConfig } from './adzuna.adapter';
+import { AdzunaAdapter, AdzunaConfig, adzunaLocationText } from './adzuna.adapter';
+import { isIndiaLocation, normalizeLocation } from '@jobsentinel/validation';
 import { STARTER_SOURCES } from '../../common/db/seed/starter-sources';
 
 /**
@@ -46,5 +47,34 @@ describe('seeded Adzuna sources', () => {
       // Every seeded config must survive the real schema, or the source fails on its first scan.
       expect(AdzunaConfig.safeParse(source.config).success).toBe(true);
     }
+  });
+});
+
+describe('adzunaLocationText', () => {
+  it('adds the country from `area` so small towns resolve to India', () => {
+    // Real payload: these GET postings were filtered as "outside India (unknown)" before.
+    const text = adzunaLocationText({
+      display_name: 'Chandgad, Kolhapur',
+      area: ['India', 'Maharashtra', 'Kolhapur', 'Chandgad'],
+    });
+    expect(text).toBe('Chandgad, Kolhapur, India');
+    const loc = normalizeLocation(text);
+    expect(
+      isIndiaLocation({ text: loc.text, city: loc.city, country: loc.country, isRemote: false }),
+    ).toBe(true);
+  });
+
+  it('does not repeat a country the display name already carries', () => {
+    expect(adzunaLocationText({ display_name: 'India', area: ['India'] })).toBe('India');
+    expect(adzunaLocationText({ display_name: 'Pune, India', area: ['India', 'Pune'] })).toBe(
+      'Pune, India',
+    );
+  });
+
+  it('falls back to whichever part is present', () => {
+    expect(adzunaLocationText({ display_name: 'Pune' })).toBe('Pune');
+    expect(adzunaLocationText({ area: ['India'] })).toBe('India');
+    expect(adzunaLocationText(undefined)).toBeUndefined();
+    expect(adzunaLocationText({ display_name: '  ', area: [] })).toBeUndefined();
   });
 });
