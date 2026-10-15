@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, ne, sql } from 'drizzle-orm';
 import { lookalikeOf, type Evidence } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
-import { companies, jobSourceMappings, jobs } from '../common/db/schema';
+import { companies, jobSourceMappings, jobSources, jobs } from '../common/db/schema';
 import { HTTP_CLIENT } from '../common/http/http.module';
 import type { HttpClientPort } from '../common/http/http-client';
 
@@ -111,7 +111,7 @@ export class CompanyVerificationService {
         check: 'MULTI_SOURCE',
         passed: true,
         weight: 0.1,
-        detail: `seen via ${sourceCount} sources`,
+        detail: `seen via ${sourceCount} independent providers`,
       });
 
     const result = this.toResult(company, evidence);
@@ -170,12 +170,18 @@ export class CompanyVerificationService {
     }
   }
 
-  /** How many distinct sources have listed any job of this company. */
+  /**
+   * How many independent providers have listed any job of this company (docs 08 §3.2: "≥2
+   * independent sources"). Counted per adapter, not per source row: two Adzuna keyword searches
+   * return the same Adzuna posting, which confirms nothing twice — that alone once verified a
+   * company with no known domain (D83).
+   */
   private async independentSourceCount(companyId: string): Promise<number> {
     const [row] = await this.db
-      .select({ n: sql<number>`count(distinct ${jobSourceMappings.sourceId})` })
+      .select({ n: sql<number>`count(distinct ${jobSources.adapter})` })
       .from(jobSourceMappings)
       .innerJoin(jobs, eq(jobs.id, jobSourceMappings.jobId))
+      .innerJoin(jobSources, eq(jobSources.id, jobSourceMappings.sourceId))
       .where(eq(jobs.companyId, companyId));
     return Number(row?.n ?? 0);
   }

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { and, eq, inArray, isNotNull, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, ne, sql } from 'drizzle-orm';
 import type { JobStatus } from '@jobsentinel/types';
 import { isSameCompany } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
@@ -21,6 +21,10 @@ import { WorkerModule } from '../worker.module';
  * starts from what is actually known (no domain). The jobs go back to CLASSIFIED, where the
  * validation upsert overwrites their evidence; matching and notification are idempotent on their
  * natural keys, so a job that was already alerted is never alerted twice.
+ *
+ * The same run drops cached verifications whose MULTI_SOURCE evidence came from a single provider
+ * (two Adzuna searches returning one Adzuna posting), which verified Brillio again even after its
+ * borrowed domain was gone; verification now counts providers, not source rows.
  *
  * Trusted companies are never touched: trust is the user's decision. Dry run by default.
  */
@@ -73,16 +77,35 @@ async function main(): Promise<void> {
     }
 
     const ids = borrowed.map((b) => b.id);
-    const affectedJobs = ids.length
+
+    // Cached MULTI_SOURCE evidence counted source rows, so two searches on one provider counted
+    // as independent confirmation. Those verifications are dropped and recomputed by provider.
+    const singleProvider = (
+      await db.execute<{ id: string; name: string }>(sql`
+        select c.id, c.name from companies c
+        where c.verification_evidence::text like '%MULTI_SOURCE%'
+          and c.is_trusted = false
+          and (select count(distinct s.adapter) from job_source_mappings m
+                 join jobs j on j.id = m.job_id join job_sources s on s.id = m.source_id
+                where j.company_id = c.id) < 2`)
+    ).filter((c) => !ids.includes(c.id));
+    const recheckIds = singleProvider.map((c) => c.id);
+
+    const allIds = [...ids, ...recheckIds];
+    const affectedJobs = allIds.length
       ? await db
           .select({ id: jobs.id, status: jobs.status })
           .from(jobs)
-          .where(and(inArray(jobs.companyId, ids), inArray(jobs.status, REVALIDATE)))
+          .where(and(inArray(jobs.companyId, allIds), inArray(jobs.status, REVALIDATE)))
       : [];
 
     console.warn(`${borrowed.length} compan(ies) carry another employer's domain:`);
     for (const b of borrowed.slice(0, 20)) console.warn(`  ${b.name} → ${b.domain} (${b.owner})`);
     if (borrowed.length > 20) console.warn(`  … and ${borrowed.length - 20} more`);
+    console.warn(
+      `${recheckIds.length} compan(ies) were confirmed "by multiple sources" from one provider:` +
+        ` ${singleProvider.map((c) => c.name).join(', ')}`,
+    );
     console.warn(`${affectedJobs.length} of their job(s) will be re-validated.`);
 
     if (!apply) {
@@ -104,6 +127,12 @@ async function main(): Promise<void> {
         })
         .where(inArray(companies.id, ids.slice(i, i + 50)));
     }
+    for (let i = 0; i < recheckIds.length; i += 50) {
+      await db
+        .update(companies)
+        .set({ verificationStatus: 'UNVERIFIED', verifiedAt: null, updatedAt: new Date() })
+        .where(inArray(companies.id, recheckIds.slice(i, i + 50)));
+    }
     const jobIds = affectedJobs.map((j) => j.id);
     for (let i = 0; i < jobIds.length; i += 50) {
       await db
@@ -112,7 +141,8 @@ async function main(): Promise<void> {
         .where(inArray(jobs.id, jobIds.slice(i, i + 50)));
     }
     console.warn(
-      `cleared ${ids.length} domain(s) and re-queued ${jobIds.length} job(s) as CLASSIFIED.` +
+      `cleared ${ids.length} domain(s), reset ${recheckIds.length} verification(s) and re-queued` +
+        ` ${jobIds.length} job(s) as CLASSIFIED.` +
         ' Run `pnpm validate` to re-validate them.',
     );
   } finally {
