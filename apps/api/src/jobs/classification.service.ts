@@ -277,7 +277,7 @@ export class ClassificationService {
       });
     }
 
-    // JobSentinel lists fresher and 0-1 year roles only, for every account (D96). This replaced
+    // JobSentinel lists only roles that accept zero experience, for every account (D96). This replaced
     // the per-user "fresher only" / "include unknown experience" switches: UNKNOWN used to be
     // listed by default, which is how generic "Backend Engineer" postings reached the list.
     // UNKNOWN still reaches the AI above when monitored; only its verdict can make it listable.

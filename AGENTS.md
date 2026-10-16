@@ -110,7 +110,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 
 - The deterministic scorer in `packages/validation/src/match` always runs and is always stored; the AI may only refine `skillScore`/`roleScore` within ±25 of it, and only for jobs already scoring ≥ 35.
 - A score never rejects a job: low matches are stored and ranked, never deleted or hidden.
-- Only fresher and 0-1 year roles are listed (`isFresherRole`, D96): classification filters the rest before matching, and the read path applies the same rule. Unknown experience is listed only when the AI places it.
+- Only roles that accept zero experience are listed (`isFresherRole`, D96): a stated minimum of 0 years with any upper end ("0-5 years"), or no stated years and a fresher/entry-level classification. Classification filters the rest before matching, and the read path applies the same rule (`fresherRoleSql`). Unknown experience with no stated years is listed only when the AI places it.
 - Every match row carries its `profile_version`. Editing a profile bumps the version and re-scores; old rows stay for history.
 - Scores are per user — `(job_id, user_id, profile_version)` is the idempotency key, so re-running a match run is always safe.
 

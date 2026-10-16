@@ -4,12 +4,13 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
 ## [Phase 12] Fresher-only listings — 2026-10-16
 
-- **Only fresher and 0-1 year roles are listed (D96).** 78 of 96 listed jobs had experience the rules could not place, and those were listed by default. Now a job is shown only if it is a fresher role, or an entry-level role asking for at most one year — decided by the rules, or by the AI for postings that do not say. Experienced roles and anything asking 2+ years are filtered before matching, so they are never scored or alerted.
+- **Revised the same day: zero is what matters.** A job is listed when it accepts zero experience — "0-2", "0-5" or "0-10 years" alike — and also when a "0-N years" range appears only in the description. A minimum of 1 year or more is not listed; neither is a senior-titled role.
+- **Only fresher roles are listed (D96).** 78 of 96 listed jobs had experience the rules could not place, and those were listed by default. Now a job is shown only if it accepts zero experience — decided by the rules, or by the AI for postings that do not say. Experienced roles and anything asking 2+ years are filtered before matching, so they are never scored or alerted.
 - The job list and dashboard counters apply the same rule; jobs you saved or are tracking stay visible.
 - The "Fresher roles only" and "Keep jobs with no stated experience" switches (Preferences, onboarding, job filters) are gone — this is now how the site works, for everyone.
 - `pnpm refilter --apply` cleans existing listings: filters what fails, and re-queues unknown-experience jobs for an AI verdict.
 - An unknown-experience job the AI has not reached yet waits (up to 4 more runs) instead of being filtered unasked; the worker gives classification 3 minutes of AI per run (was 1).
-- Tests: validation 241 (+13), classification e2e updated for the new rule (unknown experience is filtered; an AI outage is recorded as such; refilter re-queues unknown).
+- Tests: validation 249 (+21), classification e2e updated for the new rule (unknown experience is filtered; an AI outage is recorded as such; refilter re-queues unknown).
 
 ## [Phase 12] Reliable keep-awake — 2026-10-16
 

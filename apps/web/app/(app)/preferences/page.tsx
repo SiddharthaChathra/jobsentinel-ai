@@ -261,11 +261,11 @@ export default function PreferencesPage() {
 
             {/* Fresher-only is site policy now (D96), so the two switches that set it are gone. */}
             <div className="rounded-lg border border-border/60 bg-muted/40 p-3">
-              <p className="text-sm font-medium">Fresher and 0–1 year roles only</p>
+              <p className="text-sm font-medium">Fresher roles only</p>
               <p className="text-xs text-muted-foreground">
-                JobSentinel lists only fresher roles and entry-level roles asking for at most one
-                year of experience. Postings that do not say are checked by AI and shown only when
-                they are clearly for freshers.
+                JobSentinel lists jobs that accept zero experience — &quot;0–2 years&quot;,
+                &quot;0–5 years&quot; and so on — and fresher roles that state no years. Postings
+                that do not say are checked by AI and shown only when they are clearly for freshers.
               </p>
             </div>
 

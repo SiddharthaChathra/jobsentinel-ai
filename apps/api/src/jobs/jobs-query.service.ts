@@ -23,6 +23,16 @@ import {
 const DEFAULT_LIMIT = 25;
 const NEW_WINDOW_MS = 24 * 60 * 60 * 1000;
 /** Statuses a job must be in to appear in the user's lists at all (docs 03 §3). */
+/**
+ * SQL mirror of `isFresherRole` (D96) for a jobs table alias: a stated minimum of zero (unless the
+ * role is EXPERIENCED), or no stated minimum and a FRESHER / ENTRY_LEVEL classification.
+ */
+export function fresherRoleSql(alias: string): SQL {
+  const a = sql.raw(alias);
+  const max = sql.raw(String(MAX_FRESHER_MIN_YEARS));
+  return sql`((${a}.experience_min_years is not null and ${a}.experience_min_years <= ${max} and ${a}.experience_level <> 'EXPERIENCED') or (${a}.experience_min_years is null and ${a}.experience_level in ('FRESHER', 'ENTRY_LEVEL')))`;
+}
+
 const LISTABLE = ['VALID', 'NEEDS_REVIEW', 'MATCHED', 'NOTIFY_PENDING', 'NOTIFIED'] as const;
 
 /** One row of the list query: the job, its company, this user's match and tracker state. */
@@ -165,13 +175,11 @@ export class JobsQueryService {
 
     if (q.remote !== undefined) where.push(eq(jobs.isRemote, q.remote));
     if (q.fresherOnly) where.push(eq(jobs.fresherEligible, true));
-    // Fresher and 0-1 year roles only (D96). Classification already filters the rest; this keeps
+    // Roles that accept zero experience only (D96). Classification already filters the rest; this keeps
     // rows classified under older rules out of the list. A user's own saved or tracked jobs stay
     // visible in those views whatever their level.
     if (q.saved !== true && !q.tracker?.length) {
-      where.push(
-        sql`${jobs.experienceLevel} in ('FRESHER', 'ENTRY_LEVEL') and coalesce(${jobs.experienceMinYears}, 0) <= ${MAX_FRESHER_MIN_YEARS}`,
-      );
+      where.push(fresherRoleSql('jobs'));
     }
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
     // A posting older than 60 days is almost always filled, so the ceiling applies even when the

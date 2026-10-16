@@ -296,7 +296,7 @@ export function PreferencesStep({
             </div>
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Only fresher and 0–1 year roles are listed.
+                Only jobs that accept zero experience (0–N years) are listed.
               </p>
               <div className="space-y-1">
                 <Label htmlFor="threshold">Instant alert threshold: {instantMinScore}% match</Label>
