@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import type { Me } from '@jobsentinel/types';
+import { Logo } from '@/components/brand/Logo';
 import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 import { ApiError } from '@/lib/api';
 import { serverApi } from '@/lib/api-server';
@@ -22,6 +23,7 @@ export default async function OnboardingPage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8">
       <header className="mb-6">
+        <Logo size={48} className="mb-3 drop-shadow-md" />
         <h1 className="text-2xl font-semibold tracking-tight">Set up JobSentinel</h1>
         <p className="text-sm text-muted-foreground">
           Upload your resume, confirm what we found, and choose what to monitor. Nothing is decided

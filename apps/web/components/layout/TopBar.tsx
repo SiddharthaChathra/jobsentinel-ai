@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, ShieldCheck } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { SignOutButton } from '@/components/auth/sign-out-button';
 import { ThemeToggle } from './ThemeToggle';
 import { InboxBell } from './InboxBell';
 import { titleForPath } from './nav-items';
+import { Logo } from '@/components/brand/Logo';
 
 /**
  * Sticky header. On mobile it carries the brand (the sidebar is hidden there); on desktop it
@@ -18,9 +19,7 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur md:h-16 md:px-6">
       <Link href="/dashboard" className="flex items-center gap-2 md:hidden">
-        <span className="grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground">
-          <ShieldCheck className="size-4" />
-        </span>
+        <Logo size={28} />
         <span className="text-sm font-semibold tracking-tight">JobSentinel</span>
       </Link>
 

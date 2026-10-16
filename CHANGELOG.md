@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] App icon — 2026-10-16
+
+- **New 3D icon:** an indigo tile with a raised, bevelled shield, a green "verified" check and an AI sparkle. One master SVG (`apps/web/public/icons/jobsentinel.svg`) generates the favicon (16/32/48), the SVG tab icon, the Apple touch icon, install icons (192, 512, maskable) and the 1200×630 link-preview image: `pnpm --filter @jobsentinel/web icons`.
+- It replaces the default Next.js/Vercel favicon, the generic shield glyph in the sidebar and mobile header, and appears on every sign-in page and onboarding. A web app manifest makes the site installable. The unused template images (`vercel.svg`, `next.svg`, …) are gone.
+
 ## [Phase 12] Open sign-up — 2026-10-16
 
 - **Anyone can create an account** on the deployed site (D93); `ALLOWED_SIGNUP_EMAILS` still restricts an instance when set to a list.

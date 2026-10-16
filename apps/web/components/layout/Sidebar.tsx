@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from './nav-items';
 import { InboxBell } from './InboxBell';
+import { Logo } from '@/components/brand/Logo';
 
 /** Desktop navigation (≥ md). The mobile equivalent is `BottomTabs`. */
 export function Sidebar() {
@@ -14,9 +14,7 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex md:w-60 md:shrink-0 md:flex-col md:border-r md:border-border/60 md:bg-sidebar">
       <div className="flex h-16 items-center gap-2 px-5">
-        <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-          <ShieldCheck className="size-4" />
-        </span>
+        <Logo size={32} />
         <span className="text-[15px] font-semibold tracking-tight">JobSentinel</span>
       </div>
 
