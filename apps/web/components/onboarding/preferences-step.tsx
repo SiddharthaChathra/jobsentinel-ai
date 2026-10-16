@@ -96,7 +96,6 @@ export function PreferencesStep({
     'CLOUD_DEVOPS',
     'DATA',
   ]);
-  const [fresherOnly, setFresherOnly] = useState(true);
   const [instantMinScore, setInstantMinScore] = useState(75);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +127,8 @@ export function PreferencesStep({
       remotePreference: remote,
       employmentTypes: employment,
       categories,
-      fresherOnly,
+      // Site policy (D96); kept in the payload because the API contract still has the field.
+      fresherOnly: true,
       includeUnknownExperience: true,
       salaryMin: null,
       salaryCurrency: 'INR',
@@ -295,14 +295,9 @@ export function PreferencesStep({
                 ))}
             </div>
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={fresherOnly}
-                  onChange={(e) => setFresherOnly(e.target.checked)}
-                />
-                Fresher / entry-level only
-              </label>
+              <p className="text-sm text-muted-foreground">
+                Only fresher and 0–1 year roles are listed.
+              </p>
               <div className="space-y-1">
                 <Label htmlFor="threshold">Instant alert threshold: {instantMinScore}% match</Label>
                 <input

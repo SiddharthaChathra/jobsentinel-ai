@@ -8,6 +8,7 @@ import type {
   JobSort,
   TrackerState,
 } from '@jobsentinel/types';
+import { MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
 import {
   applications,
@@ -164,6 +165,14 @@ export class JobsQueryService {
 
     if (q.remote !== undefined) where.push(eq(jobs.isRemote, q.remote));
     if (q.fresherOnly) where.push(eq(jobs.fresherEligible, true));
+    // Fresher and 0-1 year roles only (D96). Classification already filters the rest; this keeps
+    // rows classified under older rules out of the list. A user's own saved or tracked jobs stay
+    // visible in those views whatever their level.
+    if (q.saved !== true && !q.tracker?.length) {
+      where.push(
+        sql`${jobs.experienceLevel} in ('FRESHER', 'ENTRY_LEVEL') and coalesce(${jobs.experienceMinYears}, 0) <= ${MAX_FRESHER_MIN_YEARS}`,
+      );
+    }
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
     // A posting older than 60 days is almost always filled, so the ceiling applies even when the
     // caller asks for more; a narrower `postedAfter` still narrows it further. `posted_at` is null

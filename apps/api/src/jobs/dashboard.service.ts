@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { DashboardSummary } from '@jobsentinel/types';
+import { MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
 import { JobsQueryService, LISTABLE } from './jobs-query.service';
 
@@ -46,7 +47,8 @@ export class DashboardService {
     const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
     // LISTABLE is a fixed internal constant, never user input.
     const listable = sql.raw(LISTABLE.map((s) => `'${s}'`).join(','));
-    const visible = sql`j.status in (${listable}) and j.closed_at is null`;
+    // Same fresher-only rule as the job list (D96), so the counters match what the list shows.
+    const visible = sql`j.status in (${listable}) and j.closed_at is null and j.experience_level in ('FRESHER', 'ENTRY_LEVEL') and coalesce(j.experience_min_years, 0) <= ${sql.raw(String(MAX_FRESHER_MIN_YEARS))}`;
     const scored = (band: string) => sql`
       (select count(*) from job_matches m join jobs j on j.id = m.job_id
         where m.user_id = ${userId} and m.profile_version = ${profileVersion}

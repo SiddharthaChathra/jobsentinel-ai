@@ -243,7 +243,7 @@ describeIf('classification stage (integration)', () => {
     ).toBe(true);
   }, 60_000);
 
-  it('ignores a low-confidence AI verdict and keeps the rules result', async () => {
+  it('ignores a low-confidence AI verdict, and does not list a job it cannot place (D96)', async () => {
     await moduleRef.close();
     await build({
       data: { level: 'EXPERIENCED', fresherEligible: false, confidence: 0.3, evidence: ['guess'] },
@@ -255,10 +255,11 @@ describeIf('classification stage (integration)', () => {
     await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
     const job = await statusOf(id);
     expect(job.experienceLevel).toBe('UNKNOWN');
-    expect(job.status).toBe('CLASSIFIED'); // unknown experience is still monitored, not hidden
+    // Fresher and 0-1 year roles only: unknown experience is filtered, not listed by default.
+    expect(job.status).toBe('FILTERED_OUT');
   }, 60_000);
 
-  it('survives an AI outage: the job is still classified by rules', async () => {
+  it('survives an AI outage: the rules still decide, and the reason says the AI was missing', async () => {
     await moduleRef.close();
     await build({ status: 'BUDGET_EXCEEDED' });
     const id = await seedJob(
@@ -268,8 +269,13 @@ describeIf('classification stage (integration)', () => {
     const result = await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
     expect(result.aiUnavailable).toBeGreaterThanOrEqual(1);
     const job = await statusOf(id);
-    expect(job.status).toBe('CLASSIFIED');
+    expect(job.status).toBe('FILTERED_OUT');
     expect(job.experienceLevel).toBe('UNKNOWN');
+    const [event] = await db
+      .select({ detail: jobEvents.detail })
+      .from(jobEvents)
+      .where(and(eq(jobEvents.jobId, id), eq(jobEvents.type, 'FILTERED_OUT')));
+    expect(JSON.stringify(event?.detail)).toContain('AI unavailable');
   }, 60_000);
 
   it('keeps an India or country-less remote job and filters a foreign one (D73)', async () => {
@@ -339,19 +345,27 @@ describeIf('classification stage (integration)', () => {
       'Freshers welcome. 0-1 years of experience. Graduates of any batch may apply.',
       { status: 'VALID' },
     );
+    const unknown = await seedJob(
+      'Backend Engineer',
+      'Work with our team on services and APIs for our growing platform.',
+      { status: 'VALID' },
+    );
     await db.insert(savedJobs).values({ userId, jobId: savedSenior });
-    const ids = [listedSenior, savedSenior, fresher];
+    const ids = [listedSenior, savedSenior, fresher, unknown];
 
     // A dry run reports without writing.
     const dry = await service.refilterListed({ apply: false, jobIds: ids });
-    expect(dry.checked).toBe(2); // the saved job is not even considered
+    expect(dry.checked).toBe(3); // the saved job is not even considered
     expect(dry.filtered.map((f) => f.id)).toEqual([listedSenior]);
+    // Unknown experience is not filtered unasked: it goes back for an AI verdict (D96).
+    expect(dry.requeued.map((r) => r.id)).toEqual([unknown]);
     expect((await statusOf(listedSenior)).status).toBe('MATCHED');
 
     await service.refilterListed({ apply: true, jobIds: ids });
     expect((await statusOf(listedSenior)).status).toBe('FILTERED_OUT');
     expect((await statusOf(savedSenior)).status).toBe('VALID');
     expect((await statusOf(fresher)).status).toBe('VALID');
+    expect((await statusOf(unknown)).status).toBe('DISCOVERED');
     const events = await db
       .select({ detail: jobEvents.detail })
       .from(jobEvents)

@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { usePreferences, useUpdatePreferences } from '@/hooks/useUser';
 import { cn } from '@/lib/utils';
 
@@ -260,30 +259,14 @@ export default function PreferencesPage() {
               </p>
             </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">Fresher roles only</p>
-                <p className="text-xs text-muted-foreground">
-                  Filters out anything that states an experience requirement you cannot meet.
-                </p>
-              </div>
-              <Switch
-                checked={form.fresherOnly}
-                onCheckedChange={(on) => setForm({ ...form, fresherOnly: on })}
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">Keep jobs with no stated experience</p>
-                <p className="text-xs text-muted-foreground">
-                  Many good postings simply do not say. Turning this off hides them.
-                </p>
-              </div>
-              <Switch
-                checked={form.includeUnknownExperience}
-                onCheckedChange={(on) => setForm({ ...form, includeUnknownExperience: on })}
-              />
+            {/* Fresher-only is site policy now (D96), so the two switches that set it are gone. */}
+            <div className="rounded-lg border border-border/60 bg-muted/40 p-3">
+              <p className="text-sm font-medium">Fresher and 0–1 year roles only</p>
+              <p className="text-xs text-muted-foreground">
+                JobSentinel lists only fresher roles and entry-level roles asking for at most one
+                year of experience. Postings that do not say are checked by AI and shown only when
+                they are clearly for freshers.
+              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

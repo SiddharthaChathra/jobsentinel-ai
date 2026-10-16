@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   });
   try {
     const svc = app.get(ClassificationService);
-    const { checked, filtered } = await svc.refilterListed({ apply });
+    const { checked, filtered, requeued } = await svc.refilterListed({ apply });
 
     console.warn(`${filtered.length} of ${checked} listed job(s) fail today's gates.`);
     const byReason = new Map<string, number>();
@@ -35,7 +35,12 @@ async function main(): Promise<void> {
       console.warn(`  · ${f.title.slice(0, 60)} — ${f.reason}`);
 
     console.warn(
-      apply ? `\nfiltered ${filtered.length} job(s).` : '\nDry run. Re-run with --apply to write.',
+      `${requeued.length} job(s) of unknown experience go back to classification for an AI verdict.`,
+    );
+    console.warn(
+      apply
+        ? `\nfiltered ${filtered.length}, re-queued ${requeued.length}. Run \`pnpm classify --ai=N\` to classify them now.`
+        : '\nDry run. Re-run with --apply to write.',
     );
   } finally {
     await app.close();

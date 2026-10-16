@@ -8,6 +8,8 @@ import {
   isIndiaLocation,
   extractJobBatchYear,
   isBatchYearCompatible,
+  isFresherRole,
+  MAX_FRESHER_MIN_YEARS,
   type ExperienceEvidence,
 } from '@jobsentinel/validation';
 import { AI_SERVICE } from '../common/ai/ai.module';
@@ -44,12 +46,25 @@ interface JobDecision {
 /** Categories any user monitors; a job outside every user's list is FILTERED_OUT but kept. */
 interface MonitoringPrefs {
   categories: Set<JobCategory>;
-  fresherOnlyForAll: boolean;
-  includeUnknownExperience: boolean;
   graduationYears: Set<number | null>;
 }
 
 const AI_CONFIDENCE_FLOOR = 0.6;
+
+/** Reason prefix for a job filtered only because its experience could not be placed (D96). */
+export const UNKNOWN_EXPERIENCE_REASON = 'experience unknown';
+
+function notFresherReason(
+  level: ExperienceLevel,
+  minYears: number | null,
+  aiUnavailable: boolean,
+): string {
+  if (minYears !== null && minYears > MAX_FRESHER_MIN_YEARS) return `asks for ${minYears}+ years`;
+  if (level === 'EXPERIENCED') return 'experienced role';
+  return aiUnavailable
+    ? `${UNKNOWN_EXPERIENCE_REASON} (AI unavailable)`
+    : UNKNOWN_EXPERIENCE_REASON;
+}
 
 /** Statuses a job reaches only after passing classification, and before it is closed. */
 const REFILTERABLE = [
@@ -235,13 +250,17 @@ export class ClassificationService {
       });
     }
 
-    // Filtered out only when nobody monitors the category, or it is definitely too senior.
-    const tooSenior = prefs.fresherOnlyForAll && level === 'EXPERIENCED';
-    const unknownExcluded = !prefs.includeUnknownExperience && level === 'UNKNOWN';
-    const batchExcluded = prefs.fresherOnlyForAll && !isBatchCompatible;
+    // JobSentinel lists fresher and 0-1 year roles only, for every account (D96). This replaced
+    // the per-user "fresher only" / "include unknown experience" switches: UNKNOWN used to be
+    // listed by default, which is how generic "Backend Engineer" postings reached the list.
+    // UNKNOWN still reaches the AI above when monitored; only its verdict can make it listable.
+    const minYears =
+      rules.minYears ?? (job.experienceMinYears ? Number(job.experienceMinYears) : null);
+    const notFresher = !isFresherRole({ level, minYears });
+    const batchExcluded = !isBatchCompatible;
     const status = !indiaOk
       ? 'FILTERED_OUT'
-      : !monitored || tooSenior || unknownExcluded || batchExcluded
+      : !monitored || notFresher || batchExcluded
         ? 'FILTERED_OUT'
         : 'CLASSIFIED';
 
@@ -263,13 +282,11 @@ export class ClassificationService {
         ? `location outside India (${job.locationCountry ?? 'unknown'})`
         : !monitored
           ? 'category not monitored'
-          : tooSenior
-            ? 'experienced role, fresher-only mode'
-            : unknownExcluded
-              ? 'unknown experience excluded'
-              : batchExcluded
-                ? `targets the ${jobBatchYear} batch`
-                : category.reason,
+          : notFresher
+            ? notFresherReason(level, minYears, aiUnavailable)
+            : batchExcluded
+              ? `targets the ${jobBatchYear} batch`
+              : category.reason,
     };
   }
 
@@ -287,10 +304,15 @@ export class ClassificationService {
    */
   async refilterListed(
     opts: { apply: boolean; jobIds?: string[]; batch?: number } = { apply: false },
-  ): Promise<{ checked: number; filtered: { id: string; title: string; reason: string }[] }> {
+  ): Promise<{
+    checked: number;
+    filtered: { id: string; title: string; reason: string }[];
+    requeued: { id: string; title: string }[];
+  }> {
     const prefs = await this.monitoringPrefs();
     const batch = opts.batch ?? 200;
     const filtered: { id: string; title: string; reason: string }[] = [];
+    const requeued: { id: string; title: string }[] = [];
     let checked = 0;
     let after = '00000000-0000-0000-0000-000000000000';
     for (;;) {
@@ -316,12 +338,29 @@ export class ClassificationService {
       for (const job of page) {
         const decision = await this.decide(job, prefs, false);
         if (decision.status !== 'FILTERED_OUT') continue;
+        if (decision.reason.startsWith(UNKNOWN_EXPERIENCE_REASON)) {
+          // The rules alone cannot place it. A stored AI verdict that did is kept; otherwise the
+          // job goes back to classification, where the AI decides — not filtered unasked (D96).
+          const stored = job.experienceMinYears ? Number(job.experienceMinYears) : null;
+          if (isFresherRole({ level: job.experienceLevel, minYears: stored })) continue;
+          requeued.push({ id: job.id, title: job.title });
+          continue;
+        }
         decisions.push({ ...decision, reason: `re-filtered: ${decision.reason}` });
         filtered.push({ id: job.id, title: job.title, reason: decision.reason });
       }
       if (opts.apply && decisions.length > 0) await this.persist(decisions);
     }
-    return { checked, filtered };
+    if (opts.apply) {
+      const ids = requeued.map((r) => r.id);
+      for (let i = 0; i < ids.length; i += 50) {
+        await this.db
+          .update(jobs)
+          .set({ status: 'DISCOVERED', stageAttempts: 0, stageError: null })
+          .where(inArray(jobs.id, ids.slice(i, i + 50)));
+      }
+    }
+    return { checked, filtered, requeued };
   }
 
   /** Two statements per batch (one UPDATE ... FROM VALUES, one bulk event insert), in one transaction. */
@@ -369,8 +408,6 @@ export class ClassificationService {
     const rows = await this.db
       .select({
         categories: preferences.categories,
-        fresherOnly: preferences.fresherOnly,
-        includeUnknown: preferences.includeUnknownExperience,
         graduationYear: preferences.graduationYear,
       })
       .from(preferences);
@@ -388,8 +425,6 @@ export class ClassificationService {
           'CIVIL',
           'OTHER_ENGINEERING',
         ]),
-        fresherOnlyForAll: false,
-        includeUnknownExperience: true,
         // `null` means "no batch constraint", which is what an absent profile actually tells us.
         // Substituting a literal year here would invent a filter the user never asked for, and
         // would silently become the wrong year every August.
@@ -404,8 +439,6 @@ export class ClassificationService {
     }
     return {
       categories,
-      fresherOnlyForAll: rows.every((r) => r.fresherOnly),
-      includeUnknownExperience: rows.some((r) => r.includeUnknown),
       graduationYears,
     };
   }

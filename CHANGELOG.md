@@ -2,6 +2,14 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Fresher-only listings — 2026-10-16
+
+- **Only fresher and 0-1 year roles are listed (D96).** 78 of 96 listed jobs had experience the rules could not place, and those were listed by default. Now a job is shown only if it is a fresher role, or an entry-level role asking for at most one year — decided by the rules, or by the AI for postings that do not say. Experienced roles and anything asking 2+ years are filtered before matching, so they are never scored or alerted.
+- The job list and dashboard counters apply the same rule; jobs you saved or are tracking stay visible.
+- The "Fresher roles only" and "Keep jobs with no stated experience" switches (Preferences, onboarding, job filters) are gone — this is now how the site works, for everyone.
+- `pnpm refilter --apply` cleans existing listings: filters what fails, and re-queues unknown-experience jobs for an AI verdict.
+- Tests: validation 241 (+13), classification e2e updated for the new rule (unknown experience is filtered; an AI outage is recorded as such; refilter re-queues unknown).
+
 ## [Phase 12] Reliable keep-awake — 2026-10-16
 
 - **The API keeps itself awake (D94).** The GitHub keep-awake job ran 4 times in 12 hours instead of every 10 minutes — GitHub runs free scheduled jobs best-effort — so the API now requests its own public `/health` every 10 minutes when running on Render. The workflow stays as a backup.

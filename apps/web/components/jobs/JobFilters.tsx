@@ -176,15 +176,6 @@ export function JobFilters() {
 
         <div className="flex items-center space-x-2">
           <Switch
-            id="fresher"
-            checked={query.fresherOnly === true}
-            onCheckedChange={(checked) => updateFilter('fresherOnly', checked || undefined)}
-          />
-          <Label htmlFor="fresher">Fresher / Entry Level Only</Label>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch
             id="saved"
             checked={query.saved === true}
             onCheckedChange={(checked) => updateFilter('saved', checked || undefined)}

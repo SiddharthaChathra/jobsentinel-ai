@@ -6,6 +6,7 @@ export * from './classify/role-family';
 export * from './classify/experience';
 export * from './classify/category';
 export * from './classify/batch-year';
+export * from './classify/fresher-policy';
 export * from './extract/skills';
 export * from './dedupe';
 export * from './validate/domain';
