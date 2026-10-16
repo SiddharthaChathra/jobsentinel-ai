@@ -1,4 +1,6 @@
-# Keeps the API on Render's free plan from falling asleep (D92).
+# Backup for the API's own keep-awake ping (D94). GitHub runs free scheduled jobs best-effort —
+# this fired 4 times in 12 hours instead of 72 — so the API now pings itself; this stays as a
+# second line of defence. Original purpose (D92): keep Render's free plan from falling asleep.
 #
 # A free Render instance spins down after 15 minutes without inbound requests, and the next
 # visitor then waits 30-60 s while it boots — every signed-in page asks the API first, so the

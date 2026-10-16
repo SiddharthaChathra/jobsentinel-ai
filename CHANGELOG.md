@@ -2,6 +2,12 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Reliable keep-awake — 2026-10-16
+
+- **The API keeps itself awake (D94).** The GitHub keep-awake job ran 4 times in 12 hours instead of every 10 minutes — GitHub runs free scheduled jobs best-effort — so the API now requests its own public `/health` every 10 minutes when running on Render. The workflow stays as a backup.
+- The failure emails from GitHub, Vercel and Render all came from runs that failed before the CI, worker and Render fixes (D88, D89); every run since has passed.
+- Tests: API unit 105 (+4).
+
 ## [Phase 12] App icon — 2026-10-16
 
 - **New 3D icon:** an indigo tile with a raised, bevelled shield, a green "verified" check and an AI sparkle. One master SVG (`apps/web/public/icons/jobsentinel.svg`) generates the favicon (16/32/48), the SVG tab icon, the Apple touch icon, install icons (192, 512, maskable) and the 1200×630 link-preview image: `pnpm --filter @jobsentinel/web icons`.

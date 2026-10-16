@@ -149,6 +149,8 @@ export const envSchema = z
     PORT: int(4000, { min: 1, max: 65535 }),
     // Browser origins allowed by CORS: comma-separated, e.g. the Vercel URL and localhost (D89).
     WEB_ORIGIN: originList('http://localhost:3000'),
+    // Set by Render itself to the service's public URL; turns on the keep-awake ping (D94).
+    RENDER_EXTERNAL_URL: optUrl(),
     ALLOWED_SIGNUP_EMAILS: emailList('*'),
     ADMIN_EMAILS: emailList([]),
     ENABLE_API_DOCS: bool(false),
