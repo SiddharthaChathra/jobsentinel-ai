@@ -6,7 +6,7 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
 - **Telegram linking works on the deployed site (D98).** Each account always had its own Telegram link, and alerts go only to that account's chat, but nothing was reading the bot's messages, so a new user's `/start` code was never answered. Telegram now pushes bot messages to the API (`/api/v1/telegram/webhook`, secret-checked), so linking, `/status`, `/pause`, `/digest` and the Save / Not interested buttons all respond.
 - **Security:** a network error quoted the Telegram URL, which contains the bot token, into the API log. Every HTTP error message now has URLs redacted — bot tokens in the path as well as secret query parameters, wherever the URL appears in the text. The exposed token is being rotated.
-- Bot replies from the Singapore API timed out at random: Node gave each connection attempt 250 ms, under one round trip to Telegram's servers. Now 2.5 s. Network errors also say *why* (e.g. `ETIMEDOUT`), not just "fetch failed".
+- Bot replies from the Singapore API timed out at random: Node gave each connection attempt 250 ms, under one round trip to Telegram's servers. Now 2.5 s. Network errors also say _why_ (e.g. `ETIMEDOUT`), not just "fetch failed".
 - Tests: API unit 128 (+19).
 
 ## [Phase 12] Faster pages: API moved to Singapore — 2026-10-16
