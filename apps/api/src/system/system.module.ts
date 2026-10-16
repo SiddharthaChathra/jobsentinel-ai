@@ -4,10 +4,11 @@ import { HealthController } from './health.controller';
 import { StatusService } from './status.service';
 import { SystemController } from './system.controller';
 import { KeepAwakeService } from './keep-awake.service';
+import { WorkerDispatchService } from './worker-dispatch.service';
 
 @Module({
   controllers: [HealthController, SystemController],
-  providers: [AuditLogger, StatusService, KeepAwakeService],
+  providers: [AuditLogger, StatusService, KeepAwakeService, WorkerDispatchService],
   exports: [AuditLogger, StatusService],
 })
 export class SystemModule {}

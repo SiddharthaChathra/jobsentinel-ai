@@ -151,6 +151,11 @@ export const envSchema = z
     WEB_ORIGIN: originList('http://localhost:3000'),
     // Set by Render itself to the service's public URL; turns on the keep-awake ping (D94).
     RENDER_EXTERNAL_URL: optUrl(),
+    // Optional: the API starts the GitHub-hosted worker on its own clock (D95). A fine-grained
+    // token limited to "Actions: read and write" on this repository; unset = off.
+    WORKER_DISPATCH_TOKEN: optStr(),
+    WORKER_DISPATCH_REPO: strDefault('SiddharthaChathra/jobsentinel-ai'),
+    WORKER_DISPATCH_INTERVAL_MIN: int(30, { min: 10, max: 1440 }),
     ALLOWED_SIGNUP_EMAILS: emailList('*'),
     ADMIN_EMAILS: emailList([]),
     ENABLE_API_DOCS: bool(false),

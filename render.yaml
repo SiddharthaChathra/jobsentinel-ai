@@ -46,6 +46,10 @@ services:
       # used to be listed as CORS_ORIGINS, which nothing reads, so CORS stayed on localhost (D89).
       - key: WEB_ORIGIN
         sync: false
+      # Optional: a fine-grained GitHub token (Actions read+write, this repo only). The API then
+      # starts the worker every 30 minutes, which GitHub's own schedule does not manage (D95).
+      - key: WORKER_DISPATCH_TOKEN
+        sync: false
       # The API must not poll Telegram — only the worker owns getUpdates, or the two
       # would fight over the same update offset.
       - key: TELEGRAM_POLLING
