@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Env } from '@jobsentinel/config';
+import { z } from 'zod';
 import { ENV } from '../common/config/config.module';
 import type { HttpClientPort } from '../common/http/http-client';
 import { HTTP_CLIENT } from '../common/http/http.module';
@@ -22,21 +23,30 @@ export interface SendMessageInput {
   disablePreview?: boolean;
 }
 
-export interface TelegramUpdate {
-  update_id: number;
-  message?: {
-    message_id: number;
-    chat: { id: number; username?: string; type: string };
-    from?: { id: number; username?: string };
-    text?: string;
-  };
-  callback_query?: {
-    id: string;
-    data?: string;
-    from: { id: number; username?: string };
-    message?: { chat: { id: number } };
-  };
-}
+/**
+ * The slice of a Bot API update the bot acts on. Parsed with Zod because, with a webhook, it is an
+ * HTTP body from the internet; unknown fields are ignored, not rejected, as Telegram adds them.
+ */
+export const TelegramUpdateSchema = z.object({
+  update_id: z.number().int(),
+  message: z
+    .object({
+      message_id: z.number().int(),
+      chat: z.object({ id: z.number().int(), username: z.string().optional(), type: z.string() }),
+      from: z.object({ id: z.number().int(), username: z.string().optional() }).optional(),
+      text: z.string().optional(),
+    })
+    .optional(),
+  callback_query: z
+    .object({
+      id: z.string(),
+      data: z.string().optional(),
+      from: z.object({ id: z.number().int(), username: z.string().optional() }),
+      message: z.object({ chat: z.object({ id: z.number().int() }) }).optional(),
+    })
+    .optional(),
+});
+export type TelegramUpdate = z.infer<typeof TelegramUpdateSchema>;
 
 export class TelegramError extends Error {
   constructor(
@@ -121,6 +131,24 @@ export class TelegramClient {
       'getUpdates',
       { offset, timeout: timeoutSec, allowed_updates: ['message', 'callback_query'] },
       { timeoutMs: (timeoutSec + 10) * 1_000, skipRateLimit: true },
+    );
+  }
+
+  /**
+   * Points the bot at an HTTPS endpoint (docs 10 §1). Telegram then pushes every update there,
+   * sending `secretToken` in a header, and refuses `getUpdates` while the webhook is set.
+   */
+  async setWebhook(url: string, secretToken: string): Promise<void> {
+    await this.call<boolean>(
+      'setWebhook',
+      {
+        url,
+        secret_token: secretToken,
+        allowed_updates: ['message', 'callback_query'],
+        // Commands typed while the API was being redeployed are still answered, once.
+        drop_pending_updates: false,
+      },
+      { skipRateLimit: true },
     );
   }
 

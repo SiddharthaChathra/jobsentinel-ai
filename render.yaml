@@ -50,7 +50,9 @@ services:
       # starts the worker every 30 minutes, which GitHub's own schedule does not manage (D95).
       - key: WORKER_DISPATCH_TOKEN
         sync: false
-      # The API must not poll Telegram — only the worker owns getUpdates, or the two
-      # would fight over the same update offset.
+      # Telegram pushes bot updates (a new user's `/start <code>`, commands, buttons) to the API's
+      # /api/v1/telegram/webhook, registered on boot (D98). The API never long-polls.
+      - key: TELEGRAM_MODE
+        value: webhook
       - key: TELEGRAM_POLLING
         value: 'false'

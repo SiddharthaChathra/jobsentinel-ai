@@ -8,7 +8,7 @@ import { TrackerService } from '../jobs/tracker.service';
 import { JobsDetailService } from '../jobs/jobs-detail.service';
 import { DigestService } from './digest.service';
 import { NotificationsService } from './notifications.service';
-import { TelegramClient, type TelegramUpdate } from './telegram.client';
+import { TelegramClient, TelegramError, type TelegramUpdate } from './telegram.client';
 
 export interface PollResult {
   updates: number;
@@ -43,13 +43,41 @@ export class TelegramPollerService {
 
   async poll(opts: { timeoutSec?: number } = {}): Promise<PollResult> {
     const result: PollResult = { updates: 0, linked: 0, commands: 0, callbacks: 0, ignored: 0 };
+    // With a webhook set, Telegram pushes updates to the API and refuses getUpdates (D98).
     if (!this.telegram.configured || !this.env.TELEGRAM_POLLING) return result;
+    if (this.env.TELEGRAM_MODE === 'webhook') return result;
 
     const offset = await this.readOffset();
-    const updates = await this.telegram.getUpdates(offset, opts.timeoutSec ?? 25);
-    result.updates = updates.length;
+    let updates: TelegramUpdate[];
+    try {
+      updates = await this.telegram.getUpdates(offset, opts.timeoutSec ?? 25);
+    } catch (err) {
+      // 409: a webhook is set (the deployed API owns updates, D98). A local worker in polling
+      // mode must not fight it, and nothing is lost — Telegram delivers to the webhook.
+      if (err instanceof TelegramError && err.status === 409) {
+        this.logger.warn('telegram: a webhook owns this bot; not polling');
+        return result;
+      }
+      throw err;
+    }
     if (updates.length === 0) return result;
 
+    await this.handleUpdates(updates, result);
+    // Acknowledge past the highest id we have processed, even if some handler failed: replaying
+    // a poisonous update forever would stall every later one.
+    await this.writeOffset(Math.max(...updates.map((u) => u.update_id)) + 1);
+    return result;
+  }
+
+  /**
+   * Handles a batch of updates, however they arrived — long polling or the webhook (D98). One
+   * failing update is logged and skipped, never allowed to block the rest.
+   */
+  async handleUpdates(
+    updates: TelegramUpdate[],
+    result: PollResult = { updates: 0, linked: 0, commands: 0, callbacks: 0, ignored: 0 },
+  ): Promise<PollResult> {
+    result.updates += updates.length;
     for (const update of updates) {
       try {
         await this.handle(update, result);
@@ -57,9 +85,6 @@ export class TelegramPollerService {
         this.logger.error(`update ${update.update_id} failed: ${String(err)}`);
       }
     }
-    // Acknowledge past the highest id we have processed, even if some handler failed: replaying
-    // a poisonous update forever would stall every later one.
-    await this.writeOffset(Math.max(...updates.map((u) => u.update_id)) + 1);
     return result;
   }
 

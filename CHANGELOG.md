@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Every user can link their own Telegram — 2026-10-16
+
+- **Telegram linking works on the deployed site (D98).** Each account always had its own Telegram link, and alerts go only to that account's chat, but nothing was reading the bot's messages, so a new user's `/start` code was never answered. Telegram now pushes bot messages to the API (`/api/v1/telegram/webhook`, secret-checked), so linking, `/status`, `/pause`, `/digest` and the Save / Not interested buttons all respond.
+- Tests: API unit 123 (+14).
+
 ## [Phase 12] Faster pages: API moved to Singapore — 2026-10-16
 
 - **Pages load 2-3× faster (D97).** The API ran in Render's Oregon region while the database is in Mumbai, so every query crossed the Pacific. It now runs in Singapore: `/me` 2.3 → 0.9 s, `/jobs` 2.5 → 0.8 s, dashboard 2.9 → 1.3 s.

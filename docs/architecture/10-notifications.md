@@ -2,10 +2,10 @@
 
 ## 1. Channels
 
-| Channel       | Use                                                                                   | Implementation                                                       |
-| ------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **Telegram**  | instant alerts, daily digest, system alerts, simple commands                          | Bot API via `fetch` (no heavy framework); long polling in the worker |
-| **Web inbox** | mirror of every notification + read state; the only channel when Telegram is unlinked | `notifications(channel=WEB)` rows, `InboxBell` in the app            |
+| Channel       | Use                                                                                   | Implementation                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Telegram**  | instant alerts, daily digest, system alerts, simple commands                          | Bot API via `fetch` (no heavy framework); updates by webhook to the API in production, long polling locally (D98) |
+| **Web inbox** | mirror of every notification + read state; the only channel when Telegram is unlinked | `notifications(channel=WEB)` rows, `InboxBell` in the app                                                         |
 
 `NotificationChannel` interface allows adding email/web-push later without touching the dispatcher.
 
@@ -65,7 +65,7 @@ Messages > 4096 chars are split; digest lists at most 15 jobs with a dashboard l
 ## 4. Telegram account linking (`/telegram/link`)
 
 1. API creates `telegram_links(link_code, expires 15 min)` and returns `https://t.me/<bot>?start=<code>` + QR (rendered client-side).
-2. User taps → bot receives `/start <code>` → poller looks up code → stores `chat_id`, marks linked, replies "Linked to <email masked>".
+2. User taps → bot receives `/start <code>` (webhook to the API, or the poller locally) → handler looks up code → stores `chat_id`, marks linked, replies "Linked to <email masked>".
 3. Only one chat per user; re-linking replaces. Messages from unknown chats are ignored (and rate-limited).
 
 Bot commands: `/status` (worker, last scan, today's counts), `/pause 24h` / `/resume`, `/digest` (send now), `/help`. No free-text AI chat in the bot (keeps scope and budget tight).

@@ -122,6 +122,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Every alert carries its evidence (verification line, matched/missing skills), never a bare score.
 - All employer-supplied text is HTML-escaped before it reaches Telegram, and button URLs must be public (D56).
 - Quiet hours and the digest hour are evaluated in the user's timezone, not the server's.
+- Each user links their own chat and alerts go only to it. In production the bot's messages reach the API by webhook (`/api/v1/telegram/webhook`, secret header), never by polling: the worker runs in short bursts (D98).
 
 ## 11. Security rules (docs/architecture/11-security.md)
 

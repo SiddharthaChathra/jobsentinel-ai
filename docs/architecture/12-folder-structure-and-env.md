@@ -103,7 +103,7 @@ AI_ALLOW_DETERMINISTIC_ALERTS=true
 # ───────── Notifications ─────────
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_MODE=polling                          # polling | webhook
-TELEGRAM_WEBHOOK_SECRET=
+TELEGRAM_WEBHOOK_SECRET=                      # optional; derived from the bot token when empty (D98)
 
 # ───────── Sources (optional keys) ─────────
 ADZUNA_APP_ID=

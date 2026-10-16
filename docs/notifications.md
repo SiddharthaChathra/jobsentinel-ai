@@ -50,7 +50,7 @@ Button URLs must be publicly reachable or Telegram rejects the entire message, s
 ## Linking a Telegram account
 
 1. `POST /telegram/link` returns `https://t.me/<bot>?start=<code>`, valid 15 minutes.
-2. The user opens it; the bot receives `/start <code>`; the poller stores the chat id and confirms with a masked email.
+2. The user opens it; the bot receives `/start <code>`; the API stores the chat id and confirms with a masked email. In production Telegram pushes it to `POST /api/v1/telegram/webhook`, checked against a secret header (D98).
 3. One chat per user, one user per chat — re-linking replaces both sides. Messages from unlinked chats are ignored.
 
 Bot commands: `/status`, `/digest`, `/pause 24h`, `/resume`, `/help`. There is deliberately no free-text AI chat in the bot.
@@ -64,9 +64,11 @@ pnpm --filter @jobsentinel/api notify --dispatch-only
 pnpm --filter @jobsentinel/api notify --user=<uuid>
 ```
 
-The worker runs the same four stages every tick: `notify` → `dispatch` → `digest` → `telegram` (long poll). Each is isolated, so a Telegram outage cannot stop scanning.
+The worker runs the same four stages every tick: `notify` → `dispatch` → `digest` → `telegram` (long poll; skipped in webhook mode). Each is isolated, so a Telegram outage cannot stop scanning.
 
-Env: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_POLLING`. With no token the system runs normally and writes only to the web inbox.
+Every alert goes to the chat linked to _that_ user (`telegram_links.user_id`): each account links its own Telegram, and one user never sees another's alerts.
+
+Env: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_POLLING`, `TELEGRAM_MODE` (`webhook` in production: the API registers `RENDER_EXTERNAL_URL/api/v1/telegram/webhook` on boot), `TELEGRAM_WEBHOOK_SECRET` (optional; derived from the bot token when unset). With no token the system runs normally and writes only to the web inbox.
 
 ## Verified live
 

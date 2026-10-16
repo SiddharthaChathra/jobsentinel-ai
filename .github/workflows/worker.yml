@@ -2,9 +2,8 @@
 # (docs 14). Each run is one full pipeline tick and exits.
 #
 # Trade-off worth knowing: GitHub's schedule is best-effort and can be delayed by 10+ minutes
-# under load, and Telegram long-polling cannot work in short bursts, so bot commands
-# (/status, /pause) will not respond on this deployment. Alerts still go out. For a responsive
-# bot, run the worker continuously on an always-free VM instead.
+# under load (the API starts it every 30 minutes instead, D95). The worker does not read the
+# bot's messages: Telegram pushes them to the API's webhook (D98), so linking and commands work.
 name: worker
 
 on:
