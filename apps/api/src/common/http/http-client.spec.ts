@@ -1,4 +1,11 @@
-import { HttpClient, HttpError, isPrivateAddress, nat64ToV4, redactUrl } from './http-client';
+import {
+  HttpClient,
+  HttpError,
+  isPrivateAddress,
+  nat64ToV4,
+  redactText,
+  redactUrl,
+} from './http-client';
 
 describe('nat64ToV4', () => {
   it('decodes the embedded IPv4', () => {
@@ -172,5 +179,34 @@ describe('redactUrl (D61)', () => {
     const url = 'https://boards-api.greenhouse.io/v1/boards/groww/jobs?content=true';
     expect(redactUrl(url)).toBe(url);
     expect(redactUrl('not a url')).toBe('not a url');
+  });
+
+  it('masks a Telegram bot token in the path (D98)', () => {
+    expect(redactUrl('https://api.telegram.org/bot123456:AAH-fake_Token9/sendMessage')).toBe(
+      'https://api.telegram.org/bot***/sendMessage',
+    );
+  });
+});
+
+describe('redactText (D98)', () => {
+  it('redacts URLs quoted inside a message', () => {
+    expect(
+      redactText(
+        'Network error fetching https://api.telegram.org/bot123456:AAH-fake_Token9/sendMessage: fetch failed',
+      ),
+    ).toBe('Network error fetching https://api.telegram.org/bot***/sendMessage: fetch failed');
+    expect(redactText('HTTP 500 for https://x.test/a?app_key=SECRET, retrying')).toBe(
+      'HTTP 500 for https://x.test/a?app_key=***, retrying',
+    );
+  });
+
+  it('is what HttpError messages go through', () => {
+    const err = new HttpError(
+      'Network error fetching https://api.telegram.org/bot1:abc/getMe: fetch failed',
+      'NETWORK',
+      'https://api.telegram.org/bot1:abc/getMe',
+    );
+    expect(err.message).not.toContain('bot1:abc');
+    expect(err.url).toBe('https://api.telegram.org/bot***/getMe');
   });
 });

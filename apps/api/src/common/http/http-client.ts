@@ -37,10 +37,17 @@ export interface HttpResponse {
 const SECRET_PARAMS =
   /^(app_key|api_key|apikey|key|token|access_token|auth|secret|client_secret|password|signature|sig)$/i;
 
-/** Replaces the value of any credential-bearing query parameter with `***`. */
+/**
+ * Bot API URLs carry the bot token in the path (`/bot<id>:<secret>/sendMessage`); a "fetch failed"
+ * message once printed one into the API's log (D98).
+ */
+const TELEGRAM_BOT_PATH = /\/bot\d+:[A-Za-z0-9_-]+/g;
+
+/** Replaces credentials in a URL — secret query parameters and a bot token path — with `***`. */
 export function redactUrl(raw: string): string {
+  const pathRedacted = raw.replace(TELEGRAM_BOT_PATH, '/bot***');
   try {
-    const url = new URL(raw);
+    const url = new URL(pathRedacted);
     let touched = false;
     for (const name of [...url.searchParams.keys()]) {
       if (SECRET_PARAMS.test(name)) {
@@ -48,10 +55,19 @@ export function redactUrl(raw: string): string {
         touched = true;
       }
     }
-    return touched ? url.toString() : raw;
+    return touched ? url.toString() : pathRedacted;
   } catch {
-    return raw; // not a URL we can parse; nothing to redact
+    return pathRedacted; // not a URL we can parse; the path rule above still applied
   }
+}
+
+/** `redactUrl` for every URL inside free text, such as an error message that quotes one. */
+export function redactText(text: string): string {
+  // Sentence punctuation after a URL is not part of it ("…?app_key=X, retrying").
+  return text.replace(
+    /(https?:\/\/[^\s'"<>]+?)([,.;:!?)]*)(?=[\s'"<>]|$)/g,
+    (_m, url: string, tail: string) => `${redactUrl(url)}${tail}`,
+  );
 }
 
 export class HttpError extends Error {
@@ -61,7 +77,7 @@ export class HttpError extends Error {
       'SSRF_BLOCKED' | 'TIMEOUT' | 'NETWORK' | 'TOO_MANY_REDIRECTS' | 'INVALID_URL',
     url?: string,
   ) {
-    super(redactUrl(message));
+    super(redactText(message));
     this.name = 'HttpError';
     this.url = url === undefined ? undefined : redactUrl(url);
   }

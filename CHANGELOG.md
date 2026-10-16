@@ -5,7 +5,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 ## [Phase 12] Every user can link their own Telegram — 2026-10-16
 
 - **Telegram linking works on the deployed site (D98).** Each account always had its own Telegram link, and alerts go only to that account's chat, but nothing was reading the bot's messages, so a new user's `/start` code was never answered. Telegram now pushes bot messages to the API (`/api/v1/telegram/webhook`, secret-checked), so linking, `/status`, `/pause`, `/digest` and the Save / Not interested buttons all respond.
-- Tests: API unit 123 (+14).
+- **Security:** a network error quoted the Telegram URL, which contains the bot token, into the API log. Every HTTP error message now has URLs redacted — bot tokens in the path as well as secret query parameters, wherever the URL appears in the text. The exposed token is being rotated.
+- Tests: API unit 126 (+17).
 
 ## [Phase 12] Faster pages: API moved to Singapore — 2026-10-16
 
