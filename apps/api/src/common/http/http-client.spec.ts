@@ -1,4 +1,6 @@
+import { getDefaultAutoSelectFamilyAttemptTimeout } from 'node:net';
 import {
+  CONNECT_ATTEMPT_TIMEOUT_MS,
   describeNetworkError,
   HttpClient,
   HttpError,
@@ -220,5 +222,12 @@ describe('describeNetworkError', () => {
     );
     expect(describeNetworkError(new Error('plain'))).toBe('plain');
     expect(describeNetworkError('odd')).toBe('odd');
+  });
+});
+
+describe('connect attempt budget (D98)', () => {
+  it('gives each address more than one intercontinental round trip', () => {
+    expect(CONNECT_ATTEMPT_TIMEOUT_MS).toBeGreaterThanOrEqual(1_000);
+    expect(getDefaultAutoSelectFamilyAttemptTimeout()).toBe(CONNECT_ATTEMPT_TIMEOUT_MS);
   });
 });

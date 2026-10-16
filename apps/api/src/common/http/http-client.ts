@@ -1,5 +1,14 @@
 import { lookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
+import { isIP, setDefaultAutoSelectFamilyAttemptTimeout } from 'node:net';
+
+/**
+ * Per-address connect budget when Node races IPv6 and IPv4 ("happy eyeballs"). Node's default is
+ * 250 ms per attempt, less than one round trip from Render's Singapore region to Telegram's
+ * servers in Amsterdam, so new connections to Telegram failed at random with an empty ETIMEDOUT
+ * (D98). The request's own timeout still bounds the whole call.
+ */
+export const CONNECT_ATTEMPT_TIMEOUT_MS = 2_500;
+setDefaultAutoSelectFamilyAttemptTimeout(CONNECT_ATTEMPT_TIMEOUT_MS);
 
 export interface HttpRequestOptions {
   method?: 'GET' | 'HEAD' | 'POST';
