@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Faster pages: API moved to Singapore — 2026-10-16
+
+- **Pages load 2-3× faster (D97).** The API ran in Render's Oregon region while the database is in Mumbai, so every query crossed the Pacific. It now runs in Singapore: `/me` 2.3 → 0.9 s, `/jobs` 2.5 → 0.8 s, dashboard 2.9 → 1.3 s.
+- New API address: `https://jobsentinel-api-sg.onrender.com` (website setting and keep-warm job updated).
+
 ## [Phase 12] Fresher-only listings — 2026-10-16
 
 - **Revised the same day: zero is what matters.** A job is listed when it accepts zero experience — "0-2", "0-5" or "0-10 years" alike — and also when a "0-N years" range appears only in the description. A minimum of 1 year or more is not listed; neither is a senior-titled role.
