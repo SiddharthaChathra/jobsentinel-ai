@@ -35,10 +35,17 @@ async function main(): Promise<void> {
       filteredOut: 0,
       aiUsed: 0,
       aiUnavailable: 0,
+      deferred: 0,
     };
     const startedAt = Date.now();
     for (;;) {
-      const r = await svc.classifyPending({ batch: 200, maxAiCalls });
+      // One AI call takes ~4.5 s at the free tier's pacing; give the batch time for all of them.
+      const r = await svc.classifyPending({
+        batch: 200,
+        maxAiCalls,
+        aiTimeBudgetMs: Math.max(60_000, maxAiCalls * 6_000),
+      });
+      if (r.processed === r.deferred) break; // only jobs still waiting for an AI verdict remain
       if (r.processed === 0) break;
       for (const k of Object.keys(totals) as (keyof ClassifyResult)[]) totals[k] += r[k];
       process.stdout.write(

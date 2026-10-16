@@ -8,6 +8,7 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 - The job list and dashboard counters apply the same rule; jobs you saved or are tracking stay visible.
 - The "Fresher roles only" and "Keep jobs with no stated experience" switches (Preferences, onboarding, job filters) are gone — this is now how the site works, for everyone.
 - `pnpm refilter --apply` cleans existing listings: filters what fails, and re-queues unknown-experience jobs for an AI verdict.
+- An unknown-experience job the AI has not reached yet waits (up to 4 more runs) instead of being filtered unasked; the worker gives classification 3 minutes of AI per run (was 1).
 - Tests: validation 241 (+13), classification e2e updated for the new rule (unknown experience is filtered; an AI outage is recorded as such; refilter re-queues unknown).
 
 ## [Phase 12] Reliable keep-awake — 2026-10-16

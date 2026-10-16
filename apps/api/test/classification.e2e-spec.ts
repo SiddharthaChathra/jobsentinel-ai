@@ -259,15 +259,23 @@ describeIf('classification stage (integration)', () => {
     expect(job.status).toBe('FILTERED_OUT');
   }, 60_000);
 
-  it('survives an AI outage: the rules still decide, and the reason says the AI was missing', async () => {
+  it('survives an AI outage: an unknown job waits for a verdict, then is filtered with the reason', async () => {
     await moduleRef.close();
     await build({ status: 'BUDGET_EXCEEDED' });
     const id = await seedJob(
       'Support Engineer',
       'Help customers with technical issues across our products every day.',
     );
-    const result = await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
-    expect(result.aiUnavailable).toBeGreaterThanOrEqual(1);
+    // Not filtered unasked: it stays DISCOVERED for the next run's AI (D96).
+    const first = await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
+    expect(first.aiUnavailable).toBeGreaterThanOrEqual(1);
+    expect(first.deferred).toBe(1);
+    expect((await statusOf(id)).status).toBe('DISCOVERED');
+
+    // The wait is bounded: after the last allowed run it is filtered, and says why.
+    for (let i = 0; i < 4; i++) {
+      await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
+    }
     const job = await statusOf(id);
     expect(job.status).toBe('FILTERED_OUT');
     expect(job.experienceLevel).toBe('UNKNOWN');
@@ -275,8 +283,8 @@ describeIf('classification stage (integration)', () => {
       .select({ detail: jobEvents.detail })
       .from(jobEvents)
       .where(and(eq(jobEvents.jobId, id), eq(jobEvents.type, 'FILTERED_OUT')));
-    expect(JSON.stringify(event?.detail)).toContain('AI unavailable');
-  }, 60_000);
+    expect(JSON.stringify(event?.detail)).toContain('no AI verdict');
+  }, 120_000);
 
   it('keeps an India or country-less remote job and filters a foreign one (D73)', async () => {
     // Same proven fresher/SOFTWARE title and description for all four, so that location is the

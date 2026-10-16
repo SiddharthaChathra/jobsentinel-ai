@@ -22,13 +22,15 @@ export interface ClassifyResult {
   filteredOut: number;
   aiUsed: number;
   aiUnavailable: number;
+  /** Unknown-experience jobs left DISCOVERED to wait for an AI verdict next run (D96). */
+  deferred: number;
 }
 
 type JobRow = typeof jobs.$inferSelect;
 
 interface JobDecision {
   jobId: string;
-  status: 'CLASSIFIED' | 'FILTERED_OUT';
+  status: 'CLASSIFIED' | 'FILTERED_OUT' | 'DEFERRED';
   category: JobCategory;
   roleFamily: string;
   level: ExperienceLevel;
@@ -54,15 +56,23 @@ const AI_CONFIDENCE_FLOOR = 0.6;
 /** Reason prefix for a job filtered only because its experience could not be placed (D96). */
 export const UNKNOWN_EXPERIENCE_REASON = 'experience unknown';
 
+/**
+ * Runs an unknown-experience job may wait for an AI verdict before it is filtered without one.
+ * The AI gets a time box per batch (~13 calls at the free tier's pacing), so most ambiguous jobs
+ * in a large batch are not reached the first time; filtering them unasked would drop fresher
+ * roles that merely do not state experience. Shares `stage_attempts`, which stops at 5.
+ */
+const MAX_AI_WAITS = 4;
+
 function notFresherReason(
   level: ExperienceLevel,
   minYears: number | null,
-  aiUnavailable: boolean,
+  verdictMissing: boolean,
 ): string {
   if (minYears !== null && minYears > MAX_FRESHER_MIN_YEARS) return `asks for ${minYears}+ years`;
   if (level === 'EXPERIENCED') return 'experienced role';
-  return aiUnavailable
-    ? `${UNKNOWN_EXPERIENCE_REASON} (AI unavailable)`
+  return verdictMissing
+    ? `${UNKNOWN_EXPERIENCE_REASON} (no AI verdict)`
     : UNKNOWN_EXPERIENCE_REASON;
 }
 
@@ -114,6 +124,7 @@ export class ClassificationService {
       filteredOut: 0,
       aiUsed: 0,
       aiUnavailable: 0,
+      deferred: 0,
     };
 
     const pending = await this.db
@@ -133,6 +144,7 @@ export class ClassificationService {
     // Decisions are computed first (pure + optional AI), then written in two statements per batch:
     // per-job transactions cost ~0.4 s each over the pooler, which made a full re-classify unusable.
     const decisions: JobDecision[] = [];
+    const deferredIds: string[] = [];
     for (const job of pending) {
       result.processed++;
       try {
@@ -143,6 +155,11 @@ export class ClassificationService {
         );
         if (decision.usedAi) result.aiUsed++;
         if (decision.aiUnavailable) result.aiUnavailable++;
+        if (decision.status === 'DEFERRED') {
+          result.deferred++;
+          deferredIds.push(job.id);
+          continue;
+        }
         if (decision.status === 'FILTERED_OUT') result.filteredOut++;
         else result.classified++;
         decisions.push(decision);
@@ -156,6 +173,16 @@ export class ClassificationService {
       }
     }
     if (decisions.length > 0) await this.persist(decisions);
+    if (deferredIds.length > 0) {
+      // Still DISCOVERED, so the next run picks them up; the attempt count bounds the waiting.
+      await this.db
+        .update(jobs)
+        .set({
+          stageAttempts: sql`${jobs.stageAttempts} + 1`,
+          stageError: 'waiting for an AI verdict on experience',
+        })
+        .where(inArray(jobs.id, deferredIds));
+    }
     return result;
   }
 
@@ -258,11 +285,16 @@ export class ClassificationService {
       rules.minYears ?? (job.experienceMinYears ? Number(job.experienceMinYears) : null);
     const notFresher = !isFresherRole({ level, minYears });
     const batchExcluded = !isBatchCompatible;
-    const status = !indiaOk
-      ? 'FILTERED_OUT'
-      : !monitored || notFresher || batchExcluded
+    // Only the AI can place an ambiguous job; until it has answered, the job waits (bounded).
+    const verdictMissing = monitored && rules.needsAi && !usedAi && level === 'UNKNOWN';
+    const status: JobDecision['status'] =
+      !indiaOk || !monitored || batchExcluded
         ? 'FILTERED_OUT'
-        : 'CLASSIFIED';
+        : notFresher
+          ? verdictMissing && job.stageAttempts < MAX_AI_WAITS
+            ? 'DEFERRED'
+            : 'FILTERED_OUT'
+          : 'CLASSIFIED';
 
     return {
       jobId: job.id,
@@ -283,7 +315,7 @@ export class ClassificationService {
         : !monitored
           ? 'category not monitored'
           : notFresher
-            ? notFresherReason(level, minYears, aiUnavailable)
+            ? notFresherReason(level, minYears, verdictMissing)
             : batchExcluded
               ? `targets the ${jobBatchYear} batch`
               : category.reason,
@@ -337,8 +369,11 @@ export class ClassificationService {
       const decisions: JobDecision[] = [];
       for (const job of page) {
         const decision = await this.decide(job, prefs, false);
-        if (decision.status !== 'FILTERED_OUT') continue;
-        if (decision.reason.startsWith(UNKNOWN_EXPERIENCE_REASON)) {
+        if (decision.status === 'CLASSIFIED') continue;
+        if (
+          decision.status === 'DEFERRED' ||
+          decision.reason.startsWith(UNKNOWN_EXPERIENCE_REASON)
+        ) {
           // The rules alone cannot place it. A stored AI verdict that did is kept; otherwise the
           // job goes back to classification, where the AI decides — not filtered unasked (D96).
           const stored = job.experienceMinYears ? Number(job.experienceMinYears) : null;

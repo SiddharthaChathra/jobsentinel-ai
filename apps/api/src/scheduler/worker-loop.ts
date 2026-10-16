@@ -103,7 +103,11 @@ export class WorkerLoop {
       {
         name: 'classify',
         run: () =>
-          this.classification.classifyPending(opts.once ? { batch: 200, maxAiCalls: 50 } : {}),
+          this.classification.classifyPending(
+            // 3 minutes of AI per run: unknown-experience jobs wait for a verdict (D96), and the
+            // free tier's pacing allows ~13 calls a minute.
+            opts.once ? { batch: 200, maxAiCalls: 50, aiTimeBudgetMs: 180_000 } : {},
+          ),
       },
       {
         name: 'validate',
