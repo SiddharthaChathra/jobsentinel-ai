@@ -70,6 +70,18 @@ export function redactText(text: string): string {
   );
 }
 
+/**
+ * Undici reports every transport failure as "fetch failed" and puts the reason (ECONNRESET,
+ * ETIMEDOUT, a TLS error…) in `cause`; without it a network error cannot be diagnosed.
+ */
+export function describeNetworkError(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const cause: unknown = err.cause;
+  if (!(cause instanceof Error)) return err.message;
+  const code = (cause as { code?: unknown }).code;
+  return `${err.message} (${typeof code === 'string' ? `${code}: ` : ''}${cause.message})`;
+}
+
 export class HttpError extends Error {
   constructor(
     message: string,
@@ -273,7 +285,7 @@ export class HttpClient implements HttpClientPort {
         if (controller.signal.aborted)
           throw new HttpError(`Timeout fetching ${current}`, 'TIMEOUT', current);
         throw new HttpError(
-          `Network error fetching ${current}: ${err instanceof Error ? err.message : String(err)}`,
+          `Network error fetching ${current}: ${describeNetworkError(err)}`,
           'NETWORK',
           current,
         );

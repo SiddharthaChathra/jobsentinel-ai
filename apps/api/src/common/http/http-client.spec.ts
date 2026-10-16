@@ -1,4 +1,5 @@
 import {
+  describeNetworkError,
   HttpClient,
   HttpError,
   isPrivateAddress,
@@ -208,5 +209,16 @@ describe('redactText (D98)', () => {
     );
     expect(err.message).not.toContain('bot1:abc');
     expect(err.url).toBe('https://api.telegram.org/bot***/getMe');
+  });
+});
+
+describe('describeNetworkError', () => {
+  it('surfaces the cause undici hides behind "fetch failed"', () => {
+    const cause = Object.assign(new Error('connect ETIMEDOUT 1.2.3.4:443'), { code: 'ETIMEDOUT' });
+    expect(describeNetworkError(new TypeError('fetch failed', { cause }))).toBe(
+      'fetch failed (ETIMEDOUT: connect ETIMEDOUT 1.2.3.4:443)',
+    );
+    expect(describeNetworkError(new Error('plain'))).toBe('plain');
+    expect(describeNetworkError('odd')).toBe('odd');
   });
 });
