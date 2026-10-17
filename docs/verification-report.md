@@ -1,14 +1,56 @@
-# Verification report: R1–R8 and F8, after A and C
+# Verification report: R1–R8 and F8
 
-**Date:** 2026-10-17 (after F1, F2, A and C; before F3). **Scope:** this covers the earlier fixes R1–R8 and F8's budget guard. It is not the full Part 2–4 audit, which runs after F11.
+Latest run first. **NOT VERIFIED** marks anything that couldn't be checked, with the reason. Production checks are read-only counts.
+
+## Re-run — 2026-10-18 (after the owner's decisions, F8 completion and F3 part 2)
+
+**Code:** `main` at `58f946d`. **CI** run 39061318582: lint, typecheck, unit, build, secret scan and API e2e all green. **Production:** migrations 0008–0010 applied, nine approved sources seeded with `--only`, `pnpm backfill:holds --apply` run (3 older held jobs sent to validation, 147 unknown-experience jobs re-classified), then one worker run on the new code.
+
+| Suite                                                                  | Result                                                      |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Lint, format, typecheck (all workspaces)                               | pass, 0 warnings                                            |
+| Unit: types 4, config 33, ai 25, validation 347, api 140               | pass                                                        |
+| API e2e, local Supabase stack, 18 suites                               | **128 / 128** (was 119)                                     |
+| Web: Vitest                                                            | 46 / 46                                                     |
+| Classification accuracy gate, before and after each of the three fixes | level 72/72, engineering 72/72, abstained 10/72 — unchanged |
+
+| Production check (2026-10-18)                                                           | Result                                                                                                                                                           |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Listed jobs (VALID, not held, open, ≤ 60 days, fresher rule)                            | 11                                                                                                                                                               |
+| Listed on-site outside India / listed EXPERIENCED or minimum > 0                        | **0 / 0**                                                                                                                                                        |
+| Alertable jobs failing the fresher rule / on-site outside India                         | **0 / 0**                                                                                                                                                        |
+| Held jobs (`hold_reason`) that are VALID/MATCHED/NOTIFIED                               | **0**                                                                                                                                                            |
+| Telegram alerts, last 7 days, for an unverified or held job                             | **0**                                                                                                                                                            |
+| Duplicate notifications per (user, job, channel, type) for jobs; duplicate tracker rows | **0 / 0** (digests carry no job: one per user per day)                                                                                                           |
+| Needs review, open                                                                      | 72; another 90 held jobs are still waiting for validation (~20 per tick)                                                                                         |
+| Held jobs that validation found SUSPICIOUS (excluded from Needs review)                 | 8 — the scam check now runs on held jobs (D110)                                                                                                                  |
+| AI calls today / largest single-user share                                              | 209 of 500 / 21 of the 100 per-user limit                                                                                                                        |
+| Match labels                                                                            | RULES_ONLY 1,860, AI_REFINED 564                                                                                                                                 |
+| Adzuna requests, last 24 h                                                              | 402 — **all before the quota fix** (last at 15:55 UTC on 17 Oct). None since: the guard refuses until the rolling day drops below 225, about 10:00 UTC on 18 Oct |
+
+| ID  | Result                              | What changed since 2026-10-17                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | **PASS**                            | Unchanged rules. New sources go through the same location gate; the backfill's re-classified jobs too (e.g. "Developer Relations Engineer (London, UK)" is filtered again).                                                                                                                                                                                                                                                                                                           |
+| R2  | **PASS — now matches your rule**    | Unknown experience is **held** in Needs review ("Experience not stated"), never filtered unseen, never on Telegram (D110). e2e: `classification` (held with reason after the AI waits), `validation` (a held job that passes every check stays NEEDS_REVIEW; a held scam goes SUSPICIOUS), `needs-review` (listed with `EXPERIENCE_UNKNOWN`; on-site abroad and 75-day-old held jobs excluded; never in the main list). Multi-batch parsing (D107).                                   |
+| R3  | **PASS**                            | Unchanged.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| R4  | **PASS**                            | Held jobs are excluded from the main list, the dashboard and Telegram by the same `hold_reason` rule.                                                                                                                                                                                                                                                                                                                                                                                 |
+| R5  | **PASS**                            | Unchanged; alerts now also carry the Adzuna credit when the advert is Adzuna's (D115).                                                                                                                                                                                                                                                                                                                                                                                                |
+| R6  | **PASS (API, alert); web pending**  | The salary filter keeps undisclosed salaries by default (`includeUndisclosedSalary`, D111; e2e `jobs-api`). Alert: tested. **Web:** the job card test exists; the **detail-page test does not** (the C2 report said it did — it renders only `JobCard`), and the web has **no salary filter yet**: both are in Gemini's handoff `docs/handoffs/gemini-f3-web.md`.                                                                                                                     |
+| R7  | **PASS**                            | Unchanged. _Real-browser log-out/in: NOT VERIFIED (F9)._                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| R8  | **PASS**                            | Adds the `postingType` filter (e2e `jobs-api`).                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| F8  | **PASS (API); web display pending** | `ai_usage` daily totals read before every call (e2e `ai-budget`: totals per user and provider, a refused call spends nothing); per-user daily limit `AI_USER_DAILY_CALL_LIMIT` (unit + e2e: a third call refused for one user, resume parsing and other users unaffected); explicit `RULES_ONLY` / `AI_REFINED` on matches and "rules only" in alerts (e2e `matching`, unit `format.spec`). Showing the per-user limit and the rules-only note in the web app is in Gemini's handoff. |
+
+**Closed since the last run:** the R2 difference (D110), the R6 filter (D111), F8's three gaps (D112), the GET mislabel and the plural title (D109). **Corrected:** "Adzuna ad 5921751606 stored twice" was wrong — it is one job with two Adzuna ids, merged correctly; the earlier count was of ids, not jobs (now covered by an e2e test, with the cross-source preview case, D113). **Still open:** "asks for 80+ years" misparse (LOW, not in this round's approvals).
+
+---
+
+# Earlier run — 2026-10-17 (after F1, F2, A and C; before F3)
 
 **Evidence sources:**
 
 - automated suites, all on `main` at commit `4471dbe`;
 - read-only invariant queries on production (counts only; no data was changed);
 - code inspection, marked as such.
-
-Anything that couldn't be checked is marked **NOT VERIFIED**, with the reason.
 
 ## Baseline
 
