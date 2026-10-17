@@ -30,6 +30,19 @@ describe('classifyCategory', () => {
     expect(r.isEngineering).toBe(false);
   });
 
+  it('leaves a bare graduate-trainee title to the AI: engineering, category unknown (D109)', () => {
+    for (const title of ['Graduate Engineer Trainee', 'Graduate Engineer, Operations', 'GET']) {
+      expect(classifyCategory({ title })).toMatchObject({
+        category: 'UNKNOWN',
+        roleFamily: 'graduate_engineer_trainee',
+        isEngineering: true,
+      });
+    }
+    expect(
+      classifyCategory({ title: 'Graduate Engineer Trainee - Technical Sales' }).category,
+    ).toBe('NON_ENGINEERING');
+  });
+
   it('keeps technical hybrids on the engineering side', () => {
     for (const title of [
       'Sales Engineer',

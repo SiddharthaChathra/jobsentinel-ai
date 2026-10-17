@@ -9,10 +9,10 @@ describe('classifyRoleFamily', () => {
     ['Associate Cloud Engineer', 'cloud_engineer', 'CLOUD_DEVOPS'],
     ['Data Analyst Intern', 'data_analyst', 'DATA'],
     ['Junior Data Engineer', 'data_engineer', 'DATA'],
-    // A programme, not a discipline: its qualifier decides, or it stays generic (D109).
-    ['Graduate Engineer Trainee', 'graduate_engineer_trainee', 'OTHER_ENGINEERING'],
-    ['Graduate Engineer Trainee GET', 'graduate_engineer_trainee', 'OTHER_ENGINEERING'],
-    ['Graduate Engineer, Operations', 'graduate_engineer_trainee', 'OTHER_ENGINEERING'],
+    // A programme, not a discipline: its qualifier decides, or the AI reads the description (D109).
+    ['Graduate Engineer Trainee', 'graduate_engineer_trainee', 'UNKNOWN'],
+    ['Graduate Engineer Trainee GET', 'graduate_engineer_trainee', 'UNKNOWN'],
+    ['Graduate Engineer, Operations', 'graduate_engineer_trainee', 'UNKNOWN'],
     ['GET - Production', 'mechanical_engineer', 'MECHANICAL'],
     ['Graduate Engineer Trainee - Production', 'mechanical_engineer', 'MECHANICAL'],
     ['Graduate Engineer Trainee (GET) – Materials & Quality', 'mechanical_engineer', 'MECHANICAL'],
@@ -24,7 +24,7 @@ describe('classifyRoleFamily', () => {
     ['GET Mechanical Engineer', 'mechanical_engineer', 'MECHANICAL'],
     ['Software Engineer Trainee', 'software_engineer', 'SOFTWARE'],
     ['Network Engineer Trainee', 'network_engineer', 'NETWORK'],
-    ['Trainee Engineer', 'graduate_engineer_trainee', 'OTHER_ENGINEERING'],
+    ['Trainee Engineer', 'graduate_engineer_trainee', 'UNKNOWN'],
     // Plurals classify like the singular (D109).
     ['Software Engineers', 'software_engineer', 'SOFTWARE'],
     ['Hiring Software Developers - Freshers', 'software_engineer', 'SOFTWARE'],

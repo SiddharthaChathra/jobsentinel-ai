@@ -1,4 +1,8 @@
-import { ENGINEERING_OVERRIDE_PATTERNS, NON_ENGINEERING_PATTERNS } from '@jobsentinel/config';
+import {
+  ENGINEERING_OVERRIDE_PATTERNS,
+  GRADUATE_TRAINEE_FAMILY,
+  NON_ENGINEERING_PATTERNS,
+} from '@jobsentinel/config';
 import type { JobCategory } from '@jobsentinel/types';
 import { classifyRoleFamily } from './role-family';
 
@@ -39,6 +43,16 @@ export function classifyCategory(input: CategoryInput): CategoryClassification {
   }
 
   const role = classifyRoleFamily(title);
+  if (role.roleFamily === GRADUATE_TRAINEE_FAMILY) {
+    // An engineering programme whose discipline the title does not name (D109): engineering, but
+    // the category is left to the description — the AI category step (D105).
+    return {
+      category: 'UNKNOWN',
+      roleFamily: role.roleFamily,
+      isEngineering: true,
+      reason: 'graduate trainee programme; discipline not stated',
+    };
+  }
   if (role.category === 'UNKNOWN' && engineeringOverride) {
     return {
       category: 'OTHER_ENGINEERING',

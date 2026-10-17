@@ -170,9 +170,12 @@ export const ROLE_FAMILIES: RoleFamily[] = [
     // hires across plants and functions. It used to sit under software_engineer, which labelled
     // "GET – Production" SOFTWARE (D109). Last, so a discipline the title states ("GET Mechanical
     // Engineer", "Software Engineer Trainee") wins; a bare qualifier is read by the list below.
+    // With neither, the category is UNKNOWN on purpose: the AI reads the description to place it
+    // (D105), and holds it for review if unsure. Labelling it OTHER_ENGINEERING would hide every
+    // bare GET posting from a user who monitors only SOFTWARE.
     key: GRADUATE_TRAINEE_FAMILY,
     label: 'Graduate Engineer Trainee',
-    category: 'OTHER_ENGINEERING',
+    category: 'UNKNOWN',
     patterns: [
       /\bgraduate engineer(ing)?\b/,
       /\b(engineer|engineering) trainee\b/,
