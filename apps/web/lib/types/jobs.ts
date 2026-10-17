@@ -26,4 +26,7 @@ export type {
   SavedJobsQuery,
   NotInterestedInput,
   DashboardSummary,
+  ReviewJobCard,
+  HeldInfo,
+  HeldKind,
 } from '@jobsentinel/types';

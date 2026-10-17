@@ -45,6 +45,25 @@ function sourceStatusVariant(status: string): 'default' | 'secondary' | 'destruc
   }
 }
 
+const PURPOSE_LABELS: Record<string, string> = {
+  CATEGORY_CLASSIFY: 'Category check',
+  RESUME_PARSE: 'Resume parsing',
+  MATCHING: 'Job matching',
+  REQUIREMENTS: 'Requirements check',
+  SUSPICION: 'Suspicion check',
+  FRESHER_CHECK: 'Fresher check',
+};
+
+function formatPurpose(key: string): string {
+  return (
+    PURPOSE_LABELS[key] ??
+    key
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
 export default function SystemPage() {
   const { data: me, isLoading: meLoading } = useMe();
   const isAdmin = me?.user.isAdmin === true;
@@ -107,6 +126,24 @@ export default function SystemPage() {
             <p className="text-xs text-muted-foreground">
               Tokens: {status?.ai?.tokensToday ?? 0} / {status?.ai?.tokenBudget ?? 0}
             </p>
+            {status?.ai?.byPurpose && Object.keys(status.ai.byPurpose).length > 0 && (
+              <div className="mt-3 border-t pt-2 space-y-1">
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                  Calls by purpose
+                </div>
+                <div className="space-y-0.5 text-xs">
+                  {Object.entries(status.ai.byPurpose).map(([purpose, count]) => (
+                    <div
+                      key={purpose}
+                      className="flex justify-between items-center text-muted-foreground"
+                    >
+                      <span>{formatPurpose(purpose)}:</span>
+                      <span className="font-medium tabular-nums text-foreground">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

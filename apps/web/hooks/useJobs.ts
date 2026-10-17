@@ -12,6 +12,7 @@ import type {
   ApplicationUpsert,
   TrackerState,
   NotInterestedInput,
+  ReviewJobCard,
 } from '../lib/types/jobs';
 
 // ────────────────────────────────────────────────────────────────────
@@ -28,6 +29,24 @@ export function useJobs(query: JobsQuery) {
       );
       return { data: res.data, meta: res.meta };
     },
+  });
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Needs review list  GET /jobs/needs-review -> { data: ReviewJobCard[], meta: { nextCursor } }
+// ────────────────────────────────────────────────────────────────────
+export function useNeedsReview(query: JobsQuery, options?: { enabled?: boolean }) {
+  const api = useApi();
+  return useQuery({
+    queryKey: queryKeys.jobs.needsReview(query),
+    queryFn: async () => {
+      const res = await api.get<ReviewJobCard[]>(
+        '/jobs/needs-review',
+        query as unknown as Record<string, string | number | boolean | string[] | undefined>,
+      );
+      return { data: res.data, meta: res.meta };
+    },
+    enabled: options?.enabled,
   });
 }
 

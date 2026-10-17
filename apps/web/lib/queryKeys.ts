@@ -3,6 +3,7 @@ export const queryKeys = {
     all: ['jobs'] as const,
     list: (filters: unknown) => [...queryKeys.jobs.all, 'list', filters] as const,
     detail: (id: string) => [...queryKeys.jobs.all, 'detail', id] as const,
+    needsReview: (filters: unknown) => [...queryKeys.jobs.all, 'needsReview', filters] as const,
     saved: ['savedJobs'] as const,
     applications: ['applications'] as const,
   },

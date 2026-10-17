@@ -1,16 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { JobFilters } from '@/components/jobs/JobFilters';
 import { JobList } from '@/components/jobs/JobList';
+import { NeedsReviewList } from '@/components/jobs/NeedsReviewList';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useFilterParams } from '@/hooks/useFilterParams';
 import { useJobs } from '@/hooks/useJobs';
+import { cn } from '@/lib/utils';
 
 export default function JobsPage() {
   const { query } = useFilterParams();
+  const [activeTab, setActiveTab] = useState<'all' | 'needs-review'>('all');
   const { data, isLoading, isError, error } = useJobs(query);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -22,11 +25,11 @@ export default function JobsPage() {
       <PageHeader
         title="Jobs"
         description={
-          isLoading
-            ? 'Loading…'
-            : // The API pages by cursor and returns no total, so report what is actually loaded
-              // rather than implying a count we do not have.
-              `${jobs.length}${hasMore ? '+' : ''} ${jobs.length === 1 ? 'job' : 'jobs'} matching your filters`
+          activeTab === 'needs-review'
+            ? 'Held jobs waiting for manual review before application'
+            : isLoading
+              ? 'Loading…'
+              : `${jobs.length}${hasMore ? '+' : ''} ${jobs.length === 1 ? 'job' : 'jobs'} matching your filters`
         }
         actions={
           <Button
@@ -47,27 +50,71 @@ export default function JobsPage() {
         }
       />
 
+      {/* View Switcher Tabs (C step 2, D106) */}
+      <div className="mb-4 flex items-center justify-between gap-4 border-b border-border/60 pb-3">
+        <div
+          role="tablist"
+          aria-label="Job categories"
+          className="inline-flex rounded-lg border bg-muted/40 p-1 text-sm font-medium"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'all'}
+            onClick={() => setActiveTab('all')}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              activeTab === 'all'
+                ? 'bg-background text-foreground shadow-xs font-semibold'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <CheckCircle2 className="size-4" />
+            <span>All Jobs</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            data-testid="needs-review-tab"
+            aria-selected={activeTab === 'needs-review'}
+            onClick={() => setActiveTab('needs-review')}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              activeTab === 'needs-review'
+                ? 'bg-background text-foreground shadow-xs font-semibold'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <AlertTriangle className="size-4 text-amber-500" />
+            <span>Needs Review</span>
+          </button>
+        </div>
+      </div>
+
       <div className="grid items-start gap-6 md:grid-cols-12">
         <aside className="sticky top-20 hidden md:col-span-4 md:block lg:col-span-3">
           <JobFilters />
         </aside>
 
         <section className="min-w-0 md:col-span-8 lg:col-span-9">
-          {/* On a phone the filters stay collapsed: otherwise they fill the first screen and the
-              jobs — the reason for the page — are pushed below the fold. */}
+          {/* On a phone the filters stay collapsed */}
           {filtersOpen && (
             <div id="job-filters-mobile" className="mb-4 md:hidden">
               <JobFilters />
             </div>
           )}
 
-          <JobList
-            jobs={jobs}
-            isLoading={isLoading}
-            isError={isError}
-            error={error as Error}
-            hasNextPage={hasMore}
-          />
+          {activeTab === 'all' ? (
+            <JobList
+              jobs={jobs}
+              isLoading={isLoading}
+              isError={isError}
+              error={error as Error}
+              hasNextPage={hasMore}
+            />
+          ) : (
+            <NeedsReviewList query={query} />
+          )}
         </section>
       </div>
     </>
