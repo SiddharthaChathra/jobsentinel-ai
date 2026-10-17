@@ -6,7 +6,7 @@ import { JobDetail } from '@/components/jobs/JobDetail';
 import { TrackerActions } from '@/components/jobs/TrackerActions';
 import { MatchBreakdown } from '@/components/jobs/MatchBreakdown';
 import { VerificationBadge } from '@/components/jobs/VerificationBadge';
-import { Building, MapPin, Banknote, Clock } from 'lucide-react';
+import { Building, MapPin, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RelativeTime } from '@/components/common/RelativeTime';
 
@@ -45,12 +45,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 <span>{job.location.isRemote ? 'Remote' : (job.location.text ?? 'Unknown')}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Banknote className="h-4 w-4" />
-                <span>
-                  {job.salary?.disclosed && job.salary?.text ? job.salary.text : 'Not disclosed'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 {job.postedAt ? <RelativeTime date={job.postedAt} /> : 'Unknown'}
               </div>
@@ -59,7 +53,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <VerificationBadge validation={job.validation} />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {job.fresherEligible && (
             <Badge className="bg-green-600 hover:bg-green-700">Fresher Eligible</Badge>
           )}
@@ -72,15 +66,15 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
       <TrackerActions job={job} />
 
-      <div className="grid gap-6 md:grid-cols-12 items-start">
-        <div className="md:col-span-8 space-y-6">
+      <div className="grid items-start gap-6 md:grid-cols-12">
+        <div className="space-y-6 md:col-span-8">
           <JobDetail job={job} />
         </div>
-        <div className="md:col-span-4 space-y-6">
+        <div className="space-y-6 md:col-span-4">
           {job.match ? (
-            <MatchBreakdown match={job.match} />
+            <MatchBreakdown match={job.match} jobId={job.id} />
           ) : (
-            <div className="p-4 border rounded-lg text-center text-sm text-muted-foreground">
+            <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
               Not scored yet — your resume profile may need updating.
             </div>
           )}

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import type { PostingType } from '@/lib/types/jobs';
 
 // One list per control feeds both the options and Base UI's `items`, which is what lets the
 // closed trigger show "Newest First" instead of the raw value `newest`.
@@ -35,6 +36,11 @@ const STATUS_ITEMS = [
 const VERIFICATION_ITEMS = [
   { value: 'VERIFIED', label: 'Verified only' },
   { value: 'INCLUDE_UNCONFIRMED', label: 'Include unconfirmed' },
+];
+const POSTING_TYPE_ITEMS: { value: PostingType; label: string }[] = [
+  { value: 'CAMPUS_DRIVE', label: 'Campus drive' },
+  { value: 'OFF_CAMPUS_PROGRAM', label: 'Off-campus programme' },
+  { value: 'REGULAR', label: 'Regular opening' },
 ];
 
 function Options({ items }: { items: { value: string; label: string }[] }) {
@@ -163,6 +169,79 @@ export function JobFilters() {
             Unconfirmed jobs are usually real — their careers page blocked our check. Each one shows
             the evidence we gathered.
           </p>
+        </div>
+
+        {/* Salary filter (R6, D111) */}
+        <div className="space-y-2">
+          <Label htmlFor="salary-min-input">Minimum Salary (₹/year)</Label>
+          <Input
+            id="salary-min-input"
+            data-testid="salary-min-input"
+            type="number"
+            min={0}
+            step={50000}
+            placeholder="e.g. 500000"
+            value={query.salaryMin ?? ''}
+            onChange={(e) => {
+              const val = e.target.value.trim();
+              const num = val === '' ? undefined : Number(val);
+              updateFilter('salaryMin', num !== undefined && !isNaN(num) ? num : undefined);
+            }}
+          />
+          <div className="flex items-center space-x-2 pt-1">
+            <input
+              id="salary-undisclosed-toggle"
+              data-testid="salary-undisclosed-toggle"
+              type="checkbox"
+              checked={query.includeUndisclosedSalary !== false}
+              // Only meaningful with a minimum: without one the API ignores it (D111), and the
+              // hook drops it, so an enabled box would silently re-check itself.
+              disabled={query.salaryMin === undefined}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                if (checked) {
+                  updateFilter('includeUndisclosedSalary', undefined);
+                } else {
+                  // Send false when unchecked (R6, D111)
+                  updateFilter('includeUndisclosedSalary', false);
+                }
+              }}
+              className="size-4 cursor-pointer rounded border-input text-primary focus:ring-primary"
+            />
+            <Label
+              htmlFor="salary-undisclosed-toggle"
+              className="cursor-pointer text-xs font-normal text-muted-foreground"
+            >
+              Include jobs that don&apos;t state a salary
+            </Label>
+          </div>
+        </div>
+
+        {/* Posting type filter (D114) */}
+        <div data-testid="posting-type-filter" className="space-y-2">
+          <Label>Posting Type</Label>
+          <div className="flex flex-col gap-2">
+            {POSTING_TYPE_ITEMS.map((item) => {
+              const isSelected = (query.postingType ?? []).includes(item.value);
+              return (
+                <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      const current = query.postingType ?? [];
+                      const updated = e.target.checked
+                        ? [...current, item.value]
+                        : current.filter((v) => v !== item.value);
+                      updateFilter('postingType', updated.length > 0 ? updated : undefined);
+                    }}
+                    className="size-4 cursor-pointer rounded border-input text-primary focus:ring-primary"
+                  />
+                  <span>{item.label}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">

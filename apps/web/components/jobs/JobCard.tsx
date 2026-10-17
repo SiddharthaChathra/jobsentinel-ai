@@ -93,9 +93,11 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
   const unverified = job.validation.status === 'NEEDS_REVIEW';
   const place = job.location.isRemote ? 'Remote' : (job.location.text ?? 'Location not stated');
 
-  const heldCfg = held ? (HELD_CONFIG[held.kind] ?? HELD_CONFIG.OTHER) : undefined;
+  const isKnownKind = held && held.kind in HELD_CONFIG;
+  const effectiveKind = isKnownKind ? held.kind : 'OTHER';
+  const heldCfg = held ? (HELD_CONFIG[effectiveKind] ?? HELD_CONFIG.OTHER) : undefined;
   const heldTooltip = held
-    ? held.kind === 'OTHER'
+    ? effectiveKind === 'OTHER'
       ? held.reason
       : (heldCfg?.tooltip ?? held.reason)
     : '';
@@ -141,7 +143,7 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
           aria-label={`Held for review: ${held.label}`}
         >
           <div className="flex items-center gap-2 min-w-0">
-            <HeldIcon className="size-4 shrink-0" aria-label={held.kind} />
+            <HeldIcon className="size-4 shrink-0" aria-label={effectiveKind} />
             <span className="font-medium truncate">{held.label}</span>
           </div>
           <span
@@ -152,7 +154,7 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
             )}
             title={heldTooltip}
           >
-            {held.kind}
+            {effectiveKind}
           </span>
         </div>
       )}
@@ -193,7 +195,18 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
         </div>
 
         {job.match ? (
-          <MatchRing score={job.match.overallScore} priority={job.match.priority} />
+          <div className="flex flex-col items-center">
+            <MatchRing score={job.match.overallScore} priority={job.match.priority} />
+            {job.match.scoring === 'RULES_ONLY' && (
+              <span
+                data-testid={`scoring-rules-only-${job.id}`}
+                className="mt-1 text-[10px] text-muted-foreground cursor-help"
+                title="The AI budget was used up or the AI was unavailable; this score comes from the rules. It may be refined later."
+              >
+                Rules-only score
+              </span>
+            )}
+          </div>
         ) : (
           <span className="shrink-0 rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
             Not scored
@@ -224,6 +237,24 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
         {job.fresherEligible && (
           <Badge className="border-transparent bg-success/15 text-success hover:bg-success/15">
             Fresher eligible
+          </Badge>
+        )}
+        {job.postingType === 'CAMPUS_DRIVE' && (
+          <Badge
+            variant="secondary"
+            data-testid={`posting-type-${job.id}`}
+            className="border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
+          >
+            Campus drive
+          </Badge>
+        )}
+        {job.postingType === 'OFF_CAMPUS_PROGRAM' && (
+          <Badge
+            variant="secondary"
+            data-testid={`posting-type-${job.id}`}
+            className="border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+          >
+            Off-campus programme
           </Badge>
         )}
         {job.employmentType !== 'UNKNOWN' && (
@@ -269,10 +300,29 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
       )}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
-        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Clock className="size-3.5" />
-          {job.postedAt ? <RelativeTime date={job.postedAt} /> : 'Date unknown'}
-        </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock className="size-3.5" />
+            {job.postedAt ? <RelativeTime date={job.postedAt} /> : 'Date unknown'}
+          </span>
+          {job.attribution && (
+            <a
+              href={job.attribution.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid={`attribution-${job.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="relative z-10 inline-flex min-h-[23px] min-w-[116px] items-center justify-center rounded-md border border-border/80 bg-background/80 px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              style={{ minWidth: 116, minHeight: 23 }}
+              aria-label={`Jobs by ${job.attribution.label}`}
+            >
+              Jobs by{' '}
+              <span className="ml-1 font-semibold text-primary underline">
+                {job.attribution.label}
+              </span>
+            </a>
+          )}
+        </div>
         {/* Above the card-wide link so both remain clickable. */}
         <div className="relative z-10 flex items-center gap-2">
           <SaveButton jobId={job.id} saved={job.tracker.saved} />

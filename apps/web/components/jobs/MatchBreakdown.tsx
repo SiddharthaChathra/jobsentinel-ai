@@ -4,14 +4,25 @@ import type { JobMatchDetail } from '@/lib/types/jobs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 
-export function MatchBreakdown({ match }: { match: JobMatchDetail }) {
+export function MatchBreakdown({ match, jobId }: { match: JobMatchDetail; jobId?: string }) {
+  const isRulesOnly = match.scoring === 'RULES_ONLY';
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">
-          Match Breakdown: {match.overallScore}%
+        <CardTitle className="flex flex-wrap items-center gap-2 text-lg">
+          <span>Match Breakdown: {match.overallScore}%</span>
+          {isRulesOnly && (
+            <span
+              data-testid={jobId ? `scoring-rules-only-${jobId}` : 'scoring-rules-only'}
+              className="inline-flex cursor-help items-center rounded-md border border-border px-1.5 py-0.5 text-xs font-normal text-muted-foreground"
+              title="The AI budget was used up or the AI was unavailable; this score comes from the rules. It may be refined later."
+            >
+              Rules-only score
+            </span>
+          )}
           {match.aiPending && (
-            <span className="ml-2 inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
               AI refinement pending
             </span>
