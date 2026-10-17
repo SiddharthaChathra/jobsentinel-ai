@@ -274,7 +274,11 @@ describeIf('onboarding (e2e)', () => {
       .get(`/api/v1/resumes/${resumeId}/download`)
       .set(auth())
       .expect(200);
-    expect(res.body.data.url).toMatch(/^https:\/\//);
+    // A signed Storage URL on the configured project — https in production, http on the local
+    // test stack (D101). The download below proves the signature works.
+    expect(
+      res.body.data.url.startsWith(`${process.env.SUPABASE_URL}/storage/v1/object/sign/`),
+    ).toBe(true);
     const file = await fetch(res.body.data.url);
     expect(file.status).toBe(200);
     expect(
