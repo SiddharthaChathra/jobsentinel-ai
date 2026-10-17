@@ -94,6 +94,7 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
   postedAfter?: string;       // ISO
   sourceId?: string;
   salaryMin?: number;
+  includeUndisclosedSalary?: boolean;     // default true: with salaryMin, keep "Not disclosed" jobs (D111)
   saved?: boolean;
   tracker?: ApplicationStatus[];
   sort?: 'newest' | 'score' | 'posted' ;   // default newest

@@ -60,6 +60,12 @@ export const JobsQuery = z.object({
   postedAfter: z.iso.datetime().optional(),
   sourceId: z.uuid().optional(),
   salaryMin: int(0, 100_000_000),
+  /**
+   * With `salaryMin`: also keep jobs that state no comparable salary ("Not disclosed").
+   * Default true — most fresher postings state none, so a salary filter would otherwise hide
+   * nearly all of them (R6, D111). `false` keeps only jobs whose stated minimum meets it.
+   */
+  includeUndisclosedSalary: bool,
   saved: bool,
   tracker: csv(ApplicationStatus),
   sort: JobSort.optional(),

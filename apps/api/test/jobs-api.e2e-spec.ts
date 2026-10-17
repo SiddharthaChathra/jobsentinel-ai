@@ -421,4 +421,31 @@ describeIf('jobs API (integration)', () => {
     expect(ids).toContain(remoteAbroad);
     expect(ids).not.toContain(onsiteAbroad);
   }, 60_000);
+
+  it('keeps undisclosed salaries under a salary filter unless asked not to (R6, D111)', async () => {
+    const paid = await seedJob('Quillfeather Paid Developer', {
+      salaryMin: '600000',
+      salaryMax: '800000',
+      salaryDisclosed: true,
+      salaryText: '₹6-8 LPA',
+    });
+    const low = await seedJob('Quillfeather Low Developer', {
+      salaryMin: '200000',
+      salaryDisclosed: true,
+      salaryText: '₹2 LPA',
+    });
+    const hidden = await seedJob('Quillfeather Hidden Developer'); // no salary stated
+    const list = async (extra: string) => {
+      const res = await auth(
+        api().get(`/api/v1/jobs?companyId=${companyId}&q=Quillfeather&salaryMin=500000${extra}`),
+      ).expect(200);
+      return (res.body as { data: JobCard[] }).data.map((j) => j.id).sort();
+    };
+    // Default ON: the stated minimum must meet it; "Not disclosed" is kept.
+    expect(await list('')).toEqual([paid, hidden].sort());
+    expect(await list('&includeUndisclosedSalary=true')).toEqual([paid, hidden].sort());
+    // OFF: only jobs whose stated minimum meets the filter.
+    expect(await list('&includeUndisclosedSalary=false')).toEqual([paid]);
+    expect(await list('&includeUndisclosedSalary=false')).not.toContain(low);
+  }, 60_000);
 });

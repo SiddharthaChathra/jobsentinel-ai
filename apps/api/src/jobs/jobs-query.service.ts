@@ -205,9 +205,7 @@ export class JobsQueryService {
       // The review view also shows jobs held because their experience is unknown (D110): the
       // hold is set only when no stated requirement or EXPERIENCED verdict ruled the job out.
       where.push(
-        review
-          ? or(fresherRoleSql('jobs'), isNotNull(jobs.holdReason))
-          : fresherRoleSql('jobs'),
+        review ? or(fresherRoleSql('jobs'), isNotNull(jobs.holdReason)) : fresherRoleSql('jobs'),
       );
     }
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
@@ -222,7 +220,12 @@ export class JobsQueryService {
     where.push(
       sql`coalesce(${jobs.postedAt}, ${jobs.firstSeenAt}) >= ${effectivePostedAfter.toISOString()}::timestamptz`,
     );
-    if (q.salaryMin !== undefined) where.push(gte(jobs.salaryMin, String(q.salaryMin)));
+    if (q.salaryMin !== undefined) {
+      const meets = gte(jobs.salaryMin, String(q.salaryMin));
+      // Undisclosed salaries are kept unless the user opts out (R6, D111): no figure is not a
+      // figure below the minimum.
+      where.push(q.includeUndisclosedSalary === false ? meets : or(meets, isNull(jobs.salaryMin)));
+    }
     if (q.sourceId) {
       where.push(
         sql`exists (select 1 from job_source_mappings m where m.job_id = ${jobs.id} and m.source_id = ${q.sourceId})`,
