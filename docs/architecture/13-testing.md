@@ -44,6 +44,16 @@ Coverage targets: `packages/validation` ≥ 90 %, `packages/ai` ≥ 85 %, `apps/
 | Job closes after discovery                               | re-check → EXPIRED; hidden; tracker intact; no new notification                                                   |
 | Budget exhausted                                         | AI_PENDING queue drains next day                                                                                  |
 
+## 3a. Test environment (F1, D101)
+
+Integration and e2e tests never touch production. They run against a **local Supabase stack** (Postgres, Auth, Storage in Docker via the Supabase CLI), started fresh in CI for every run.
+
+- `pnpm test:db:start` starts the stack (generating an ES256 signing key on first use, so tokens verify against the JWKS exactly as in production) and writes `apps/api/.env.test` from it. `pnpm test:db:seed` applies migrations and the seed; `pnpm test:db:reset` wipes the app schema and auth users first. `pnpm test:db:stop` stops it.
+- The e2e suites and both scripts load **`apps/api/.env.test` only** — never `.env`, which holds production settings and the real bot/AI keys.
+- **Guard:** `assertTestTarget` (`packages/config/src/database-target.ts`) runs before any suite (Jest `setupFiles` and `globalSetup`) and in the scripts. It aborts unless every `DATABASE_URL`, `DATABASE_DIRECT_URL` and `SUPABASE_URL` is local or the project named in `TEST_SUPABASE_REF`, and always aborts on `PRODUCTION_SUPABASE_REF` — even if a typo names production as the test project. Verified: with production configured both `pnpm test:e2e` and `pnpm test:db:reset` refuse before connecting.
+- Without `.env.test` the database suites skip themselves. Running them on a laptop needs Docker (Docker Desktop is free for personal use); otherwise rely on CI's `e2e` job.
+- Supabase's free plan allows two projects and both are in use, which is why the test environment is local rather than a second hosted project. `TEST_SUPABASE_REF` exists for a hosted test project should one become available.
+
 ## 4. Quality gates
 
 - `pnpm lint && pnpm typecheck && pnpm test` must pass before every commit that ends a phase (spec loop: RUN → TEST → DEBUG → VERIFY).

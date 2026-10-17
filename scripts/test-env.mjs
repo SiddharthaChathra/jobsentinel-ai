@@ -6,6 +6,7 @@
 // The local stack's keys are generated per machine and only work against 127.0.0.1, but they
 // are still credentials: .env.test is git-ignored (.env.*) and never printed here.
 import { execFileSync } from 'node:child_process';
+import { generateKeyPairSync, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +25,18 @@ if (!process.argv.includes('--no-start')) {
   // sign with an asymmetric key. Generated once per checkout; git-ignored.
   const keyFile = resolve(root, 'supabase/signing_keys.json');
   if (!existsSync(keyFile)) {
-    writeFileSync(keyFile, supabase('gen', 'signing-key', '--algorithm', 'ES256'));
+    // Generated here rather than with `supabase gen signing-key`: that command reads config.toml,
+    // which already points at this file, and fails while it does not exist yet.
+    const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' });
+    const jwk = {
+      ...privateKey.export({ format: 'jwk' }),
+      kid: randomUUID(),
+      use: 'sig',
+      key_ops: ['sign', 'verify'],
+      alg: 'ES256',
+      ext: true,
+    };
+    writeFileSync(keyFile, JSON.stringify([jwk], null, 2));
   }
   supabase(
     'start',

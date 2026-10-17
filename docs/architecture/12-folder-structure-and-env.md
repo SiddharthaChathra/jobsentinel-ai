@@ -114,6 +114,11 @@ ADZUNA_APP_KEY=
 # ───────── Tests ─────────
 TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
 AI_LIVE_TESTS=0
+# Tests only (read by the test guard, never by the app; D101). apps/api/.env.test is generated
+# by `pnpm test:db:start`. Tests abort on PRODUCTION_SUPABASE_REF and accept a hosted
+# database only if it is TEST_SUPABASE_REF. Project refs are identifiers, not secrets.
+PRODUCTION_SUPABASE_REF=
+TEST_SUPABASE_REF=
 ```
 
 Rules: `packages/config/env.ts` declares each variable with a Zod type, default and which process needs it (`web | api | worker`); boot fails with a list of missing variables. Vercel gets only `NEXT_PUBLIC_*`; Render/VM get API+worker sets; GitHub Actions cron (if used) gets worker set as repository secrets.
