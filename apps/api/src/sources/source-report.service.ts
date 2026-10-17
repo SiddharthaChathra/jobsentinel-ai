@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import type {
   ExperienceLevel,
   JobStatus,
@@ -8,13 +8,15 @@ import type {
   SourceStatus,
   ValidationStatus,
 } from '@jobsentinel/types';
+import type { Env } from '@jobsentinel/config';
 import {
-  AUTO_PAUSE_DAYS,
   decideAutoPause,
+  isIndiaScopedSource,
   sourceHealth,
   tally,
   type CollectedJob,
 } from '@jobsentinel/validation';
+import { ENV } from '../common/config/config.module';
 import { DB, type Db } from '../common/db/db.module';
 import { companies, jobSources } from '../common/db/schema';
 import { AppError } from '../common/errors/app-error';
@@ -37,6 +39,12 @@ export interface PausedSource {
   reason: string;
 }
 
+/** What one auto-pause pass did: sources paused, and exempt sources the owner is alerted about. */
+export interface AutoPauseResult {
+  paused: PausedSource[];
+  alerted: PausedSource[];
+}
+
 /**
  * Source report card and auto-pause (F2, D103). The rules are pure functions in
  * @jobsentinel/validation; this fetches the rows and applies them.
@@ -45,9 +53,13 @@ export interface PausedSource {
 export class SourceReportService {
   private readonly logger = new Logger(SourceReportService.name);
 
-  constructor(@Inject(DB) private readonly db: Db) {}
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    @Inject(ENV) private readonly env: Env,
+  ) {}
 
-  async report(days: 7 | 30, now = new Date()): Promise<SourceReport> {
+  /** `days` is 7 or 30 on the API; auto-pause passes its configured window (D104). */
+  async report(days: number, now = new Date()): Promise<SourceReport> {
     const since = new Date(now.getTime() - days * 86_400_000);
     const [sources, collected, lastKept] = await Promise.all([
       this.db
@@ -87,11 +99,12 @@ export class SourceReportService {
         pausedAt: source.pausedAt?.toISOString() ?? null,
         pausedReason: source.pausedReason,
         resumedAt: source.resumedAt?.toISOString() ?? null,
+        pauseExempt: isIndiaScopedSource(source),
       };
     });
 
     return {
-      days,
+      days: days === 7 ? 7 : 30,
       generatedAt: now.toISOString(),
       totals: {
         collected: rows.reduce((n, r) => n + r.collected, 0),
@@ -102,23 +115,50 @@ export class SourceReportService {
   }
 
   /**
-   * Pauses every ACTIVE source that collected jobs but kept none over the last 30 days (F2).
-   * Idempotent: the update is conditional on the status still being ACTIVE, so a concurrent run
-   * or a repeat pauses (and reports) each source once.
+   * One auto-pause pass (F2, D104). An ACTIVE source old enough, with at least
+   * AUTO_PAUSE_MIN_COLLECTED jobs collected in the last AUTO_PAUSE_WINDOW_DAYS and none kept,
+   * is paused — unless it is India-scoped by design, in which case the owner is alerted instead,
+   * at most once per window. Both updates are conditional, so repeats do nothing (and notify
+   * nobody) until the situation is new again.
    */
-  async autoPause(now = new Date(), sourceIds?: string[]): Promise<PausedSource[]> {
-    const { sources } = await this.report(AUTO_PAUSE_DAYS, now);
-    const candidates = sources.filter((s) => !sourceIds || sourceIds.includes(s.id));
-    const paused: PausedSource[] = [];
-    for (const s of candidates) {
+  async autoPause(now = new Date(), sourceIds?: string[]): Promise<AutoPauseResult> {
+    const windowDays = this.env.AUTO_PAUSE_WINDOW_DAYS;
+    const { sources } = await this.report(windowDays, now);
+    const result: AutoPauseResult = { paused: [], alerted: [] };
+    for (const s of sources) {
+      if (sourceIds && !sourceIds.includes(s.id)) continue;
       const decision = decideAutoPause({
         status: s.status,
         createdAt: new Date(s.createdAt),
         resumedAt: s.resumedAt ? new Date(s.resumedAt) : null,
-        last30: { collected: s.collected, kept: s.kept, rejected: s.rejected },
+        window: { collected: s.collected, kept: s.kept, rejected: s.rejected },
         now,
+        minCollected: this.env.AUTO_PAUSE_MIN_COLLECTED,
+        windowDays,
+        exempt: s.pauseExempt,
       });
-      if (!decision.pause) continue;
+      if (decision.action === 'NONE') continue;
+
+      if (decision.action === 'ALERT') {
+        const lastAllowed = new Date(now.getTime() - windowDays * 86_400_000);
+        const marked = await this.db
+          .update(jobSources)
+          .set({ keptZeroAlertedAt: now })
+          .where(
+            and(
+              eq(jobSources.id, s.id),
+              or(
+                isNull(jobSources.keptZeroAlertedAt),
+                lt(jobSources.keptZeroAlertedAt, lastAllowed),
+              ),
+            ),
+          )
+          .returning({ id: jobSources.id });
+        if (marked.length > 0)
+          result.alerted.push({ id: s.id, name: s.name, reason: decision.reason });
+        continue;
+      }
+
       const updated = await this.db
         .update(jobSources)
         .set({
@@ -132,9 +172,9 @@ export class SourceReportService {
         .returning({ id: jobSources.id });
       if (updated.length === 0) continue;
       this.logger.warn(`auto-paused ${s.name}: ${decision.reason}`);
-      paused.push({ id: s.id, name: s.name, reason: decision.reason });
+      result.paused.push({ id: s.id, name: s.name, reason: decision.reason });
     }
-    return paused;
+    return result;
   }
 
   /** One-click resume: back to ACTIVE, scanned on the next tick, with a fresh 30-day grace. */

@@ -1,6 +1,7 @@
 import {
   type CollectedJob,
   decideAutoPause,
+  isIndiaScopedSource,
   filterReasonBucket,
   jobOutcome,
   sourceHealth,
@@ -82,107 +83,121 @@ describe('sourceHealth keeps the three cases apart', () => {
   });
 });
 
-describe('decideAutoPause (F2)', () => {
+describe('decideAutoPause (F2, D104)', () => {
   const old = daysAgo(90);
-  const keptNone = tally(
-    [
-      filtered('category not monitored'),
-      filtered('asks for 3+ years'),
-      filtered('asks for 5+ years'),
-    ],
-    now,
-  );
-
-  it('pauses an old active source that collected jobs and kept none', () => {
-    const d = decideAutoPause({
-      status: 'ACTIVE',
-      createdAt: old,
-      resumedAt: null,
-      last30: keptNone,
+  const filteredMany = (n: number) =>
+    tally(
+      Array.from({ length: n }, (_, i) =>
+        filtered(i % 3 === 0 ? 'category not monitored' : 'asks for 3+ years'),
+      ),
       now,
-    });
-    expect(d.pause).toBe(true);
-    expect(d.pause && d.reason).toBe(
-      'collected 3 jobs in 30 days and kept none (experience 2, category 1)',
     );
+  const base = {
+    status: 'ACTIVE' as const,
+    createdAt: old,
+    resumedAt: null,
+    window: filteredMany(21),
+    now,
+    minCollected: 20,
+    windowDays: 30,
+    exempt: false,
+  };
+
+  it('pauses an old active source with 20+ collected jobs and none kept', () => {
+    const d = decideAutoPause(base);
+    expect(d).toEqual({
+      action: 'PAUSE',
+      reason: 'collected 21 jobs in 30 days and kept none (experience 14, category 7)',
+    });
+  });
+
+  it('never pauses below the minimum sample — 19 collected is too few (spares tiny boards)', () => {
+    expect(decideAutoPause({ ...base, window: filteredMany(19) })).toEqual({
+      action: 'NONE',
+      why: 'TOO_FEW',
+    });
+    expect(decideAutoPause({ ...base, window: filteredMany(20) }).action).toBe('PAUSE');
+  });
+
+  it('never pauses a source that collected nothing (possibly broken, needs a human)', () => {
+    expect(decideAutoPause({ ...base, window: tally([], now) })).toEqual({
+      action: 'NONE',
+      why: 'TOO_FEW',
+    });
+  });
+
+  it('alerts instead of pausing an India-scoped source', () => {
+    expect(decideAutoPause({ ...base, exempt: true })).toEqual({
+      action: 'ALERT',
+      reason: 'collected 21 jobs in 30 days and kept none (experience 14, category 7)',
+    });
+  });
+
+  it('uses the configured threshold and window, not hard-coded ones', () => {
+    expect(decideAutoPause({ ...base, minCollected: 50 })).toEqual({
+      action: 'NONE',
+      why: 'TOO_FEW',
+    });
+    // A 60-day window: a 45-day-old source is still too new.
+    expect(decideAutoPause({ ...base, windowDays: 60, createdAt: daysAgo(45) })).toEqual({
+      action: 'NONE',
+      why: 'TOO_NEW',
+    });
+    expect(decideAutoPause({ ...base, windowDays: 60 }).action).toBe('PAUSE');
   });
 
   it('never pauses a source in error backoff — that is the backoff’s job', () => {
     for (const status of ['DEGRADED', 'FAILING', 'DISABLED'] as const) {
-      expect(
-        decideAutoPause({ status, createdAt: old, resumedAt: null, last30: keptNone, now }),
-      ).toEqual({
-        pause: false,
-        why: 'NOT_ACTIVE',
-      });
+      expect(decideAutoPause({ ...base, status })).toEqual({ action: 'NONE', why: 'NOT_ACTIVE' });
     }
   });
 
-  it('never pauses a source that collected nothing (possibly broken, needs a human)', () => {
-    expect(
-      decideAutoPause({
-        status: 'ACTIVE',
-        createdAt: old,
-        resumedAt: null,
-        last30: tally([], now),
-        now,
-      }),
-    ).toEqual({ pause: false, why: 'COLLECTED_NOTHING' });
+  it('exempts a source younger than the window, and one resumed within it', () => {
+    expect(decideAutoPause({ ...base, createdAt: daysAgo(29) })).toEqual({
+      action: 'NONE',
+      why: 'TOO_NEW',
+    });
+    expect(decideAutoPause({ ...base, resumedAt: daysAgo(5) })).toEqual({
+      action: 'NONE',
+      why: 'TOO_NEW',
+    });
   });
 
-  it('exempts a source younger than 30 days, and one resumed within 30 days', () => {
-    expect(
-      decideAutoPause({
-        status: 'ACTIVE',
-        createdAt: daysAgo(29),
-        resumedAt: null,
-        last30: keptNone,
-        now,
-      }),
-    ).toEqual({ pause: false, why: 'TOO_NEW' });
-    expect(
-      decideAutoPause({
-        status: 'ACTIVE',
-        createdAt: old,
-        resumedAt: daysAgo(5),
-        last30: keptNone,
-        now,
-      }),
-    ).toEqual({ pause: false, why: 'TOO_NEW' });
-  });
-
-  it('keeps a source that kept even one job', () => {
-    const one = tally([filtered('category not monitored'), listed()], now);
-    expect(
-      decideAutoPause({ status: 'ACTIVE', createdAt: old, resumedAt: null, last30: one, now }),
-    ).toEqual({
-      pause: false,
+  it('keeps a source that kept even one job, and waits while jobs are pending', () => {
+    const jobs = Array.from({ length: 25 }, () => filtered('category not monitored'));
+    expect(decideAutoPause({ ...base, window: tally([...jobs, listed()], now) })).toEqual({
+      action: 'NONE',
       why: 'KEEPS_JOBS',
     });
-  });
-
-  it('waits while collected jobs are still being processed', () => {
-    const pending = tally(
-      [filtered('category not monitored'), listed({ status: 'CLASSIFIED' })],
-      now,
-    );
     expect(
-      decideAutoPause({ status: 'ACTIVE', createdAt: old, resumedAt: null, last30: pending, now }),
-    ).toEqual({
-      pause: false,
-      why: 'STILL_PENDING',
-    });
+      decideAutoPause({ ...base, window: tally([...jobs, listed({ status: 'CLASSIFIED' })], now) }),
+    ).toEqual({ action: 'NONE', why: 'STILL_PENDING' });
   });
 
   it('does not pause an already paused source again', () => {
+    expect(decideAutoPause({ ...base, status: 'PAUSED_AUTO' })).toEqual({
+      action: 'NONE',
+      why: 'NOT_ACTIVE',
+    });
+  });
+});
+
+describe('isIndiaScopedSource (D104)', () => {
+  it('treats Adzuna India searches as India-scoped, including the default country', () => {
     expect(
-      decideAutoPause({
-        status: 'PAUSED_AUTO',
-        createdAt: old,
-        resumedAt: null,
-        last30: keptNone,
-        now,
-      }),
-    ).toEqual({ pause: false, why: 'NOT_ACTIVE' });
+      isIndiaScopedSource({ adapter: 'adzuna', config: { country: 'in', what: 'graduate' } }),
+    ).toBe(true);
+    expect(isIndiaScopedSource({ adapter: 'adzuna', config: { what: 'graduate' } })).toBe(true);
+    expect(isIndiaScopedSource({ adapter: 'adzuna', config: { country: 'gb' } })).toBe(false);
+  });
+
+  it('honours an explicit flag on any source, and is false otherwise', () => {
+    expect(isIndiaScopedSource({ adapter: 'greenhouse', config: { indiaScoped: true } })).toBe(
+      true,
+    );
+    expect(isIndiaScopedSource({ adapter: 'greenhouse', config: { board: 'elastic' } })).toBe(
+      false,
+    );
+    expect(isIndiaScopedSource({ adapter: 'lever', config: null })).toBe(false);
   });
 });

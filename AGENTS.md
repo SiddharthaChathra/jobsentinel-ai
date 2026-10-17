@@ -143,7 +143,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Before seeding/adding an ATS board, confirm the company behind the slug from its postings (slugs are global; see docs/sources.md).
 - A source's company and domain apply only to postings that name that company (`isSameCompany`). Keyword searches (the Adzuna employer sources) return other employers too; lending them the domain verifies the wrong company (D83).
 - All outbound HTTP goes through `HttpClient` (`HTTP_CLIENT` token); adapters never call `fetch` directly.
-- A source that collects jobs but keeps none for 30 days is auto-paused (`PAUSED_AUTO`, D103) and announced to admins once; errors and collected-nothing never trigger it. Sources are never deleted; resume is `POST /sources/:id/resume`. The report card is `GET /sources/report`.
+- A source with 20+ jobs collected and none kept over 30 days (`AUTO_PAUSE_MIN_COLLECTED`, `AUTO_PAUSE_WINDOW_DAYS`) is auto-paused (`PAUSED_AUTO`, D103, D104) and announced to admins once; errors and small samples never trigger it. India-scoped sources (Adzuna `in`, or `config.indiaScoped`) are never paused — they are alerted on once per window. Sources are never deleted; resume is `POST /sources/:id/resume`. The report card is `GET /sources/report`.
 
 ## 13. Testing requirements (docs/architecture/13-testing.md)
 

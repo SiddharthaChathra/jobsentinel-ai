@@ -111,43 +111,65 @@ export function sourceHealth(status: SourceStatus, t: SourceTally): SourceHealth
   return 'OK';
 }
 
+/** Defaults; the deployed values come from AUTO_PAUSE_MIN_COLLECTED / AUTO_PAUSE_WINDOW_DAYS. */
+export const AUTO_PAUSE_DEFAULTS = { minCollected: 20, windowDays: AUTO_PAUSE_DAYS } as const;
+
+/**
+ * A source India-scoped by design is never auto-paused — reported and alerted instead (D104).
+ * Adzuna searches with country `in` (its default), or any source whose config says so.
+ */
+export function isIndiaScopedSource(source: { adapter: string; config: unknown }): boolean {
+  const config = (source.config ?? {}) as { country?: unknown; indiaScoped?: unknown };
+  if (config.indiaScoped === true) return true;
+  if (source.adapter !== 'adzuna') return false;
+  const country = typeof config.country === 'string' ? config.country : 'in';
+  return country.toLowerCase() === 'in';
+}
+
 export interface AutoPauseInput {
   status: SourceStatus;
   createdAt: Date;
   resumedAt: Date | null;
-  /** Tally of the jobs this source collected in the last AUTO_PAUSE_DAYS. */
-  last30: SourceTally;
+  /** Tally of the jobs this source collected in the last `windowDays`. */
+  window: SourceTally;
   now: Date;
+  /** Fewer collected jobs than this is too small a sample to judge (D104). */
+  minCollected: number;
+  windowDays: number;
+  /** India-scoped by design: alert instead of pausing (D104). */
+  exempt: boolean;
 }
 
 export type AutoPauseDecision =
-  | { pause: true; reason: string }
+  | { action: 'PAUSE'; reason: string }
+  /** Would be paused, but is exempt: report it and alert the owner instead. */
+  | { action: 'ALERT'; reason: string }
   | {
-      pause: false;
-      why: 'NOT_ACTIVE' | 'TOO_NEW' | 'COLLECTED_NOTHING' | 'KEEPS_JOBS' | 'STILL_PENDING';
+      action: 'NONE';
+      why: 'NOT_ACTIVE' | 'TOO_NEW' | 'TOO_FEW' | 'KEEPS_JOBS' | 'STILL_PENDING';
     };
 
 /**
- * Pause only an ACTIVE source, at least AUTO_PAUSE_DAYS old (or since its last resume), that
- * collected jobs in that period and kept none of them. Never deletes anything.
+ * Pause only an ACTIVE source, at least `windowDays` old (or since its last resume), that
+ * collected at least `minCollected` jobs in that window and kept none of them. An exempt
+ * (India-scoped) source gets an ALERT instead. Never deletes anything.
  */
 export function decideAutoPause(input: AutoPauseInput): AutoPauseDecision {
-  const { status, last30, now } = input;
-  if (status !== 'ACTIVE') return { pause: false, why: 'NOT_ACTIVE' };
+  const { status, window: w, now, minCollected, windowDays } = input;
+  if (status !== 'ACTIVE') return { action: 'NONE', why: 'NOT_ACTIVE' };
   const since = input.resumedAt ?? input.createdAt;
-  if (now.getTime() - since.getTime() < AUTO_PAUSE_DAYS * 86_400_000) {
-    return { pause: false, why: 'TOO_NEW' };
+  if (now.getTime() - since.getTime() < windowDays * 86_400_000) {
+    return { action: 'NONE', why: 'TOO_NEW' };
   }
-  if (last30.collected === 0) return { pause: false, why: 'COLLECTED_NOTHING' };
-  if (last30.kept > 0) return { pause: false, why: 'KEEPS_JOBS' };
-  if (last30.rejected.PENDING > 0) return { pause: false, why: 'STILL_PENDING' };
-  const top = REJECT_REASONS.filter((r) => last30.rejected[r] > 0)
-    .sort((a, b) => last30.rejected[b] - last30.rejected[a])
+  // Covers "collected nothing" too: that case is a possibly broken source, never a pause (F2).
+  if (w.collected < minCollected) return { action: 'NONE', why: 'TOO_FEW' };
+  if (w.kept > 0) return { action: 'NONE', why: 'KEEPS_JOBS' };
+  if (w.rejected.PENDING > 0) return { action: 'NONE', why: 'STILL_PENDING' };
+  const top = REJECT_REASONS.filter((r) => w.rejected[r] > 0)
+    .sort((a, b) => w.rejected[b] - w.rejected[a])
     .slice(0, 3)
-    .map((r) => `${r.toLowerCase()} ${last30.rejected[r]}`)
+    .map((r) => `${r.toLowerCase()} ${w.rejected[r]}`)
     .join(', ');
-  return {
-    pause: true,
-    reason: `collected ${last30.collected} jobs in ${AUTO_PAUSE_DAYS} days and kept none (${top})`,
-  };
+  const reason = `collected ${w.collected} jobs in ${windowDays} days and kept none (${top})`;
+  return input.exempt ? { action: 'ALERT', reason } : { action: 'PAUSE', reason };
 }

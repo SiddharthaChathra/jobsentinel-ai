@@ -50,6 +50,8 @@ export const jobSources = pgTable(
     pausedAt: timestamp('paused_at', { withTimezone: true }),
     pausedReason: text('paused_reason'),
     resumedAt: timestamp('resumed_at', { withTimezone: true }),
+    // Last "kept zero" alert for a source exempt from pausing — once per window (D104).
+    keptZeroAlertedAt: timestamp('kept_zero_alerted_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => [

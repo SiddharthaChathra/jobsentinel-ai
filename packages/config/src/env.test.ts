@@ -123,3 +123,14 @@ describe('keep-awake window (D99)', () => {
     expect(() => loadEnv({ KEEP_AWAKE_TZ: 'Mars/Olympus' })).toThrow(/KEEP_AWAKE_TZ/);
   });
 });
+
+describe('auto-pause thresholds (D104)', () => {
+  it('default to 20 jobs over 30 days, and are configurable within bounds', () => {
+    expect(loadEnv({})).toMatchObject({ AUTO_PAUSE_MIN_COLLECTED: 20, AUTO_PAUSE_WINDOW_DAYS: 30 });
+    expect(loadEnv({ AUTO_PAUSE_MIN_COLLECTED: '50', AUTO_PAUSE_WINDOW_DAYS: '45' })).toMatchObject(
+      { AUTO_PAUSE_MIN_COLLECTED: 50, AUTO_PAUSE_WINDOW_DAYS: 45 },
+    );
+    expect(() => loadEnv({ AUTO_PAUSE_WINDOW_DAYS: '3' })).toThrow(/AUTO_PAUSE_WINDOW_DAYS/);
+    expect(() => loadEnv({ AUTO_PAUSE_MIN_COLLECTED: '0' })).toThrow(/AUTO_PAUSE_MIN_COLLECTED/);
+  });
+});

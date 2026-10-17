@@ -52,15 +52,16 @@ export class WorkerLoop {
   ) {}
 
   /**
-   * Pauses sources that collected jobs but kept none for 30 days, and tells the admins once
-   * per pause: the update is conditional on ACTIVE, so a repeat finds nothing to pause (D103).
+   * Pauses sources that collect jobs but keep none, and tells the admins once per pause; for
+   * India-scoped sources, which are never paused, sends a "kept none" alert at most once per
+   * window instead (D103, D104).
    */
-  private async pauseIdleSources(): Promise<{ paused: number }> {
-    const paused = await this.sourceReport.autoPause();
-    if (paused.length === 0) return { paused: 0 };
+  private async pauseIdleSources(): Promise<{ paused: number; alerted: number }> {
+    const { paused, alerted } = await this.sourceReport.autoPause();
+    if (paused.length + alerted.length === 0) return { paused: 0, alerted: 0 };
     const admins = await this.notifications.adminIds();
-    for (const p of paused) {
-      for (const adminId of admins) {
+    for (const adminId of admins) {
+      for (const p of paused) {
         await this.notifications.enqueueSystemAlert(
           adminId,
           `source-paused:${p.id}`,
@@ -68,8 +69,16 @@ export class WorkerLoop {
           `${p.reason}. It will not be scanned until resumed (System Status, Sources).`,
         );
       }
+      for (const a of alerted) {
+        await this.notifications.enqueueSystemAlert(
+          adminId,
+          `source-kept-zero:${a.id}`,
+          `Source keeps nothing: ${a.name}`,
+          `${a.reason}. India-scoped, so it was not paused (D104). Check its queries or filters.`,
+        );
+      }
     }
-    return { paused: paused.length };
+    return { paused: paused.length, alerted: alerted.length };
   }
 
   stop(): void {

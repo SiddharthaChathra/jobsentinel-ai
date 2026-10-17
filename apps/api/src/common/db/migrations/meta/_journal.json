@@ -43,6 +43,13 @@
       "when": 1792248225175,
       "tag": "0005_source_auto_pause",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792249882962,
+      "tag": "0006_source_kept_zero_alert",
+      "breakpoints": true
     }
   ]
 }

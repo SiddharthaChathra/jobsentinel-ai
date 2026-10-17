@@ -40,13 +40,10 @@ describeIf('source report card and auto-pause (F2)', () => {
   let userToken: string;
   const userIds: string[] = [];
   let companyId: string;
-  const src: Record<'keptZero' | 'errors' | 'nothing' | 'young' | 'keeps', string> = {
-    keptZero: '',
-    errors: '',
-    nothing: '',
-    young: '',
-    keeps: '',
-  };
+  const src: Record<
+    'keptZero' | 'errors' | 'nothing' | 'young' | 'keeps' | 'tooFew' | 'india',
+    string
+  > = { keptZero: '', errors: '', nothing: '', young: '', keeps: '', tooFew: '', india: '' };
   const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
   const api = () => request(app.getHttpServer() as Parameters<typeof request>[0]);
 
@@ -143,11 +140,23 @@ describeIf('source report card and auto-pause (F2)', () => {
     src.nothing = await seedSource('collected-nothing');
     src.young = await seedSource('young', { createdAt: daysAgo(10) });
     src.keeps = await seedSource('keeps');
-    for (const key of ['keptZero', 'errors', 'young'] as const) {
-      await collect(src[key], `${key} sales role`, 'category not monitored');
-      await collect(src[key], `${key} senior role`, 'asks for 3+ years');
-      await collect(src[key], `${key} us role`, 'location outside India (United States)');
+    src.tooFew = await seedSource('too-few');
+    src.india = await seedSource('adzuna-india', {
+      adapter: 'adzuna',
+      type: 'PUBLIC_API',
+      config: { country: 'in', what: tag },
+    });
+    // 21 collected, none kept: over the 20-job minimum (D104).
+    const REASONS = [
+      'category not monitored',
+      'asks for 3+ years',
+      'location outside India (United States)',
+    ];
+    for (const key of ['keptZero', 'errors', 'young', 'india'] as const) {
+      for (let i = 0; i < 21; i++) await collect(src[key], `${key} role ${i}`, REASONS[i % 3]!);
     }
+    // 5 collected, none kept: under the minimum, so never paused.
+    for (let i = 0; i < 5; i++) await collect(src.tooFew, `tooFew role ${i}`, REASONS[0]!);
     await collect(src.keeps, 'keeps sales role', 'category not monitored');
     await collect(src.keeps, 'keeps graduate engineer', null);
   }, 180_000);
@@ -178,19 +187,22 @@ describeIf('source report card and auto-pause (F2)', () => {
     const row = (id: string) => report.sources.find((s) => s.id === id)!;
 
     expect(row(src.keptZero)).toMatchObject({
-      collected: 3,
+      collected: 21,
       kept: 0,
       health: 'KEPT_ZERO',
       lastKeptAt: null,
+      pauseExempt: false,
     });
-    expect(row(src.keptZero).rejected).toMatchObject({ CATEGORY: 1, EXPERIENCE: 1, LOCATION: 1 });
-    expect(row(src.errors)).toMatchObject({ collected: 3, kept: 0, health: 'ERRORS' });
+    expect(row(src.keptZero).rejected).toMatchObject({ CATEGORY: 7, EXPERIENCE: 7, LOCATION: 7 });
+    expect(row(src.errors)).toMatchObject({ collected: 21, kept: 0, health: 'ERRORS' });
+    expect(row(src.india)).toMatchObject({ collected: 21, health: 'KEPT_ZERO', pauseExempt: true });
+    expect(row(src.tooFew)).toMatchObject({ collected: 5, kept: 0, health: 'KEPT_ZERO' });
     expect(row(src.nothing)).toMatchObject({ collected: 0, kept: 0, health: 'COLLECTED_NOTHING' });
     expect(row(src.keeps)).toMatchObject({ collected: 2, kept: 1, health: 'OK' });
     expect(row(src.keeps).lastKeptAt).not.toBeNull();
-    // Manual recount of what was seeded for these five sources.
+    // Manual recount of what was seeded for these seven sources.
     const mine = report.sources.filter((s) => Object.values(src).includes(s.id));
-    expect(mine.reduce((n, s) => n + s.collected, 0)).toBe(11);
+    expect(mine.reduce((n, s) => n + s.collected, 0)).toBe(21 * 4 + 5 + 2);
     expect(mine.reduce((n, s) => n + s.kept, 0)).toBe(1);
   });
 
@@ -205,17 +217,17 @@ describeIf('source report card and auto-pause (F2)', () => {
       .expect(403);
   });
 
-  it('auto-pauses only the kept-zero source, once, and tells the admin once', async () => {
-    const loop = moduleRef.get(WorkerLoop) as unknown as {
-      pauseIdleSources(): Promise<{ paused: number }>;
-    };
+  it('pauses only the kept-zero source with 20+ jobs; alerts on the India-scoped one; spares the rest', async () => {
     const service = moduleRef.get(SourceReportService);
     const first = await service.autoPause(new Date(), Object.values(src));
-    expect(first.map((p) => p.id)).toEqual([src.keptZero]);
-    expect(first[0]!.reason).toMatch(/kept none/);
-    // The worker path: nothing left to pause, so no second notice.
-    await loop.pauseIdleSources();
-    expect(await service.autoPause(new Date(), Object.values(src))).toEqual([]);
+    expect(first.paused.map((p) => p.id)).toEqual([src.keptZero]);
+    expect(first.paused[0]!.reason).toMatch(/collected 21 jobs in 30 days and kept none/);
+    expect(first.alerted.map((p) => p.id)).toEqual([src.india]);
+    // Repeating finds nothing new: no second pause, no second alert.
+    expect(await service.autoPause(new Date(), Object.values(src))).toEqual({
+      paused: [],
+      alerted: [],
+    });
 
     const statuses = await db
       .select({ id: jobSources.id, status: jobSources.status })
@@ -223,6 +235,8 @@ describeIf('source report card and auto-pause (F2)', () => {
       .where(inArray(jobSources.id, Object.values(src)));
     const status = new Map(statuses.map((s) => [s.id, s.status]));
     expect(status.get(src.keptZero)).toBe('PAUSED_AUTO');
+    expect(status.get(src.india)).toBe('ACTIVE'); // exempt: reported and alerted, never paused
+    expect(status.get(src.tooFew)).toBe('ACTIVE'); // 5 < 20
     expect(status.get(src.errors)).toBe('FAILING');
     expect(status.get(src.nothing)).toBe('ACTIVE');
     expect(status.get(src.young)).toBe('ACTIVE');
@@ -236,7 +250,7 @@ describeIf('source report card and auto-pause (F2)', () => {
       .set({ status: 'ACTIVE', resumedAt: daysAgo(31), pausedAt: null, pausedReason: null })
       .where(eq(jobSources.id, src.keptZero));
     const loop = moduleRef.get(WorkerLoop) as unknown as {
-      pauseIdleSources(): Promise<{ paused: number }>;
+      pauseIdleSources(): Promise<{ paused: number; alerted: number }>;
     };
     await loop.pauseIdleSources();
     await loop.pauseIdleSources();
@@ -253,6 +267,35 @@ describeIf('source report card and auto-pause (F2)', () => {
         ),
       );
     expect(notices).toHaveLength(1);
+  });
+
+  it('alerts on an India-scoped kept-zero source once per window, through the worker', async () => {
+    // Allow a new alert: the last one is older than the window.
+    await db
+      .update(jobSources)
+      .set({ keptZeroAlertedAt: daysAgo(31) })
+      .where(eq(jobSources.id, src.india));
+    const loop = moduleRef.get(WorkerLoop) as unknown as {
+      pauseIdleSources(): Promise<{ paused: number; alerted: number }>;
+    };
+    await loop.pauseIdleSources();
+    await loop.pauseIdleSources();
+    const alerts = await db
+      .select({ id: notifications.id })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userIds[0]!),
+          eq(notifications.channel, 'WEB'),
+          sql`${notifications.payload}->>'key' = ${`source-kept-zero:${src.india}`}`,
+        ),
+      );
+    expect(alerts).toHaveLength(1);
+    const [india] = await db
+      .select({ status: jobSources.status })
+      .from(jobSources)
+      .where(eq(jobSources.id, src.india));
+    expect(india!.status).toBe('ACTIVE');
   });
 
   it('never schedules a paused source for scanning', async () => {
@@ -275,9 +318,9 @@ describeIf('source report card and auto-pause (F2)', () => {
     expect(row!.resumedAt).not.toBeNull();
     expect(row!.pausedReason).toBeNull();
     // Resumed today: inside the 30-day grace, so not paused again straight away.
-    expect(await moduleRef.get(SourceReportService).autoPause(new Date(), [src.keptZero])).toEqual(
-      [],
-    );
+    expect(
+      (await moduleRef.get(SourceReportService).autoPause(new Date(), [src.keptZero])).paused,
+    ).toEqual([]);
 
     await api()
       .post(`/api/v1/sources/${src.keptZero}/resume`)

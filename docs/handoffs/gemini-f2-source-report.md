@@ -33,6 +33,7 @@ You are Gemini, owner of `apps/web` in JobSentinel AI. Build the admin **Source 
   - `ERRORS`: "Failing; retrying with backoff"
   - `PAUSED`: "Auto-paused"
 - Also show collected, kept, the **rejected breakdown** (only non-zero reasons, readable labels such as "Outside India", "Asks for experience", "Wrong batch", "Not engineering", "Failed validation", "Closed", "Older than 60 days", "Other"; show `PENDING` separately as "Still processing", not as a rejection), last kept date, last successful scan, and last error (truncated, full text on expand).
+- **Exempt sources** (`pauseExempt: true`, India-scoped, D104): show an "Exempt from auto-pause" tag with the tooltip "India-scoped: alerted, never paused". They can still show KEPT_ZERO.
 - **Paused sources:** show `pausedReason` and `pausedAt` prominently, plus a **Resume** button with a confirm dialog. While the request runs, disable the button and show a spinner. On success show a toast and the row turns ACTIVE.
   - 409 `SOURCE_NOT_PAUSED`: show "Already active" and refetch.
   - 404: "Source no longer exists".
@@ -70,6 +71,7 @@ Drive the tests from `docs/contracts/source-report.mock.json`: import it, and mo
 5. Loading, empty and error (with retry) states.
 6. A non-admin renders nothing and makes no request.
 7. A `PAUSED_AUTO` source in the existing list shows "Auto-paused".
+8. A `pauseExempt` source shows the "Exempt from auto-pause" tag.
 
 ## 4. The loop (repeat for each sub-step until everything passes)
 

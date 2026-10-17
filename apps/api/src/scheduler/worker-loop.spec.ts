@@ -71,7 +71,9 @@ describe('WorkerLoop', () => {
         recovery,
         housekeeping,
         audit,
-        { autoPause: jest.fn().mockResolvedValue([]) } as unknown as SourceReportService,
+        {
+          autoPause: jest.fn().mockResolvedValue({ paused: [], alerted: [] }),
+        } as unknown as SourceReportService,
       ),
       scheduler,
       classification,

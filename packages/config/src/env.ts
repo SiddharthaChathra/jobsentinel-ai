@@ -153,6 +153,10 @@ export const envSchema = z
     RENDER_EXTERNAL_URL: optUrl(),
     // Local hours the keep-awake ping runs, "start-end" (end exclusive, may wrap past midnight).
     // Outside them the free instance may sleep, which saves Render's shared free hours (D99).
+    // Source auto-pause (F2, D104): pause only after this many collected jobs with none kept,
+    // over this many days. India-scoped sources are alerted on, never paused.
+    AUTO_PAUSE_MIN_COLLECTED: int(20, { min: 1, max: 10_000 }),
+    AUTO_PAUSE_WINDOW_DAYS: int(30, { min: 7, max: 180 }),
     KEEP_AWAKE_HOURS: z.preprocess(
       emptyToUndefined,
       z

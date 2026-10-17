@@ -143,6 +143,7 @@ function mapRow(r: Record<string, unknown>): SourceRow {
     pausedAt: d(r.paused_at),
     pausedReason: (r.paused_reason as string) ?? null,
     resumedAt: d(r.resumed_at),
+    keptZeroAlertedAt: d(r.kept_zero_alerted_at),
     createdAt: d(r.created_at)!,
     updatedAt: d(r.updated_at)!,
   };

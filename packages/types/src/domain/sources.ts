@@ -175,6 +175,8 @@ export const SourceReportRow = z.object({
   pausedAt: z.string().nullable(),
   pausedReason: z.string().nullable(),
   resumedAt: z.string().nullable(),
+  /** India-scoped by design: never auto-paused; a kept-zero source is alerted on instead (D104). */
+  pauseExempt: z.boolean(),
 });
 export type SourceReportRow = z.infer<typeof SourceReportRow>;
 

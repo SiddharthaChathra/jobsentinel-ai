@@ -1,0 +1,1 @@
+ALTER TABLE "job_sources" ADD COLUMN "kept_zero_alerted_at" timestamp with time zone;
