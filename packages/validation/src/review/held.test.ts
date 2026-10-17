@@ -9,6 +9,18 @@ describe('heldInfo (C step 2, D106)', () => {
     expect(heldInfo('category unknown (no AI verdict)', null).label).toMatch(/not known yet/);
   });
 
+  it('explains an experience hold, alone or with a category hold (R2, D110)', () => {
+    expect(heldInfo('experience unknown (no AI verdict)', null)).toMatchObject({
+      kind: 'EXPERIENCE_UNKNOWN',
+      label: 'Experience not stated: the posting does not say whether freshers can apply',
+    });
+    expect(heldInfo('experience unknown', null).kind).toBe('EXPERIENCE_UNKNOWN');
+    expect(heldInfo('category unknown; experience unknown', null)).toMatchObject({
+      kind: 'CATEGORY_UNKNOWN',
+      label: expect.stringMatching(/^Category and experience unclear/) as string,
+    });
+  });
+
   it('names the job-board case for Adzuna links, the employer case otherwise', () => {
     expect(
       heldInfo('company could not be verified', 'https://www.adzuna.in/details/5925494591'),
@@ -44,7 +56,13 @@ describe('docs/contracts/needs-review.mock.json stays true to heldInfo', () => {
 
   it('covers every held kind', () => {
     expect(new Set(cards.map((c) => c.held.kind))).toEqual(
-      new Set(['CATEGORY_UNKNOWN', 'COMPANY_UNVERIFIED', 'URL_UNREACHABLE', 'OTHER']),
+      new Set([
+        'CATEGORY_UNKNOWN',
+        'EXPERIENCE_UNKNOWN',
+        'COMPANY_UNVERIFIED',
+        'URL_UNREACHABLE',
+        'OTHER',
+      ]),
     );
   });
 

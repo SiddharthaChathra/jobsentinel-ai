@@ -157,7 +157,9 @@ describeIf('AI category decision for unknown-category jobs (A, D105)', () => {
     ai.categories.set(title, answer);
     await classify([id]);
     const job = await get(id);
-    expect(job.status).toBe('NEEDS_REVIEW');
+    // Held: on to validation with the hold, which keeps it NEEDS_REVIEW whatever it finds (D110).
+    expect(job.status).toBe('CLASSIFIED');
+    expect(job.holdReason).toBe('category unknown');
     expect(job.category).toBe('UNKNOWN');
     const [held] = await db
       .select({ detail: jobEvents.detail })
@@ -217,7 +219,8 @@ describeIf('AI category decision for unknown-category jobs (A, D105)', () => {
     await db.update(jobs).set({ stageAttempts: 4 }).where(eq(jobs.id, id));
     await classify([id]);
     const job = await get(id);
-    expect(job.status).toBe('NEEDS_REVIEW');
+    expect(job.status).toBe('CLASSIFIED');
+    expect(job.holdReason).toBe('category unknown (no AI verdict)');
     expect(job.categoryAiAt).toBeNull(); // never answered, so it may be asked later
   });
 });

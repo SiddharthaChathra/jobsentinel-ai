@@ -141,6 +141,8 @@ export interface JobCard {
  */
 export const HeldKind = z.enum([
   'CATEGORY_UNKNOWN',
+  /** The posting states no experience and the AI could not place it (D110). */
+  'EXPERIENCE_UNKNOWN',
   'COMPANY_UNVERIFIED',
   'URL_UNREACHABLE',
   'OTHER',

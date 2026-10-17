@@ -167,6 +167,60 @@
           }
         },
         {
+          "id": "6b1f3c2a-9d4e-4f7a-8b2c-1e5d7a9c0f13",
+          "title": "Associate Engineer",
+          "company": {
+            "id": "6dbb492d-e34b-4eba-bd32-61cbb2b388d1",
+            "name": "Example Industries",
+            "domain": null,
+            "verificationStatus": "UNVERIFIED"
+          },
+          "location": {
+            "text": null,
+            "city": "Pune",
+            "country": "India",
+            "isRemote": false
+          },
+          "employmentType": "UNKNOWN",
+          "experienceLevel": "UNKNOWN",
+          "fresherEligible": null,
+          "experienceText": null,
+          "salary": {
+            "min": null,
+            "max": null,
+            "currency": null,
+            "period": null,
+            "text": null,
+            "disclosed": false
+          },
+          "postedAt": null,
+          "firstSeenAt": "2026-10-15T18:43:09.279Z",
+          "deadline": null,
+          "validation": {
+            "status": "VALID",
+            "confidence": null,
+            "companyVerified": false,
+            "applicationVerified": true,
+            "jobActive": true
+          },
+          "match": {
+            "overallScore": 90,
+            "priority": "VERY_HIGH",
+            "matchedSkills": []
+          },
+          "tracker": {
+            "saved": false,
+            "status": null
+          },
+          "applicationUrl": "https://careers.example.com/jobs/associate-engineer",
+          "isNew": false,
+          "held": {
+            "kind": "EXPERIENCE_UNKNOWN",
+            "label": "Experience not stated: the posting does not say whether freshers can apply",
+            "reason": "experience unknown (no AI verdict)"
+          }
+        },
+        {
           "id": "5f2c8d3b-0a4e-4d9f-86b7-3e8f9a0b1c2d",
           "title": "Junior Network Engineer",
           "company": {

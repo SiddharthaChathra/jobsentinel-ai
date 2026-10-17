@@ -86,6 +86,9 @@ export const jobs = pgTable(
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
     // When the AI was asked for this job's category: once per canonical job, never again (D105).
     categoryAiAt: timestamp('category_ai_at', { withTimezone: true }),
+    // Why classification held this job for review (category or experience unknown, D105/D110).
+    // A held job still goes through validation; a VALID verdict then leaves it NEEDS_REVIEW.
+    holdReason: text('hold_reason'),
     nextCheckAt: timestamp('next_check_at', { withTimezone: true }),
     ...timestamps,
   },

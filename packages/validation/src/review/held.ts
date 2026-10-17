@@ -11,11 +11,27 @@ const BOARD_HOSTS = /(^|\.)adzuna\.[a-z.]+$/i;
 export function heldInfo(reason: string | null, finalUrl: string | null): HeldInfo {
   const r = reason ?? '';
   if (/^category unknown/i.test(r)) {
+    if (/experience unknown/i.test(r)) {
+      return {
+        kind: 'CATEGORY_UNKNOWN',
+        label:
+          'Category and experience unclear: the posting says neither what the work is nor how much experience it needs',
+        reason: r,
+      };
+    }
     return {
       kind: 'CATEGORY_UNKNOWN',
       label: /no AI verdict/i.test(r)
         ? 'Category not known yet: the AI has not been able to answer'
         : 'Category unclear: the posting does not say what kind of work it is',
+      reason: r,
+    };
+  }
+  if (/^experience unknown/i.test(r)) {
+    // Held, not filtered, at the owner's request (R2, D110): India, batch and recency still apply.
+    return {
+      kind: 'EXPERIENCE_UNKNOWN',
+      label: 'Experience not stated: the posting does not say whether freshers can apply',
       reason: r,
     };
   }

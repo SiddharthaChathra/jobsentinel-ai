@@ -35,7 +35,11 @@ type JobRow = typeof jobs.$inferSelect;
 
 interface JobDecision {
   jobId: string;
-  /** NEEDS_REVIEW: held — category unknown after the AI was asked or could not answer (D105). */
+  /**
+   * NEEDS_REVIEW: held — category or experience unknown after the AI was asked or could not
+   * answer (D105, D110). Persisted as CLASSIFIED with `hold_reason`, so validation (scam, URL,
+   * company) still runs; a VALID verdict then leaves the job NEEDS_REVIEW, never alertable.
+   */
   status: 'CLASSIFIED' | 'FILTERED_OUT' | 'DEFERRED' | 'NEEDS_REVIEW';
   category: JobCategory;
   roleFamily: string;
@@ -87,6 +91,11 @@ function notFresherReason(
   return verdictMissing
     ? `${UNKNOWN_EXPERIENCE_REASON} (no AI verdict)`
     : UNKNOWN_EXPERIENCE_REASON;
+}
+
+/** A held job goes on to validation like any other; `hold_reason` carries the hold (D110). */
+function persistedStatus(d: JobDecision): 'CLASSIFIED' | 'FILTERED_OUT' {
+  return d.status === 'FILTERED_OUT' ? 'FILTERED_OUT' : 'CLASSIFIED';
 }
 
 /** Statuses a job reaches only after passing classification, and before it is closed. */
@@ -352,6 +361,8 @@ ${job.description}`);
     const minYears =
       rules.minYears ?? (job.experienceMinYears ? Number(job.experienceMinYears) : null);
     const notFresher = !isFresherRole({ level, minYears });
+    // No stated years and no level: the posting simply does not say (D110).
+    const experienceUnknown = notFresher && minYears === null && level === 'UNKNOWN';
     const batchExcluded = !isBatchCompatible;
     // Only the AI can place an ambiguous job; until it has answered, the job waits (bounded).
     const verdictMissing = monitored && rules.needsAi && !usedAi && level === 'UNKNOWN';
@@ -372,16 +383,27 @@ ${job.description}`);
       status = job.stageAttempts < MAX_AI_WAITS ? 'DEFERRED' : 'NEEDS_REVIEW';
       reason = `${CATEGORY_HELD_REASON} (no AI verdict)`;
     } else if (categoryHeld) {
-      // Unsure or "unknown": held for review — only if it would otherwise be a fresher role.
-      status = notFresher ? 'FILTERED_OUT' : 'NEEDS_REVIEW';
-      reason = notFresher
-        ? notFresherReason(level, minYears, verdictMissing)
-        : CATEGORY_HELD_REASON;
+      // Unsure or "unknown": held for review — if it would otherwise be a fresher role, or its
+      // experience is unknown too (D110: unknown is held, not filtered).
+      status = notFresher && !experienceUnknown ? 'FILTERED_OUT' : 'NEEDS_REVIEW';
+      reason = !notFresher
+        ? CATEGORY_HELD_REASON
+        : experienceUnknown
+          ? `${CATEGORY_HELD_REASON}; ${notFresherReason(level, minYears, verdictMissing)}`
+          : notFresherReason(level, minYears, verdictMissing);
     } else if (!monitored) {
       status = 'FILTERED_OUT';
       reason = 'category not monitored';
     } else if (notFresher) {
-      status = verdictMissing && job.stageAttempts < MAX_AI_WAITS ? 'DEFERRED' : 'FILTERED_OUT';
+      // Experience not stated and not placed (by the rules, or by the AI after its bounded
+      // waits): held for the user to judge, never filtered unseen (owner's R2 decision, D110).
+      // A stated requirement or an EXPERIENCED verdict is still filtered.
+      status =
+        verdictMissing && job.stageAttempts < MAX_AI_WAITS
+          ? 'DEFERRED'
+          : experienceUnknown
+            ? 'NEEDS_REVIEW'
+            : 'FILTERED_OUT';
       reason = notFresherReason(level, minYears, verdictMissing);
     } else {
       status = 'CLASSIFIED';
@@ -459,6 +481,8 @@ ${job.description}`);
       for (const job of page) {
         const decision = await this.decide(job, prefs, false);
         if (decision.status === 'CLASSIFIED') continue;
+        // Already held, and still would be: nothing to re-filter (D110).
+        if (decision.status === 'NEEDS_REVIEW' && job.status === 'NEEDS_REVIEW') continue;
         if (
           decision.status === 'DEFERRED' ||
           decision.reason.startsWith(UNKNOWN_EXPERIENCE_REASON)
@@ -491,7 +515,7 @@ ${job.description}`);
   private async persist(decisions: JobDecision[]): Promise<void> {
     const rows = decisions.map(
       (d) =>
-        sql`(${d.jobId}::uuid, ${d.category}::job_category, ${d.roleFamily}, ${d.level}::experience_level, ${d.fresherEligible}::boolean, ${d.confidence.toFixed(2)}::numeric, ${JSON.stringify(d.evidence)}::jsonb, ${d.minYears}::numeric, ${d.maxYears}::numeric, ${d.experienceText}::text, ${d.status}::job_status)`,
+        sql`(${d.jobId}::uuid, ${d.category}::job_category, ${d.roleFamily}, ${d.level}::experience_level, ${d.fresherEligible}::boolean, ${d.confidence.toFixed(2)}::numeric, ${JSON.stringify(d.evidence)}::jsonb, ${d.minYears}::numeric, ${d.maxYears}::numeric, ${d.experienceText}::text, ${persistedStatus(d)}::job_status, ${d.status === 'NEEDS_REVIEW' ? d.reason : null}::text)`,
     );
     await this.db.transaction(async (tx) => {
       await tx.execute(sql`
@@ -506,9 +530,10 @@ ${job.description}`);
           experience_max_years = v.max_years,
           experience_text = v.experience_text,
           status = v.status,
+          hold_reason = v.hold_reason,
           stage_error = null,
           updated_at = now()
-        from (values ${sql.join(rows, sql`, `)}) as v(id, category, role_family, level, fresher_eligible, confidence, evidence, min_years, max_years, experience_text, status)
+        from (values ${sql.join(rows, sql`, `)}) as v(id, category, role_family, level, fresher_eligible, confidence, evidence, min_years, max_years, experience_text, status, hold_reason)
         where j.id = v.id`);
       await tx.insert(jobEvents).values(
         decisions.map((d) => ({

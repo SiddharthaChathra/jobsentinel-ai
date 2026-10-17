@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, gte, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
 import type {
   ApplicationStatus,
   EmploymentType,
@@ -137,7 +137,11 @@ export class JobsQueryService {
       : [inArray(jobs.status, [...LISTABLE])];
 
     // Validation status defaults to VALID only: a job we could not confirm is opt-in (docs 08).
-    if (!review) where.push(inArray(jobs.validationStatus, q.validationStatus ?? ['VALID']));
+    // A job held at classification can be VALID too; it belongs to the review view only (D110).
+    if (!review) {
+      where.push(inArray(jobs.validationStatus, q.validationStatus ?? ['VALID']));
+      where.push(isNull(jobs.holdReason));
+    }
 
     const activity = q.status ?? 'ACTIVE';
     if (activity === 'ACTIVE') where.push(sql`${jobs.closedAt} is null`);
@@ -198,7 +202,13 @@ export class JobsQueryService {
     // rows classified under older rules out of the list. A user's own saved or tracked jobs stay
     // visible in those views whatever their level.
     if (q.saved !== true && !q.tracker?.length) {
-      where.push(fresherRoleSql('jobs'));
+      // The review view also shows jobs held because their experience is unknown (D110): the
+      // hold is set only when no stated requirement or EXPERIENCED verdict ruled the job out.
+      where.push(
+        review
+          ? or(fresherRoleSql('jobs'), isNotNull(jobs.holdReason))
+          : fresherRoleSql('jobs'),
+      );
     }
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
     // A posting older than 60 days is almost always filled, so the ceiling applies even when the
@@ -242,9 +252,13 @@ export class JobsQueryService {
       final_url: string | null;
     }>(sql`
       select j.id,
-        (select e.detail->>'reason' from job_events e
-          where e.job_id = j.id and e.type in ('HELD', 'VALIDATED')
-          order by e.created_at desc limit 1) as reason,
+        -- Classification's hold, unless validation itself found something to review: then its
+        -- reason (e.g. company not verified) is the one the user must check first (D110).
+        coalesce(
+          case when j.validation_status is distinct from 'NEEDS_REVIEW' then j.hold_reason end,
+          (select e.detail->>'reason' from job_events e
+            where e.job_id = j.id and e.type in ('HELD', 'VALIDATED')
+            order by e.created_at desc limit 1)) as reason,
         (select v.final_url from job_validation v where v.job_id = j.id) as final_url
       from jobs j
       where j.id in (${sql.join(
