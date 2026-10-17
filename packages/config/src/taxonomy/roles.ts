@@ -13,6 +13,8 @@ export interface RoleFamily {
   patterns: RegExp[];
 }
 
+export const GRADUATE_TRAINEE_FAMILY = 'graduate_engineer_trainee';
+
 export const ROLE_FAMILIES: RoleFamily[] = [
   {
     key: 'technical_support_engineer',
@@ -132,8 +134,6 @@ export const ROLE_FAMILIES: RoleFamily[] = [
       /\bprogrammer\b/,
       /\bdeveloper\b/,
       /\bmember of technical staff\b/,
-      /\bgraduate engineer\b/,
-      /\bengineer trainee\b/,
     ],
   },
   {
@@ -165,6 +165,40 @@ export const ROLE_FAMILIES: RoleFamily[] = [
     category: 'CIVIL',
     patterns: [/\bcivil\b/, /\bstructural\b/, /\bsite engineer\b/],
   },
+  {
+    // A graduate-trainee title names a programme, not a discipline: "Graduate Engineer Trainee"
+    // hires across plants and functions. It used to sit under software_engineer, which labelled
+    // "GET – Production" SOFTWARE (D109). Last, so a discipline the title states ("GET Mechanical
+    // Engineer", "Software Engineer Trainee") wins; a bare qualifier is read by the list below.
+    key: GRADUATE_TRAINEE_FAMILY,
+    label: 'Graduate Engineer Trainee',
+    category: 'OTHER_ENGINEERING',
+    patterns: [
+      /\bgraduate engineer(ing)?\b/,
+      /\b(engineer|engineering) trainee\b/,
+      /\btrainee engineer\b/,
+      /\bget\b/,
+    ],
+  },
+];
+
+/**
+ * Discipline words a graduate-trainee title adds after the programme name ("GET – Production",
+ * "– Materials & Quality", "for Power Plant"). Consulted only for those titles: on their own these
+ * words are too broad ("Video Production", "Quality Analyst"). First match wins.
+ */
+export const TRAINEE_QUALIFIERS: { pattern: RegExp; familyKey: string }[] = [
+  {
+    // "plat" is a real posting's typo ("GET for Power Plat, Raipur"); the word pair is unambiguous.
+    pattern:
+      /\b(power (plants?|plat|stations?|generation|transmission|distribution)|instrumentation)\b/,
+    familyKey: 'electrical_engineer',
+  },
+  {
+    pattern: /\b(production|manufacturing|materials?|quality|maintenance|automobile|automotive)\b/,
+    familyKey: 'mechanical_engineer',
+  },
+  { pattern: /\bconstruction\b/, familyKey: 'civil_engineer' },
 ];
 
 export const UNKNOWN_ROLE_FAMILY = 'unknown';
