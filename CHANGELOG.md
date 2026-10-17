@@ -6,6 +6,7 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
 - **Auto-pause needs 20+ collected jobs with none kept over 30 days (D104)** — both values are settings (`AUTO_PAUSE_MIN_COLLECTED`, `AUTO_PAUSE_WINDOW_DAYS`). Smaller samples are never paused.
 - **India-scoped sources are never paused** (the Adzuna India searches, or `indiaScoped: true`): they are reported as KEPT_ZERO and you get one Telegram alert per window instead.
+- **Off until you confirm:** `AUTO_PAUSE_ENABLED` is `false` in the worker, so it only logs what it would pause (India-scoped alerts still go out). Flip it to `true` in `.github/workflows/worker.yml` once the list is approved.
 - `pnpm --filter @jobsentinel/api source-report -- --at=<date>` previews exactly what would be paused, alerted or spared, without changing anything.
 - Migration `0006_source_kept_zero_alert` (one nullable column).
 - Tests: validation 276, config 33, API e2e 101.

@@ -43,6 +43,8 @@ export interface PausedSource {
 export interface AutoPauseResult {
   paused: PausedSource[];
   alerted: PausedSource[];
+  /** With AUTO_PAUSE_ENABLED=false: sources that would have been paused, but were not. */
+  wouldPause: PausedSource[];
 }
 
 /**
@@ -124,7 +126,7 @@ export class SourceReportService {
   async autoPause(now = new Date(), sourceIds?: string[]): Promise<AutoPauseResult> {
     const windowDays = this.env.AUTO_PAUSE_WINDOW_DAYS;
     const { sources } = await this.report(windowDays, now);
-    const result: AutoPauseResult = { paused: [], alerted: [] };
+    const result: AutoPauseResult = { paused: [], alerted: [], wouldPause: [] };
     for (const s of sources) {
       if (sourceIds && !sourceIds.includes(s.id)) continue;
       const decision = decideAutoPause({
@@ -159,6 +161,13 @@ export class SourceReportService {
         continue;
       }
 
+      if (!this.env.AUTO_PAUSE_ENABLED) {
+        this.logger.warn(
+          `would auto-pause ${s.name} (AUTO_PAUSE_ENABLED=false): ${decision.reason}`,
+        );
+        result.wouldPause.push({ id: s.id, name: s.name, reason: decision.reason });
+        continue;
+      }
       const updated = await this.db
         .update(jobSources)
         .set({

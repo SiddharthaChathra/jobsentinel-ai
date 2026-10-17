@@ -227,6 +227,7 @@ describeIf('source report card and auto-pause (F2)', () => {
     expect(await service.autoPause(new Date(), Object.values(src))).toEqual({
       paused: [],
       alerted: [],
+      wouldPause: [],
     });
 
     const statuses = await db
@@ -296,6 +297,35 @@ describeIf('source report card and auto-pause (F2)', () => {
       .from(jobSources)
       .where(eq(jobSources.id, src.india));
     expect(india!.status).toBe('ACTIVE');
+  });
+
+  it('with AUTO_PAUSE_ENABLED=false, reports what it would pause and pauses nothing', async () => {
+    const service = moduleRef.get(SourceReportService) as unknown as {
+      env: { AUTO_PAUSE_ENABLED: boolean };
+      autoPause: SourceReportService['autoPause'];
+    };
+    // A fresh kept-zero case: active again, grace period over.
+    await db
+      .update(jobSources)
+      .set({ status: 'ACTIVE', resumedAt: daysAgo(31), pausedAt: null, pausedReason: null })
+      .where(eq(jobSources.id, src.keptZero));
+    const env = service.env;
+    const before = env.AUTO_PAUSE_ENABLED;
+    env.AUTO_PAUSE_ENABLED = false;
+    try {
+      const r = await service.autoPause(new Date(), [src.keptZero]);
+      expect(r.paused).toEqual([]);
+      expect(r.wouldPause.map((p) => p.id)).toEqual([src.keptZero]);
+      const [row] = await db
+        .select({ status: jobSources.status })
+        .from(jobSources)
+        .where(eq(jobSources.id, src.keptZero));
+      expect(row!.status).toBe('ACTIVE');
+    } finally {
+      env.AUTO_PAUSE_ENABLED = before;
+    }
+    // Back on: it pauses, as the next tests expect.
+    expect((await service.autoPause(new Date(), [src.keptZero])).paused).toHaveLength(1);
   });
 
   it('never schedules a paused source for scanning', async () => {

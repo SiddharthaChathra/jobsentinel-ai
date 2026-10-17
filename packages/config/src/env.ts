@@ -155,6 +155,9 @@ export const envSchema = z
     // Outside them the free instance may sleep, which saves Render's shared free hours (D99).
     // Source auto-pause (F2, D104): pause only after this many collected jobs with none kept,
     // over this many days. India-scoped sources are alerted on, never paused.
+    // Off: decisions are logged (and India-scoped alerts still sent) but nothing is paused —
+    // for reviewing the list before the first live run (D104).
+    AUTO_PAUSE_ENABLED: bool(true),
     AUTO_PAUSE_MIN_COLLECTED: int(20, { min: 1, max: 10_000 }),
     AUTO_PAUSE_WINDOW_DAYS: int(30, { min: 7, max: 180 }),
     KEEP_AWAKE_HOURS: z.preprocess(
