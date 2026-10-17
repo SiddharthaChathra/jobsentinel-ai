@@ -2,6 +2,14 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F1 — Separate test environment — 2026-10-17
+
+- **Tests can no longer touch production (D101).** The e2e suites used to run against the live database and read `.env` (production settings, real bot and AI keys). They now run against a local Supabase stack (database, auth, storage) that CI starts fresh on every push, and read `apps/api/.env.test` only.
+- **Guard:** before any suite, and in the test seed/reset scripts, `assertTestTarget` aborts unless every database URL is local or the named test project, and always refuses production. Verified by running both against the production project ref: both refused before connecting.
+- New scripts: `pnpm test:db:start | test:db:seed | test:db:reset | test:db:stop | test:e2e`. CI has a new `API e2e (local Supabase)` job and also runs on `phase-*` branches.
+- Two e2e assertions that assumed production data (an `https` storage URL, a non-empty job table) now hold on a fresh database.
+- Tests: config 32 (+10); API e2e 92 of 92 against the local stack (previously skipped in CI).
+
 ## [Phase 12] Fewer database round trips per page — 2026-10-17
 
 - **Faster dashboard and page switches (D100).** The queries themselves take ~1 ms; the time was spent waiting for one database round trip after another. `/me` (asked by every page) now makes 2 instead of 4, the dashboard 3 instead of 5, the job list 3 instead of 4.
