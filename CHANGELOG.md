@@ -13,6 +13,7 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 - **Why the 18 fresher jobs were held (D106):** every one was "company could not be verified" — Adzuna links only to its own pages, and Adzuna blocks automated requests, so we do not follow them. No scam flag, no trainee-title rule involved.
 - **New `GET /api/v1/jobs/needs-review`:** held jobs, each with a plain-language reason ("Company not verified: the job board links only to its own page", "Category unclear…"), with every list gate applied. Not in the main list; never on Telegram — the digest is now verified jobs only.
 - Sample responses for the web tab: `docs/contracts/needs-review.mock.json`, captured from the real API.
+- **Needs review view (C step 2, D106):** Segmented "Needs Review" tab on the Jobs page (`/jobs`) isolated from the default list. Shows held jobs with kind badges (`CATEGORY_UNKNOWN`, `COMPANY_UNVERIFIED`, `URL_UNREACHABLE`, `OTHER`) and verbatim labels, plain-language tooltips, prominent notice that held jobs are excluded from Telegram, and a confirmation caution step before opening unverified application links. System Status shows AI calls breakdown by purpose. R6 salary display test confirms "Not disclosed" for unstated or null salaries. Tests: web 46 (+10).
 - Tests: validation 281 (+5), API e2e 117 (+5).
 
 ## [Phase 13] A — AI category decision; F8 budget priority — 2026-10-17

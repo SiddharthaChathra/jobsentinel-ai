@@ -1,39 +1,153 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   AlertTriangle,
   Banknote,
   Building2,
   Clock,
+  HelpCircle,
+  Link2Off,
   MapPin,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
-import type { JobCard as JobCardType } from '@/lib/types/jobs';
+import type { JobCard as JobCardType, HeldInfo, HeldKind, ReviewJobCard } from '@/lib/types/jobs';
 import { RelativeTime } from '@/components/common/RelativeTime';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MatchRing } from './MatchRing';
 import { SaveButton } from './SaveButton';
 
+const HELD_CONFIG: Record<
+  HeldKind,
+  {
+    tooltip: string;
+    icon: typeof AlertTriangle;
+    bannerClass: string;
+    badgeClass: string;
+  }
+> = {
+  CATEGORY_UNKNOWN: {
+    tooltip: "We couldn't tell what kind of work this is from the posting.",
+    icon: HelpCircle,
+    bannerClass:
+      'border-amber-300 bg-amber-50/80 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200',
+    badgeClass:
+      'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border-amber-300 dark:border-amber-700',
+  },
+  COMPANY_UNVERIFIED: {
+    tooltip: "We couldn't confirm the employer. Check the company before applying.",
+    icon: ShieldAlert,
+    bannerClass:
+      'border-orange-300 bg-orange-50/80 text-orange-950 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-200',
+    badgeClass:
+      'bg-orange-100 text-orange-800 dark:bg-orange-900/60 dark:text-orange-300 border-orange-300 dark:border-orange-700',
+  },
+  URL_UNREACHABLE: {
+    tooltip: "The application page didn't open when we checked.",
+    icon: Link2Off,
+    bannerClass:
+      'border-rose-300 bg-rose-50/80 text-rose-950 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200',
+    badgeClass:
+      'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300 border-rose-300 dark:border-rose-700',
+  },
+  OTHER: {
+    tooltip: '',
+    icon: AlertTriangle,
+    bannerClass:
+      'border-purple-300 bg-purple-50/80 text-purple-950 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-200',
+    badgeClass:
+      'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300 border-purple-300 dark:border-purple-700',
+  },
+};
+
+export interface JobCardProps {
+  job: JobCardType | ReviewJobCard;
+  held?: HeldInfo;
+}
+
 /**
- * One job in a list. The whole card is a link; the Save button stops propagation.
- * Score, verification and fresher-eligibility are the three things worth seeing without opening
- * the job, so they get the visual weight.
+ * One job in a list. The whole card is a link; the Save and Apply buttons stop propagation.
+ * When `held` is provided (or job is a ReviewJobCard), renders a top "Held" banner with
+ * kind icon/tooltip, and provides a caution step before opening application URL.
  */
-export function JobCard({ job }: { job: JobCardType }) {
+export function JobCard({ job, held: propHeld }: JobCardProps) {
+  const held = propHeld ?? ('held' in job ? (job as ReviewJobCard).held : undefined);
+  const [cautionOpen, setCautionOpen] = useState(false);
+
   const verified = job.validation.companyVerified && job.validation.applicationVerified;
   const suspicious = job.validation.status === 'SUSPICIOUS';
   const unverified = job.validation.status === 'NEEDS_REVIEW';
   const place = job.location.isRemote ? 'Remote' : (job.location.text ?? 'Location not stated');
+
+  const heldCfg = held ? (HELD_CONFIG[held.kind] ?? HELD_CONFIG.OTHER) : undefined;
+  const heldTooltip = held
+    ? held.kind === 'OTHER'
+      ? held.reason
+      : (heldCfg?.tooltip ?? held.reason)
+    : '';
+  const HeldIcon = heldCfg?.icon ?? AlertTriangle;
+
+  const handleOpenCaution = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCautionOpen(true);
+  };
+
+  const handleConfirmApply = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCautionOpen(false);
+    window.open(job.applicationUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCancelCaution = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCautionOpen(false);
+  };
 
   return (
     <article
       className={cn(
         'card-hover relative rounded-xl border bg-card p-4 sm:p-5',
         job.isNew ? 'border-primary/40' : 'border-border/60',
+        // Clip only held cards (their banner is full-bleed): the "New" pill sits above the edge.
+        held ? 'overflow-hidden border-amber-300/60 dark:border-amber-700/60' : '',
       )}
     >
+      {/* Held banner (C step 2, D106) */}
+      {held && (
+        <div
+          data-testid={`held-banner-${job.id}`}
+          className={cn(
+            'mb-3.5 -mx-4 -mt-4 sm:-mx-5 sm:-mt-5 flex items-center justify-between gap-2 border-b px-4 py-2.5 text-xs',
+            heldCfg?.bannerClass,
+          )}
+          title={heldTooltip}
+          aria-label={`Held for review: ${held.label}`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <HeldIcon className="size-4 shrink-0" aria-label={held.kind} />
+            <span className="font-medium truncate">{held.label}</span>
+          </div>
+          <span
+            data-testid={`held-kind-${job.id}`}
+            className={cn(
+              'shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+              heldCfg?.badgeClass,
+            )}
+            title={heldTooltip}
+          >
+            {held.kind}
+          </span>
+        </div>
+      )}
+
       {job.isNew && (
         <span className="absolute -top-2 left-4 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
           New
@@ -62,12 +176,10 @@ export function JobCard({ job }: { job: JobCardType }) {
               <MapPin className="size-3.5 shrink-0" />
               {place}
             </span>
-            {job.salary && (
-              <span className="inline-flex items-center gap-1.5">
-                <Banknote className="size-3.5 shrink-0" />
-                {job.salary.disclosed && job.salary.text ? job.salary.text : 'Not disclosed'}
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1.5">
+              <Banknote className="size-3.5 shrink-0" />
+              {job.salary?.disclosed && job.salary?.text ? job.salary.text : 'Not disclosed'}
+            </span>
           </div>
         </div>
 
@@ -114,7 +226,7 @@ export function JobCard({ job }: { job: JobCardType }) {
             Suspicious
           </Badge>
         )}
-        {unverified && (
+        {unverified && !held && (
           <Badge variant="secondary" className="gap-1">
             <AlertTriangle className="size-3" />
             Unverified
@@ -122,14 +234,50 @@ export function JobCard({ job }: { job: JobCardType }) {
         )}
       </div>
 
+      {/* Caution prompt when unverified job apply is clicked */}
+      {cautionOpen && (
+        <div
+          role="alertdialog"
+          aria-label="Caution: unverified job"
+          className="relative z-10 mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-400 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+        >
+          <span className="font-medium">This job isn&apos;t verified. Open anyway?</span>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="default"
+              data-testid="apply-caution-confirm"
+              onClick={handleConfirmApply}
+            >
+              Open anyway
+            </Button>
+            <Button type="button" size="sm" variant="outline" onClick={handleCancelCaution}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
         <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
           <Clock className="size-3.5" />
           {job.postedAt ? <RelativeTime date={job.postedAt} /> : 'Date unknown'}
         </span>
         {/* Above the card-wide link so both remain clickable. */}
-        <div className="relative z-10 flex gap-2">
+        <div className="relative z-10 flex items-center gap-2">
           <SaveButton jobId={job.id} saved={job.tracker.saved} />
+          {held && !cautionOpen && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleOpenCaution}
+              aria-label={`Apply to ${job.title}`}
+            >
+              Apply
+            </Button>
+          )}
           <Link href={`/jobs/${job.id}`} className={buttonVariants({ size: 'sm' })}>
             View
           </Link>

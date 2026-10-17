@@ -44,14 +44,12 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 <MapPin className="h-4 w-4" />
                 <span>{job.location.isRemote ? 'Remote' : (job.location.text ?? 'Unknown')}</span>
               </div>
-              {job.salary && (
-                <div className="flex items-center gap-1">
-                  <Banknote className="h-4 w-4" />
-                  <span>
-                    {job.salary.disclosed && job.salary.text ? job.salary.text : 'Not disclosed'}
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center gap-1">
+                <Banknote className="h-4 w-4" />
+                <span>
+                  {job.salary?.disclosed && job.salary?.text ? job.salary.text : 'Not disclosed'}
+                </span>
+              </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 {job.postedAt ? <RelativeTime date={job.postedAt} /> : 'Unknown'}

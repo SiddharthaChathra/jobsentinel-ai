@@ -13,7 +13,7 @@ import type { JobDetail } from '@/lib/types/jobs';
 import { useRemoveApplication, useSaveJob, useTracker, useViewJob } from '@/hooks/useJobs';
 import type { ApplicationStatus } from '@jobsentinel/types';
 import { useRouter } from 'next/navigation';
-import { useEffect, useOptimistic, startTransition } from 'react';
+import { useEffect, useOptimistic, startTransition, useState } from 'react';
 
 // Feeds both the options and Base UI's `items`, so the closed trigger shows "Not Tracking" rather
 // than the raw value `UNTRACKED`. NOT_INTERESTED is set elsewhere but must still have a label.
@@ -59,6 +59,21 @@ export function TrackerActions({ job }: { job: JobDetail }) {
     // Only fire once on mount — not when job changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const [cautionOpen, setCautionOpen] = useState(false);
+  const isNeedsReview = job.validation.status === 'NEEDS_REVIEW';
+
+  const handleApplyClick = (e: React.MouseEvent) => {
+    if (isNeedsReview && !cautionOpen) {
+      e.preventDefault();
+      setCautionOpen(true);
+    }
+  };
+
+  const handleConfirmCaution = () => {
+    setCautionOpen(false);
+    window.open(job.applicationUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg bg-card">
@@ -117,15 +132,37 @@ export function TrackerActions({ job }: { job: JobDetail }) {
         </div>
       </div>
 
-      <a
-        href={job.applicationUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={buttonVariants({ size: 'lg', className: 'w-full sm:w-auto' })}
-      >
-        Apply Now
-        <ExternalLink className="ml-2 h-4 w-4" />
-      </a>
+      {cautionOpen ? (
+        <div
+          role="alertdialog"
+          aria-label="Caution: unverified job"
+          className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-400 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+        >
+          <span className="font-medium">This job isn&apos;t verified. Open anyway?</span>
+          <Button
+            size="sm"
+            variant="default"
+            data-testid="apply-caution-confirm"
+            onClick={handleConfirmCaution}
+          >
+            Open anyway
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setCautionOpen(false)}>
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <a
+          href={job.applicationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleApplyClick}
+          className={buttonVariants({ size: 'lg', className: 'w-full sm:w-auto' })}
+        >
+          Apply Now
+          <ExternalLink className="ml-2 h-4 w-4" />
+        </a>
+      )}
     </div>
   );
 }
