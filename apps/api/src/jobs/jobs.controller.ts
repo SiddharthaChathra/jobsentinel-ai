@@ -22,6 +22,7 @@ import {
   type JobDetail,
   type JobEventItem,
   type TrackerState,
+  ReviewJobCard,
 } from '@jobsentinel/types';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -54,6 +55,27 @@ export class JobsController {
   ) {
     const { items, nextCursor } = await this.query.list(user.id, query);
     return enveloped<JobCard[]>(items, { nextCursor });
+  }
+
+  /**
+   * The Needs review view (C step 2, D106): held jobs with why they are held. Same filters and
+   * gates as `/jobs` (location, fresher "0 to any", 60 days, open), never in the main list, never
+   * sent to Telegram. Declared before `jobs/:id` so the path is not taken for an id.
+   */
+  @Get('jobs/needs-review')
+  async needsReview(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query(new ZodValidationPipe(JobsQuery)) query: JobsQuery,
+  ) {
+    const { items, nextCursor } = await this.query.list(user.id, query, undefined, {
+      review: true,
+    });
+    const held = await this.query.heldReasons(items.map((j) => j.id));
+    const cards: ReviewJobCard[] = items.map((j) => ({
+      ...j,
+      held: held.get(j.id) ?? { kind: 'OTHER', label: 'Held for review', reason: '' },
+    }));
+    return enveloped<ReviewJobCard[]>(cards, { nextCursor });
   }
 
   @Get('jobs/:id')

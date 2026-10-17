@@ -121,7 +121,10 @@ export class DigestService {
   ): Promise<DigestData> {
     const since = new Date(now.getTime() - 24 * 3_600_000);
     const profileVersion = await this.profileVersion(userId);
-    const allowed = includeNeedsReview ? ['VALID', 'NEEDS_REVIEW'] : ['VALID'];
+    // VALID only, whatever `includeNeedsReview` says: a held job is never sent to Telegram (D106).
+    // The setting is kept for API compatibility; held jobs live in the Needs review view.
+    void includeNeedsReview;
+    const allowed = ['VALID'];
 
     const rows = await this.db
       .select({
@@ -143,7 +146,9 @@ export class DigestService {
           eq(jobMatches.profileVersion, profileVersion),
           gte(jobs.firstSeenAt, since),
           sql`${jobs.closedAt} is null`,
-          inArray(jobs.validationStatus, allowed as ('VALID' | 'NEEDS_REVIEW')[]),
+          inArray(jobs.validationStatus, allowed as 'VALID'[]),
+          // A job held at classification (status NEEDS_REVIEW) never qualifies either.
+          sql`${jobs.status} <> 'NEEDS_REVIEW'`,
         ),
       )
       .orderBy(sql`${jobMatches.overallScore} desc`)

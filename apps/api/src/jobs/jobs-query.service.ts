@@ -7,8 +7,9 @@ import type {
   JobsQuery,
   JobSort,
   TrackerState,
+  HeldInfo,
 } from '@jobsentinel/types';
-import { MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
+import { heldInfo, MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
 import {
   applications,
@@ -64,12 +65,13 @@ export class JobsQueryService {
     userId: string,
     query: JobsQuery,
     viewer?: Viewer,
+    opts: { review?: boolean } = {},
   ): Promise<{ items: JobCard[]; nextCursor: string | null }> {
     const limit = query.limit ?? DEFAULT_LIMIT;
     const sort: JobSort = query.sort ?? 'newest';
     const { profileVersion, locations, employmentTypes } = viewer ?? (await this.viewer(userId));
 
-    const where = this.buildWhere(query, locations, employmentTypes);
+    const where = this.buildWhere(query, locations, employmentTypes, opts.review === true);
     const cursor = decodeCursor(query.cursor);
     const rows = await this.select(userId, profileVersion, [
       ...where,
@@ -123,11 +125,19 @@ export class JobsQueryService {
     q: JobsQuery,
     userLocations: string[] = [],
     userEmploymentTypes: string[] = [],
+    review = false,
   ): (SQL | undefined)[] {
-    const where: (SQL | undefined)[] = [inArray(jobs.status, [...LISTABLE])];
+    // The Needs review view (D106): held jobs only — never in the main list. Suspected scams
+    // (SUSPICIOUS) are not "needs review" and stay out of both. Every other gate below applies.
+    const where: (SQL | undefined)[] = review
+      ? [
+          eq(jobs.status, 'NEEDS_REVIEW'),
+          sql`${jobs.validationStatus} is distinct from 'SUSPICIOUS'`,
+        ]
+      : [inArray(jobs.status, [...LISTABLE])];
 
     // Validation status defaults to VALID only: a job we could not confirm is opt-in (docs 08).
-    where.push(inArray(jobs.validationStatus, q.validationStatus ?? ['VALID']));
+    if (!review) where.push(inArray(jobs.validationStatus, q.validationStatus ?? ['VALID']));
 
     const activity = q.status ?? 'ACTIVE';
     if (activity === 'ACTIVE') where.push(sql`${jobs.closedAt} is null`);
@@ -218,6 +228,30 @@ export class JobsQueryService {
     if (q.tracker?.length) where.push(inArray(applications.status, q.tracker));
 
     return where;
+  }
+
+  /**
+   * Why each held job is held (D106): its latest HELD (classification) or VALIDATED reason, and
+   * where its application link ended up. One statement for a page of ids.
+   */
+  async heldReasons(ids: string[]): Promise<Map<string, HeldInfo>> {
+    if (ids.length === 0) return new Map();
+    const rows = await this.db.execute<{
+      id: string;
+      reason: string | null;
+      final_url: string | null;
+    }>(sql`
+      select j.id,
+        (select e.detail->>'reason' from job_events e
+          where e.job_id = j.id and e.type in ('HELD', 'VALIDATED')
+          order by e.created_at desc limit 1) as reason,
+        (select v.final_url from job_validation v where v.job_id = j.id) as final_url
+      from jobs j
+      where j.id in (${sql.join(
+        ids.map((id) => sql`${id}::uuid`),
+        sql`, `,
+      )})`);
+    return new Map(rows.map((r) => [r.id, heldInfo(r.reason, r.final_url)]));
   }
 
   /**

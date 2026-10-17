@@ -2,6 +2,13 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] C — Needs review — 2026-10-17
+
+- **Why the 18 fresher jobs were held (D106):** every one was "company could not be verified" — Adzuna links only to its own pages, and Adzuna blocks automated requests, so we do not follow them. No scam flag, no trainee-title rule involved.
+- **New `GET /api/v1/jobs/needs-review`:** held jobs, each with a plain-language reason ("Company not verified: the job board links only to its own page", "Category unclear…"), with every list gate applied. Not in the main list; never on Telegram — the digest is now verified jobs only.
+- Sample responses for the web tab: `docs/contracts/needs-review.mock.json`, captured from the real API.
+- Tests: validation 281 (+5), API e2e 117 (+5).
+
 ## [Phase 13] A — AI category decision; F8 budget priority — 2026-10-17
 
 - **Unknown-category jobs get an AI category decision (D105)** instead of being filtered unseen. Category only — location, batch, experience and recency stay rule-based and run first; the AI cannot override them. An unsure or "unknown" answer holds the job for review (never notified). Each job is asked once. The model is told when a description is only a preview (Adzuna) and to answer "unknown" rather than guess.

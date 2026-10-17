@@ -131,6 +131,35 @@ export interface JobCard {
   isNew: boolean;
 }
 
+// ── Needs review (C step 2, D106) ─────────────────────────────────────────────
+
+/**
+ * Why a job is held out of the main list. CATEGORY_UNKNOWN: the AI could not place its category
+ * (D105). COMPANY_UNVERIFIED: the employer could not be confirmed — usually a job board that links
+ * only to its own page. URL_UNREACHABLE: the application page could not be reached. OTHER: any
+ * other reason from verification.
+ */
+export const HeldKind = z.enum([
+  'CATEGORY_UNKNOWN',
+  'COMPANY_UNVERIFIED',
+  'URL_UNREACHABLE',
+  'OTHER',
+]);
+export type HeldKind = z.infer<typeof HeldKind>;
+
+export interface HeldInfo {
+  kind: HeldKind;
+  /** Plain-language explanation for the user, e.g. "Company not verified: …". */
+  label: string;
+  /** The pipeline's own reason, for the detail view. */
+  reason: string;
+}
+
+/** A job in the Needs review view: never in the main list, never sent to Telegram (D106). */
+export interface ReviewJobCard extends JobCard {
+  held: HeldInfo;
+}
+
 export interface JobEventItem {
   id: string;
   type: string;

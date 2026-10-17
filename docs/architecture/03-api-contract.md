@@ -63,16 +63,17 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
 
 ### Jobs
 
-| Method | Path                       | Query                                                                                   | Response                                                |
-| ------ | -------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| GET    | `/jobs`                    | `JobsQuery` (below)                                                                     | `JobCard[]` + meta                                      |
-| GET    | `/jobs/:id`                | —                                                                                       | `JobDetail`                                             |
-| POST   | `/jobs/:id/view`           | —                                                                                       | records VIEWED in tracker (idempotent) → `TrackerState` |
-| POST   | `/jobs/:id/save` / DELETE  | —                                                                                       | `TrackerState`                                          |
-| POST   | `/jobs/:id/not-interested` | `{ reason? }`                                                                           | `TrackerState`                                          |
-| POST   | `/jobs/:id/review`         | `{ decision: "ACCEPT"\|"REJECT", note? }` — resolves NEEDS_REVIEW / SUSPICIOUS manually | `JobDetail`                                             |
-| POST   | `/jobs/:id/revalidate`     | —                                                                                       | queues re-validation → 202                              |
-| GET    | `/jobs/:id/events`         | —                                                                                       | `JobEvent[]`                                            |
+| Method | Path                       | Query                                                                                   | Response                                                                               |
+| ------ | -------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| GET    | `/jobs`                    | `JobsQuery` (below)                                                                     | `JobCard[]` + meta                                                                     |
+| GET    | `/jobs/needs-review`       | `JobsQuery` (same filters)                                                              | `ReviewJobCard[]` + meta — held jobs, each with `held: { kind, label, reason }` (D106) |
+| GET    | `/jobs/:id`                | —                                                                                       | `JobDetail`                                                                            |
+| POST   | `/jobs/:id/view`           | —                                                                                       | records VIEWED in tracker (idempotent) → `TrackerState`                                |
+| POST   | `/jobs/:id/save` / DELETE  | —                                                                                       | `TrackerState`                                                                         |
+| POST   | `/jobs/:id/not-interested` | `{ reason? }`                                                                           | `TrackerState`                                                                         |
+| POST   | `/jobs/:id/review`         | `{ decision: "ACCEPT"\|"REJECT", note? }` — resolves NEEDS_REVIEW / SUSPICIOUS manually | `JobDetail`                                                                            |
+| POST   | `/jobs/:id/revalidate`     | —                                                                                       | queues re-validation → 202                                                             |
+| GET    | `/jobs/:id/events`         | —                                                                                       | `JobEvent[]`                                                                           |
 
 `JobsQuery`:
 
@@ -118,6 +119,8 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
 ```
 
 `JobDetail` = `JobCard` + `description`, `requirements[]`, `skills[]`, `sourceUrl`, `sources: [{name, url, firstSeenAt}]`, `validationDetail` (url check, evidence list, suspicious flags, AI assessment), `match.explanation`, `match.skillScore/roleScore/experienceScore/locationScore`, `match.missingSkills`, `events[]` (last 10).
+
+**Needs review (C step 2, D106).** `GET /jobs/needs-review` lists jobs with `status = NEEDS_REVIEW` — held by classification (category unknown, D105) or by verification (company not verified, page unreachable, …) — with the same filters and gates as `/jobs`: the user's places, India-or-remote and batch (applied at classification), "0 to any" experience, the 60-day window and open jobs. Suspected scams (`SUSPICIOUS`) are excluded. `held.kind` ∈ `CATEGORY_UNKNOWN | COMPANY_UNVERIFIED | URL_UNREACHABLE | OTHER`; `held.label` is the sentence to show. These jobs are never in `/jobs` and never sent to Telegram. Samples: `docs/contracts/needs-review.mock.json` (captured from the real API).
 
 ### Saved & applications (tracker)
 

@@ -121,7 +121,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 
 - Two channels, one decision: the WEB inbox row is always written, Telegram is best-effort on top. An outage delays an alert, never loses one.
 - `(user_id, job_id, channel, type)` is unique and every insert is `ON CONFLICT DO NOTHING` — "never notify twice" is enforced by the database, not by code.
-- A job that is not `VALID` is never pushed; at most it is summarised in the digest, labelled.
+- A job that is not `VALID` is never sent to Telegram — not instantly, not in the digest (D106). Held (`NEEDS_REVIEW`) jobs appear only in the Needs review view (`GET /jobs/needs-review`), with why each is held.
 - Every alert carries its evidence (verification line, matched/missing skills), never a bare score.
 - All employer-supplied text is HTML-escaped before it reaches Telegram, and button URLs must be public (D56).
 - Quiet hours and the digest hour are evaluated in the user's timezone, not the server's.
