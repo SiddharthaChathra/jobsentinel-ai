@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { sql } from 'drizzle-orm';
-import { classifyPostingType } from '@jobsentinel/validation';
+import { classifyPostingType, MAX_PLAUSIBLE_EXPERIENCE_YEARS } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
 import { WorkerModule } from '../worker.module';
 
@@ -17,7 +17,8 @@ import { WorkerModule } from '../worker.module';
  *    the last allowed wait, so they are held at once if the AI still cannot place them; India,
  *    batch and recency gates apply as for any job.
  *    Also jobs filtered as "asks for N+ years" with N above 15: company history the parser read
- *    as a requirement before D116.
+ *    as a requirement before D116. Their stored figures above 15 are cleared first, everywhere:
+ *    classification falls back to the stored figure, which the old parser wrote.
  * 3. Active jobs from the last 60 days get their posting type.
  */
 async function main(): Promise<void> {
@@ -69,6 +70,13 @@ async function main(): Promise<void> {
       console.warn('\nDry run: nothing changed. Re-run with --apply.');
       return;
     }
+    // D116: figures above the cap were stored at ingest by the old parser, and classification
+    // falls back to the stored figure — so clear them before re-classifying, or the misread
+    // "50+ years" filters the job again.
+    const cleared = await db.execute(sql`
+      update jobs set experience_min_years = null, experience_max_years = null,
+        experience_text = null, updated_at = now()
+      where experience_min_years > ${MAX_PLAUSIBLE_EXPERIENCE_YEARS} returning id`);
     for (const r of legacy) {
       await db.execute(sql`
         update jobs set hold_reason = ${r.reason}, status = 'CLASSIFIED', stage_attempts = 0,
@@ -90,7 +98,7 @@ async function main(): Promise<void> {
       );
     }
     console.warn(
-      `\nApplied: ${legacy.length} sent to validation, ${ids.length} re-queued, ${typed.length} typed.`,
+      `\nApplied: ${cleared.length} misread figures cleared, ${legacy.length} sent to validation, ${ids.length} re-queued, ${typed.length} typed.`,
     );
   } finally {
     await app.close();
