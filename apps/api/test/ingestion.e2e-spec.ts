@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './helpers/test-env';
 import { Test } from '@nestjs/testing';
 import { eq, sql } from 'drizzle-orm';
 import { normalizeCompanyName } from '@jobsentinel/validation';

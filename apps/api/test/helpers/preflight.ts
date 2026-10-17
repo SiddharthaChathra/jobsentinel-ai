@@ -1,5 +1,6 @@
-import 'dotenv/config';
+import './test-env';
 import postgres from 'postgres';
+import { pgSsl } from '@jobsentinel/config';
 
 /**
  * Jest `globalSetup` for the e2e suites: proves the database is actually reachable before any
@@ -17,7 +18,7 @@ export default async function preflight(): Promise<void> {
   if (!url) return;
 
   const host = (/@([^:/?]+)/.exec(url)?.[1] ?? 'unknown host').trim();
-  const sql = postgres(url, { ssl: 'require', prepare: false, max: 1, connect_timeout: 15 });
+  const sql = postgres(url, { ssl: pgSsl(url), prepare: false, max: 1, connect_timeout: 15 });
   try {
     await sql`select 1`;
   } catch (err) {

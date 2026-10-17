@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './helpers/test-env';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Test } from '@nestjs/testing';

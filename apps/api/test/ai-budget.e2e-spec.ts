@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './helpers/test-env';
 import { z } from 'zod';
 import { AIService, type AIProvider, type AIRequest } from '@jobsentinel/ai';
 import { and, eq, gte, sql } from 'drizzle-orm';

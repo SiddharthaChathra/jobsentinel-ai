@@ -1,8 +1,9 @@
-import 'dotenv/config';
+import './helpers/test-env';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { and, eq, sql } from 'drizzle-orm';
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { pgSsl } from '@jobsentinel/config';
 import * as schema from '../src/common/db/schema';
 import {
   companies,
@@ -41,7 +42,11 @@ describeIf('database guarantees (integration)', () => {
   let jobId: string;
 
   beforeAll(async () => {
-    client = postgres(process.env.DATABASE_DIRECT_URL!, { ssl: 'require', max: 4, prepare: false });
+    client = postgres(process.env.DATABASE_DIRECT_URL!, {
+      ssl: pgSsl(process.env.DATABASE_DIRECT_URL!),
+      max: 4,
+      prepare: false,
+    });
     db = drizzle(client, { schema });
     admin = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
       auth: { persistSession: false },

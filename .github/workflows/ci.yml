@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # Phase branches too, so a feature is proven in CI before it is merged (D101).
+    branches: [main, 'phase-*']
   pull_request:
 
 concurrency:
@@ -46,7 +47,6 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm --filter @jobsentinel/api test:e2e
       - run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
@@ -55,3 +55,28 @@ jobs:
           # them dynamic, exactly as on Vercel. Nothing connects to it during the build.
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+
+  e2e:
+    name: API e2e (local Supabase)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Public identifier of the production project (it is in every page's Supabase URL). Named
+      # so the test guard refuses it explicitly, on top of refusing anything non-local (D101).
+      PRODUCTION_SUPABASE_REF: hktrhvorwsymventjhfu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r --filter './packages/*' build
+      # A throwaway Supabase (Postgres, Auth, Storage) in Docker on the runner. Nothing here can
+      # reach production: the stack is local and .env.test is generated from it (F1, D101).
+      - run: pnpm test:db:start
+      - run: pnpm test:db:seed
+      - run: pnpm test:e2e
+      - if: always()
+        run: pnpm test:db:stop

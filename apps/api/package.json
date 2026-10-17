@@ -15,6 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file=.env -r ts-node/register src/common/db/migrate.ts",
     "db:seed": "node --env-file=.env -r ts-node/register src/common/db/seed/index.ts",
+    "test:db:seed": "node -r ts-node/register src/scripts/test-db.ts seed",
+    "test:db:reset": "node -r ts-node/register src/scripts/test-db.ts reset",
     "db:studio": "drizzle-kit studio",
     "classify": "node dist/scripts/reclassify.js",
     "validate": "node dist/scripts/validate.js",

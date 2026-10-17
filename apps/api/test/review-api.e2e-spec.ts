@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './helpers/test-env';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';

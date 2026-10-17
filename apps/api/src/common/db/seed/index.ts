@@ -1,8 +1,13 @@
-import 'dotenv/config';
 import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { assertEnv, loadEnv, SCAN_INTERVAL_SEC, SKILL_DICTIONARY } from '@jobsentinel/config';
+import {
+  assertEnv,
+  loadEnv,
+  SCAN_INTERVAL_SEC,
+  SKILL_DICTIONARY,
+  pgSsl,
+} from '@jobsentinel/config';
 import { normalizeCompanyName } from '@jobsentinel/validation';
 import { normalizeSkillName } from '../../../users/profiles.service';
 import { companies, jobSources, skills } from '../schema';
@@ -122,7 +127,11 @@ function careersUrlFor(src: (typeof STARTER_SOURCES)[number]): string | null {
 async function main(): Promise<void> {
   const env = loadEnv();
   assertEnv(env, ['DATABASE_DIRECT_URL']);
-  const client = postgres(env.DATABASE_DIRECT_URL, { ssl: 'require', max: 1, prepare: false });
+  const client = postgres(env.DATABASE_DIRECT_URL, {
+    ssl: pgSsl(env.DATABASE_DIRECT_URL),
+    max: 1,
+    prepare: false,
+  });
   try {
     const db = drizzle(client, { schema });
     const result = await seed(db);

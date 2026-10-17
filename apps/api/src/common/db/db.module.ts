@@ -1,7 +1,7 @@
 import { Global, Inject, Module, type OnModuleDestroy } from '@nestjs/common';
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { assertEnv, type Env } from '@jobsentinel/config';
+import { assertEnv, type Env, pgSsl } from '@jobsentinel/config';
 import { ENV } from '../config/config.module';
 import * as schema from './schema';
 
@@ -22,7 +22,8 @@ const PG_CLIENT = Symbol('PG_CLIENT');
       useFactory: (env: Env) => {
         assertEnv(env, ['DATABASE_URL']);
         return postgres(env.DATABASE_URL, {
-          ssl: 'require',
+          // TLS for every hosted database; a local test stack has none (D101).
+          ssl: pgSsl(env.DATABASE_URL),
           prepare: false,
           max: env.NODE_ENV === 'production' ? 8 : 4,
           // A 30 s idle timeout churned the pool: after half a minute of quiet, the next request
