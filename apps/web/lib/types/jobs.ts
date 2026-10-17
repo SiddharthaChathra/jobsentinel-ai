@@ -29,4 +29,7 @@ export type {
   ReviewJobCard,
   HeldInfo,
   HeldKind,
+  PostingType,
+  MatchScoring,
+  SourceAttribution,
 } from '@jobsentinel/types';

@@ -12,7 +12,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 - **Posting types (D114):** Campus drive / Off-campus programme / Regular, on each job and filterable.
 - **Sources (D115):** Adzuna attribution on cards (API) and Telegram alerts; boards added after the company check — Sigmoid, Hevo Data, Paytm, HackerRank, Agoda, Sarvam AI; three daily Adzuna fresher searches within the quota.
 - **Auto-pause (D104)** switched on after the owner's confirmation.
-- Tests: validation 347 (+41), ai 25 (+2), API unit 140 (+2), API e2e 128 (+9).
+- **Web UI for F3, R6, R2, and F8 (Gemini):** Adzuna attribution badge & link (`data-testid="attribution-<jobId>"`, ≥116×23 px) on JobCard and JobDetail/JobDetailPage; minimum salary input (`salary-min-input`) and "Include jobs that don't state a salary" toggle (`salary-undisclosed-toggle`, checked by default) synced via `useFilterParams`; Posting Type badges for Campus drive and Off-campus programme (`posting-type-<jobId>`) and multi-select filter (`posting-type-filter`); "Rules-only score" indicator with tooltip (`scoring-rules-only-<jobId>`) on card and MatchBreakdown; `EXPERIENCE_UNKNOWN` review banner with kind fallback to `OTHER`; System Status displays `status.ai.userCallLimit` per-user limit when present; R6 detail page salary test covering all three undisclosed shapes and disclosed text.
+- Tests: validation 347 (+41), ai 25 (+2), API unit 140 (+2), API e2e 128 (+9), web 70 (+24).
 
 ## [Phase 13] F3 (part 1) — Adzuna quota guard; multi-batch parsing — 2026-10-17
 

@@ -5,6 +5,59 @@ import { Badge } from '@/components/ui/badge';
 export function JobDetail({ job }: { job: JobDetailType }) {
   return (
     <div className="space-y-6">
+      {/* Overview: salary, posting type, and attribution */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="font-medium text-muted-foreground">Salary:</span>
+              <span
+                data-testid={`detail-salary-${job.id}`}
+                className="font-semibold text-foreground"
+              >
+                {job.salary?.disclosed && job.salary?.text ? job.salary.text : 'Not disclosed'}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {job.postingType === 'CAMPUS_DRIVE' && (
+                <Badge
+                  variant="secondary"
+                  data-testid={`posting-type-${job.id}`}
+                  className="border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
+                >
+                  Campus drive
+                </Badge>
+              )}
+              {job.postingType === 'OFF_CAMPUS_PROGRAM' && (
+                <Badge
+                  variant="secondary"
+                  data-testid={`posting-type-${job.id}`}
+                  className="border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+                >
+                  Off-campus programme
+                </Badge>
+              )}
+              {job.attribution && (
+                <a
+                  href={job.attribution.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid={`attribution-${job.id}`}
+                  className="inline-flex min-h-[23px] min-w-[116px] items-center justify-center rounded-md border border-border/80 bg-background/80 px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  style={{ minWidth: 116, minHeight: 23 }}
+                  aria-label={`Jobs by ${job.attribution.label}`}
+                >
+                  Jobs by{' '}
+                  <span className="ml-1 font-semibold text-primary underline">
+                    {job.attribution.label}
+                  </span>
+                </a>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Job Description</CardTitle>

@@ -127,6 +127,11 @@ export default function SystemPage() {
             <p className="text-xs text-muted-foreground">
               Tokens: {status?.ai?.tokensToday ?? 0} / {status?.ai?.tokenBudget ?? 0}
             </p>
+            {status?.ai?.userCallLimit !== undefined && status.ai.userCallLimit !== null && (
+              <p className="text-xs text-muted-foreground">
+                Per-user limit: {status.ai.userCallLimit} calls/day
+              </p>
+            )}
             {status?.ai?.byPurpose && Object.keys(status.ai.byPurpose).length > 0 && (
               <div className="mt-3 border-t pt-2 space-y-1">
                 <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">

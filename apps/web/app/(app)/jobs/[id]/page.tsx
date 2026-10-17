@@ -59,28 +59,62 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <VerificationBadge validation={job.validation} />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {job.fresherEligible && (
             <Badge className="bg-green-600 hover:bg-green-700">Fresher Eligible</Badge>
+          )}
+          {job.postingType === 'CAMPUS_DRIVE' && (
+            <Badge
+              variant="secondary"
+              data-testid={`posting-type-${job.id}`}
+              className="border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
+            >
+              Campus drive
+            </Badge>
+          )}
+          {job.postingType === 'OFF_CAMPUS_PROGRAM' && (
+            <Badge
+              variant="secondary"
+              data-testid={`posting-type-${job.id}`}
+              className="border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
+            >
+              Off-campus programme
+            </Badge>
           )}
           {job.employmentType !== 'UNKNOWN' && (
             <Badge variant="outline">{job.employmentType.replace('_', ' ')}</Badge>
           )}
           {job.isNew && <Badge className="bg-blue-500 hover:bg-blue-600">New</Badge>}
+          {job.attribution && (
+            <a
+              href={job.attribution.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid={`attribution-${job.id}`}
+              className="inline-flex min-h-[23px] min-w-[116px] items-center justify-center rounded-md border border-border/80 bg-background/80 px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              style={{ minWidth: 116, minHeight: 23 }}
+              aria-label={`Jobs by ${job.attribution.label}`}
+            >
+              Jobs by{' '}
+              <span className="ml-1 font-semibold text-primary underline">
+                {job.attribution.label}
+              </span>
+            </a>
+          )}
         </div>
       </header>
 
       <TrackerActions job={job} />
 
-      <div className="grid gap-6 md:grid-cols-12 items-start">
-        <div className="md:col-span-8 space-y-6">
+      <div className="grid items-start gap-6 md:grid-cols-12">
+        <div className="space-y-6 md:col-span-8">
           <JobDetail job={job} />
         </div>
-        <div className="md:col-span-4 space-y-6">
+        <div className="space-y-6 md:col-span-4">
           {job.match ? (
-            <MatchBreakdown match={job.match} />
+            <MatchBreakdown match={job.match} jobId={job.id} />
           ) : (
-            <div className="p-4 border rounded-lg text-center text-sm text-muted-foreground">
+            <div className="rounded-lg border p-4 text-center text-sm text-muted-foreground">
               Not scored yet — your resume profile may need updating.
             </div>
           )}
