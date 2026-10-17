@@ -2,6 +2,12 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] Experience misread fix; board recheck — 2026-10-18
+
+- **"Asks for 80+ years" fixed (D116):** company history ("over 80 years as an industrial leader", "For 30+ years, we've…") is no longer read as a requirement. A figure above 15 years is a parse error, a figure needs requirement wording next to it, and company-history phrasing disqualifies it. Accuracy gate unchanged (72/72, 72/72, 10/72); 40 recent jobs parse differently — none of them changes what you see in your list (the two that become fresher-eligible are in Romania).
+- **Boards:** the eight proposed networking/cloud/DevOps boards were re-checked; none has an entry-level, trainee or graduate role in India (every stated minimum is 2+ years), so none was enabled.
+- Tests: validation 359 (+12), web 71 (+1).
+
 ## [Phase 13] Owner decisions, F8 completion, F3 (part 2) — 2026-10-18
 
 - **Classification fixes (D109):** graduate-trainee titles take their discipline from the title or its qualifier ("GET – Production" → Mechanical, "for Power Plant" → Electrical); a bare "Graduate Engineer Trainee" goes to the AI category check instead of being called SOFTWARE. "Software Engineers" (plural) classifies like the singular. Accuracy gate before and after each fix: level 72/72, engineering 72/72, abstained 10/72.

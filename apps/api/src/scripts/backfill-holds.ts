@@ -16,6 +16,8 @@ import { WorkerModule } from '../worker.module';
  *    again: under the owner's R2 decision they are held for review, not filtered. They re-enter at
  *    the last allowed wait, so they are held at once if the AI still cannot place them; India,
  *    batch and recency gates apply as for any job.
+ *    Also jobs filtered as "asks for N+ years" with N above 15: company history the parser read
+ *    as a requirement before D116.
  * 3. Active jobs from the last 60 days get their posting type.
  */
 async function main(): Promise<void> {
@@ -40,8 +42,13 @@ async function main(): Promise<void> {
       cross join lateral (
         select ev.detail->>'reason' as reason from job_events ev
         where ev.job_id = j.id and ev.type = 'FILTERED_OUT' order by ev.created_at desc limit 1) e
-      where j.status = 'FILTERED_OUT' and e.reason like 'experience unknown%' and ${recent}`);
-    console.warn(`2. filtered for unknown experience, to classify again: ${unknown.length}`);
+      where j.status = 'FILTERED_OUT' and ${recent}
+        and (e.reason like 'experience unknown%'
+          -- D116: a "requirement" above 15 years was company history misread as one
+          or e.reason ~ '^asks for (1[6-9]|[2-9][0-9])[+] years')`);
+    console.warn(
+      `2. filtered for unknown experience, or for a misread 16+ years, to classify again: ${unknown.length}`,
+    );
     for (const r of unknown.slice(0, 15)) console.warn(`     ${r.title}`);
 
     const active = await db.execute<{

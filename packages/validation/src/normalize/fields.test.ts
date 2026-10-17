@@ -73,6 +73,44 @@ describe('parseExperience', () => {
     expect(r.minYears).toBe(min);
     expect(r.maxYears).toBe(max);
   });
+
+  // D116: real postings from production, as the description (third hint) carries them.
+  const fromBody = (body: string) => parseExperience(null, 'Software Engineer', body);
+
+  it.each([
+    'About Kennametal With over 80 years as an industrial technology leader, Kennametal delivers…',
+    'It has been more than 60 years since SYSTRA has garnered expertise that spans…',
+    'For 30+ years, we’ve delivered extraordinary impact together with our clients…',
+    'ERM is the largest specialist consultancy, with over 50 years of experience helping organisations…',
+    'With 40 years of experience in the Insurtech game, we’re now…',
+    'For 10+ years, we have been building tools for developers.',
+    'For 12 years, we’ve built payment rails for banks.', // curly apostrophe, under the cap
+    'We operate in 80+ countries.',
+    'This role is 80% remote.',
+    'Minimum 20 years of experience in banking.', // above the cap: a parse error, not a requirement
+  ])('company history and other numbers are not a requirement: %s', (body) => {
+    expect(fromBody(body)).toEqual({ minYears: null, maxYears: null, text: null });
+  });
+
+  it('skips company history and finds the real requirement after it', () => {
+    expect(
+      fromBody(
+        'For 30+ years, we’ve delivered impact. You have 0-2 years of experience with Java.',
+      ),
+    ).toMatchObject({ minYears: 0, maxYears: 2 });
+    expect(fromBody('We need 3+ years in Java.')).toMatchObject({ minYears: 3 });
+    expect(fromBody('Experience: 2-4 years')).toMatchObject({ minYears: 2, maxYears: 4 });
+    expect(fromBody('At least 5 years of hands-on work.')).toMatchObject({ minYears: 5 });
+  });
+
+  it("trusts the source's own experience field without extra wording", () => {
+    expect(parseExperience('2-4 years', 'Engineer', '')).toMatchObject({
+      minYears: 2,
+      maxYears: 4,
+    });
+    // …but still applies the cap there.
+    expect(parseExperience('30+ years', 'Engineer', '').minYears).toBeNull();
+  });
 });
 
 describe('parseSalary', () => {
