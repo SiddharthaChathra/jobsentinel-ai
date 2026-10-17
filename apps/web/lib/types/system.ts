@@ -8,4 +8,8 @@ export type {
   SourceInput,
   SourcePatch,
   AdapterInfo,
+  SourceReport,
+  SourceReportRow,
+  SourceHealth,
+  RejectReason,
 } from '@jobsentinel/types';

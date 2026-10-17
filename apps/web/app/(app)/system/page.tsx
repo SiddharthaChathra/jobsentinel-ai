@@ -7,6 +7,43 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Activity, Database, Server, RefreshCw } from 'lucide-react';
 import { RelativeTime } from '@/components/common/RelativeTime';
+import { SourceReportCard } from '@/components/system/SourceReportCard';
+
+/**
+ * Map a SourceStatus value to a human-readable label.
+ * PAUSED_AUTO (F2, D103) renders as "Auto-paused", not as an unknown value.
+ * Unknown values are tolerated per docs 03 §5.
+ */
+function sourceStatusLabel(status: string): string {
+  switch (status) {
+    case 'ACTIVE':
+      return 'Active';
+    case 'DEGRADED':
+      return 'Degraded';
+    case 'FAILING':
+      return 'Failing';
+    case 'DISABLED':
+      return 'Disabled';
+    case 'PAUSED_AUTO':
+      return 'Auto-paused';
+    default:
+      return status;
+  }
+}
+
+function sourceStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (status) {
+    case 'ACTIVE':
+      return 'default';
+    case 'PAUSED_AUTO':
+    case 'DISABLED':
+      return 'outline';
+    case 'FAILING':
+      return 'destructive';
+    default:
+      return 'secondary';
+  }
+}
 
 export default function SystemPage() {
   const { data: me, isLoading: meLoading } = useMe();
@@ -135,8 +172,8 @@ export default function SystemPage() {
                       <tr key={source.id} className="border-b transition-colors hover:bg-muted/50">
                         <td className="p-4 align-middle font-medium">{source.name}</td>
                         <td className="p-4 align-middle">
-                          <Badge variant={source.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                            {source.status}
+                          <Badge variant={sourceStatusVariant(source.status)}>
+                            {sourceStatusLabel(source.status)}
                           </Badge>
                         </td>
                         <td className="p-4 align-middle">
@@ -167,6 +204,9 @@ export default function SystemPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Source report card (F2, D103) — admin-only section showing per-source health. */}
+      <SourceReportCard isAdmin={isAdmin} />
     </div>
   );
 }

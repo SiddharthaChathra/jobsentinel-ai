@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from './use-api';
 import { queryKeys } from '../lib/queryKeys';
-import type { SystemStatus, SourceSummary, ScanRun } from '../lib/types/system';
+import type { SystemStatus, SourceSummary, ScanRun, SourceReport } from '../lib/types/system';
 
 export function useSystemStatus() {
   const api = useApi();
@@ -52,6 +52,36 @@ export function useScanRuns(sourceId?: string) {
       const url = sourceId ? `/sources/${sourceId}/scan-runs` : '/sources/scan-runs';
       const { data } = await api.get<ScanRun[]>(url);
       return data;
+    },
+  });
+}
+
+/** `GET /sources/report?days=…` — admin-only (F2, D103). */
+export function useSourceReport(days: 7 | 30, enabled: boolean) {
+  const api = useApi();
+  return useQuery({
+    enabled,
+    queryKey: queryKeys.system.report(days),
+    queryFn: async () => {
+      const { data } = await api.get<SourceReport>('/sources/report', { days });
+      return data;
+    },
+  });
+}
+
+/** `POST /sources/:id/resume` — resumes a PAUSED_AUTO source. On success invalidates report + sources. */
+export function useResumeSource() {
+  const api = useApi();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sourceId: string) => {
+      const { data } = await api.post<{ id: string; status: string }>(
+        `/sources/${sourceId}/resume`,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.system.all });
     },
   });
 }

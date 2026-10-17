@@ -18,6 +18,7 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 - Remote jobs follow the fresher rule like every other job ("0 to any"): a new test proves a remote "2-4 years" posting is filtered and a remote "0-3 years" one is kept.
 - Migration `0005_source_auto_pause` (additive: one enum value, three nullable columns).
 - Contract and sample responses for the admin page: `docs/contracts/source-report.mock.json`, checked against the schemas in CI.
+- **Admin UI (F2, D103):** Source report card section on the System Status page (`/system`, admin-only). Includes 7/30 days toggle with `localStorage` persistence, totals strip, per-source cards with health badges (OK, Kept Zero, Nothing Found, Errors, Paused) and plain-language tooltips, rejected reason breakdown (hiding zeros, showing PENDING as "Still processing"), exempt tag for India-scoped sources (`pauseExempt`), expandable errors, and inline confirmation dialog to resume auto-paused sources with 409 refetch. Tested at 375px and 1280px in light/dark mode. Tests: web 36 (+16).
 - Tests: validation 272 (+23), types 4 (+3), API e2e 100 (+7).
 
 ## [Phase 13] Remote jobs anywhere; commit guard — 2026-10-17

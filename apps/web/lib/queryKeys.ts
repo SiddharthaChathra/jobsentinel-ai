@@ -23,5 +23,6 @@ export const queryKeys = {
     status: ['system', 'status'] as const,
     sources: ['system', 'sources'] as const,
     scans: (sourceId?: string) => ['system', 'scans', sourceId] as const,
+    report: (days: number) => ['system', 'report', days] as const,
   },
 };
