@@ -4,7 +4,7 @@ import { classifyRoleFamily } from './role-family';
 
 /** Last-resort signal that a title is technical at all (seniority is decided separately). */
 const GENERIC_ENGINEERING =
-  /\b(engineer|engineering|developer|architect|programmer|scientist|sre|devops|technologist|technician)\b/i;
+  /\b(engineers?|engineering|developers?|architects?|programmers?|scientists?|sre|devops|technologists?|technicians?)\b/i;
 
 export interface CategoryClassification {
   category: JobCategory;

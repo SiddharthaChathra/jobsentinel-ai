@@ -14,9 +14,17 @@ export interface RoleClassification {
   matchedFamily: RoleFamily | null;
 }
 
+/**
+ * Plural role nouns read as singular ("Software Engineers" → "software engineer"), so a posting
+ * hiring several people classifies like one hiring a single person (D109). Done here, not in
+ * `normalizeTitle`: that also builds dedupe keys, and changing it would split existing jobs.
+ */
+const PLURAL_ROLE =
+  /\b(engineer|developer|programmer|analyst|scientist|architect|technician|administrator|tester)s\b/g;
+
 /** Deterministic title → role family/category. Returns `unknown`/`UNKNOWN` when nothing matches. */
 export function classifyRoleFamily(title: string): RoleClassification {
-  const t = normalizeTitle(title);
+  const t = normalizeTitle(title).replace(PLURAL_ROLE, '$1');
   for (const family of ROLE_FAMILIES) {
     if (family.patterns.some((p) => p.test(t))) {
       if (family.key === GRADUATE_TRAINEE_FAMILY) {

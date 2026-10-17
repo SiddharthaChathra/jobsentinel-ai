@@ -25,6 +25,11 @@ describe('classifyRoleFamily', () => {
     ['Software Engineer Trainee', 'software_engineer', 'SOFTWARE'],
     ['Network Engineer Trainee', 'network_engineer', 'NETWORK'],
     ['Trainee Engineer', 'graduate_engineer_trainee', 'OTHER_ENGINEERING'],
+    // Plurals classify like the singular (D109).
+    ['Software Engineers', 'software_engineer', 'SOFTWARE'],
+    ['Hiring Software Developers - Freshers', 'software_engineer', 'SOFTWARE'],
+    ['Data Analysts', 'data_analyst', 'DATA'],
+    ['Network Engineers (L1)', 'network_engineer', 'NETWORK'],
     ['Mechanical Design Engineer', 'mechanical_engineer', 'MECHANICAL'],
     ['Marketing Executive', 'unknown', 'UNKNOWN'],
     // The qualifier list is read only for trainee titles: these words alone decide nothing.

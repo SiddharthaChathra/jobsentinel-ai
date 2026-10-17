@@ -8,6 +8,9 @@ describe('classifyCategory', () => {
     ['Associate Cloud Engineer', 'CLOUD_DEVOPS'],
     ['Data Analyst Intern', 'DATA'],
     ['Mechanical Design Engineer', 'MECHANICAL'],
+    ['Software Engineers', 'SOFTWARE'], // was UNKNOWN (D109)
+    ['Field Service Engineers', 'OTHER_ENGINEERING'],
+    ['GET - Production', 'MECHANICAL'], // was SOFTWARE (D109)
   ])('%s → %s', (title, category) => {
     expect(classifyCategory({ title }).category).toBe(category);
   });
