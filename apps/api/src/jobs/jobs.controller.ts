@@ -144,6 +144,6 @@ export class JobsController {
 
   @Get('dashboard/summary')
   summary(@CurrentUser() user: AuthenticatedUser): Promise<DashboardSummary> {
-    return this.dashboard.summary(user.id);
+    return this.dashboard.summary(user.id, user.profileVersion);
   }
 }

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Patch, Put, Query } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   Me,
@@ -13,7 +13,7 @@ import {
 } from '@jobsentinel/types';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { DB, type Db } from '../common/db/db.module';
-import { resumes, users } from '../common/db/schema';
+import { users } from '../common/db/schema';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AppError } from '../common/errors/app-error';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -33,18 +33,29 @@ export class UsersController {
 
   @Get('me')
   async me(@CurrentUser() user: AuthenticatedUser): Promise<Me> {
-    const row = await this.db.query.users.findFirst({ where: eq(users.id, user.id) });
+    // One statement, not three sequential lookups: every page asks for /me, and each round trip
+    // to the database costs far more than the lookups themselves (D100).
+    const [row] = await this.db
+      .select({
+        id: users.id,
+        email: users.email,
+        displayName: users.displayName,
+        isAdmin: users.isAdmin,
+        onboardingCompletedAt: users.onboardingCompletedAt,
+        profileVersion: users.profileVersion,
+        hasActiveResume: sql<boolean>`exists (select 1 from resumes r where r.user_id = ${user.id} and r.is_active)`,
+        hasProfile: sql<boolean>`exists (select 1 from profiles p where p.user_id = ${user.id})`,
+      })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
     if (!row) throw AppError.notFound('USER_NOT_FOUND');
-    const activeResume = await this.db.query.resumes.findFirst({
-      where: (r, { and }) => and(eq(r.userId, user.id), eq(resumes.isActive, true)),
-      columns: { id: true },
-    });
     return {
       user: { id: row.id, email: row.email, displayName: row.displayName, isAdmin: row.isAdmin },
       onboardingCompleted: row.onboardingCompletedAt !== null,
       profileVersion: row.profileVersion,
-      hasActiveResume: Boolean(activeResume),
-      hasProfile: await this.profiles.hasProfile(user.id),
+      hasActiveResume: row.hasActiveResume,
+      hasProfile: row.hasProfile,
       telegramLinked: false, // Phase 9
     };
   }

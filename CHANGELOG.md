@@ -2,6 +2,10 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Fewer database round trips per page — 2026-10-17
+
+- **Faster dashboard and page switches (D100).** The queries themselves take ~1 ms; the time was spent waiting for one database round trip after another. `/me` (asked by every page) now makes 2 instead of 4, the dashboard 3 instead of 5, the job list 3 instead of 4.
+
 ## [Phase 12] Room for a second free Render service — 2026-10-17
 
 - **The API sleeps overnight (D99).** Render's 750 free hours a month are shared by every free service, and keeping the API awake all day used ~744 of them, leaving nothing for NetSentinel. It is now kept awake 07:00-24:00 India time (`KEEP_AWAKE_HOURS`), using ~530 hours. Between midnight and 07:00 the first page or bot message waits 30-60 s while the API wakes; scanning continues on GitHub's schedule.

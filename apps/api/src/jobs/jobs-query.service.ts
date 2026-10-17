@@ -38,6 +38,13 @@ const LISTABLE = ['VALID', 'NEEDS_REVIEW', 'MATCHED', 'NOTIFY_PENDING', 'NOTIFIE
 /** One row of the list query: the job, its company, this user's match and tracker state. */
 type Row = Awaited<ReturnType<JobsQueryService['select']>>[number];
 
+/** What a job list needs to know about the viewing user. */
+export interface Viewer {
+  profileVersion: number;
+  locations: string[];
+  employmentTypes: EmploymentType[];
+}
+
 /**
  * Read side of the jobs API (docs 03 §3). Every list goes through `list()` so `/jobs`,
  * `/saved-jobs`, `/applications` and the dashboard all return the identical `JobCard` shape.
@@ -49,19 +56,20 @@ type Row = Awaited<ReturnType<JobsQueryService['select']>>[number];
 export class JobsQueryService {
   constructor(@Inject(DB) private readonly db: Db) {}
 
+  /**
+   * `viewer` is what the list needs to know about the user. A caller that lists more than once
+   * per request (the dashboard) loads it once and passes it in; otherwise it costs one query.
+   */
   async list(
     userId: string,
     query: JobsQuery,
+    viewer?: Viewer,
   ): Promise<{ items: JobCard[]; nextCursor: string | null }> {
     const limit = query.limit ?? DEFAULT_LIMIT;
     const sort: JobSort = query.sort ?? 'newest';
-    const profileVersion = await this.profileVersion(userId);
-    const prefs = await this.db.query.preferences.findFirst({
-      where: eq(preferences.userId, userId),
-      columns: { locations: true, employmentTypes: true },
-    });
+    const { profileVersion, locations, employmentTypes } = viewer ?? (await this.viewer(userId));
 
-    const where = this.buildWhere(query, prefs?.locations ?? [], prefs?.employmentTypes ?? []);
+    const where = this.buildWhere(query, locations, employmentTypes);
     const cursor = decodeCursor(query.cursor);
     const rows = await this.select(userId, profileVersion, [
       ...where,
@@ -209,6 +217,28 @@ export class JobsQueryService {
     if (q.tracker?.length) where.push(inArray(applications.status, q.tracker));
 
     return where;
+  }
+
+  /**
+   * Profile version and list preferences in one round trip rather than two: every query to the
+   * pooled database costs a network round trip, which dwarfs the lookup itself (D100).
+   */
+  async viewer(userId: string): Promise<Viewer> {
+    const [row] = await this.db
+      .select({
+        profileVersion: users.profileVersion,
+        locations: preferences.locations,
+        employmentTypes: preferences.employmentTypes,
+      })
+      .from(users)
+      .leftJoin(preferences, eq(preferences.userId, users.id))
+      .where(eq(users.id, userId))
+      .limit(1);
+    return {
+      profileVersion: row?.profileVersion ?? 0,
+      locations: row?.locations ?? [],
+      employmentTypes: row?.employmentTypes ?? [],
+    };
   }
 
   /** The version every score shown to this user must belong to. */

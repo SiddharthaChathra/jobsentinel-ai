@@ -39,8 +39,11 @@ export class DashboardService {
     private readonly query: JobsQueryService,
   ) {}
 
-  async summary(userId: string): Promise<DashboardSummary> {
-    const profileVersion = await this.query.profileVersion(userId);
+  /**
+   * `profileVersion` comes from the user row the auth guard loaded for this request, so the
+   * counters start at once; the two card lists share one viewer lookup (D100).
+   */
+  async summary(userId: string, profileVersion: number): Promise<DashboardSummary> {
     const now = Date.now();
     const dayAgo = new Date(now - 24 * 60 * 60 * 1000).toISOString();
     const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -53,7 +56,7 @@ export class DashboardService {
         where m.user_id = ${userId} and m.profile_version = ${profileVersion}
           and ${visible} and m.priority = ${band})::int`;
 
-    const [counts, recent, top] = await Promise.all([
+    const [counts, [recent, top]] = await Promise.all([
       this.db.execute<CountsRow>(sql`
         select
           (select count(*) from jobs j where ${visible} and j.first_seen_at >= ${dayAgo}::timestamptz)::int as new_today,
@@ -71,8 +74,14 @@ export class DashboardService {
           (select max(last_successful_scan) from job_sources) as last_scan_at,
           (select count(*) from job_sources where status in ('FAILING','DISABLED'))::int as failing_sources
       `),
-      this.query.list(userId, { sort: 'newest', limit: CARD_COUNT }),
-      this.query.list(userId, { sort: 'score', limit: CARD_COUNT, minScore: 1 }),
+      this.query.viewer(userId).then((viewer) => {
+        // Pin the cards to the same version as the counters, even if a re-score lands mid-request.
+        const pinned = { ...viewer, profileVersion };
+        return Promise.all([
+          this.query.list(userId, { sort: 'newest', limit: CARD_COUNT }, pinned),
+          this.query.list(userId, { sort: 'score', limit: CARD_COUNT, minScore: 1 }, pinned),
+        ]);
+      }),
     ]);
 
     const c = counts[0];
