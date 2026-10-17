@@ -16,6 +16,9 @@ import { SCAN_INTERVAL_SEC } from '@jobsentinel/config';
 import {
   SourceInput,
   SourcePatch,
+  SourceReportQuery,
+  type SourceReport,
+  type SourceStatus,
   type AdapterInfo,
   type ScanRun,
   type SourceSummary,
@@ -30,6 +33,7 @@ import type { HttpClientPort } from '../common/http/http-client';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { SchedulerService } from '../scheduler/scheduler.service';
 import { SourceRegistry } from './source-registry';
+import { SourceReportService } from './source-report.service';
 
 const IdParam = z.string().uuid();
 const RunsQuery = z.object({ limit: z.coerce.number().int().min(1).max(100).default(20) });
@@ -43,7 +47,25 @@ export class SourcesController {
     @Inject(HTTP_CLIENT) private readonly http: HttpClientPort,
     private readonly registry: SourceRegistry,
     private readonly scheduler: SchedulerService,
+    private readonly report: SourceReportService,
   ) {}
+
+  /** Report card: collected vs kept per source over 7 or 30 days (F2, D103; docs 03). */
+  @Get('report')
+  sourceReport(
+    @Query(new ZodValidationPipe(SourceReportQuery)) query: SourceReportQuery,
+  ): Promise<SourceReport> {
+    return this.report.report(query.days === 7 ? 7 : 30);
+  }
+
+  /** One-click resume of an auto-paused source; scanned on the next tick (F2, D103). */
+  @Post(':id/resume')
+  @HttpCode(200)
+  resume(
+    @Param('id', new ZodValidationPipe(IdParam)) id: string,
+  ): Promise<{ id: string; status: SourceStatus }> {
+    return this.report.resume(id);
+  }
 
   @Get('adapters')
   adapters(): AdapterInfo[] {

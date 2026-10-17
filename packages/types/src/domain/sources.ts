@@ -120,3 +120,68 @@ export const SystemStatus = z.object({
   }),
 });
 export type SystemStatus = z.infer<typeof SystemStatus>;
+
+// ── Source report card (F2, D103) ─────────────────────────────────────────────
+
+/** Why a collected job is not listed. PENDING: still in the pipeline, not a rejection. */
+export const RejectReason = z.enum([
+  'LOCATION',
+  'EXPERIENCE',
+  'BATCH',
+  'CATEGORY',
+  'VALIDATION',
+  'EXPIRED',
+  'STALE',
+  'PENDING',
+  'OTHER',
+]);
+export type RejectReason = z.infer<typeof RejectReason>;
+
+/**
+ * OK; PAUSED (auto-paused); ERRORS (failing — handled by the scan backoff); COLLECTED_NOTHING
+ * (possibly broken, look at it); KEPT_ZERO (collects, but nothing fits: a pause candidate).
+ */
+export const SourceHealth = z.enum(['OK', 'PAUSED', 'ERRORS', 'COLLECTED_NOTHING', 'KEPT_ZERO']);
+export type SourceHealth = z.infer<typeof SourceHealth>;
+
+export const SourceReportQuery = z.object({
+  days: z.coerce
+    .number()
+    .int()
+    .refine((d) => d === 7 || d === 30, 'days must be 7 or 30')
+    .default(30),
+});
+export type SourceReportQuery = z.infer<typeof SourceReportQuery>;
+
+export const SourceReportRow = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  type: SourceType,
+  adapter: z.string(),
+  company: z.object({ id: z.string().uuid(), name: z.string() }).nullable(),
+  status: SourceStatus,
+  health: SourceHealth,
+  createdAt: z.string(),
+  /** Jobs this source first saw inside the window. */
+  collected: z.number().int(),
+  /** Of those, how many passed every gate (location, fresher, validation, recency). */
+  kept: z.number().int(),
+  rejected: z.record(RejectReason, z.number().int()),
+  /** When this source last found a job that was kept, at any time. */
+  lastKeptAt: z.string().nullable(),
+  lastSuccessfulScan: z.string().nullable(),
+  lastError: z.string().nullable(),
+  consecutiveFailures: z.number().int(),
+  pausedAt: z.string().nullable(),
+  pausedReason: z.string().nullable(),
+  resumedAt: z.string().nullable(),
+});
+export type SourceReportRow = z.infer<typeof SourceReportRow>;
+
+export const SourceReport = z.object({
+  days: z.union([z.literal(7), z.literal(30)]),
+  generatedAt: z.string(),
+  totals: z.object({ collected: z.number().int(), kept: z.number().int() }),
+  sources: z.array(SourceReportRow),
+});
+export type SourceReport = z.infer<typeof SourceReport>;

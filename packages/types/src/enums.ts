@@ -87,7 +87,8 @@ export type SourceType = z.infer<typeof SourceType>;
 export const SourcePriority = z.enum(['HIGH', 'NORMAL', 'LOW']);
 export type SourcePriority = z.infer<typeof SourcePriority>;
 
-export const SourceStatus = z.enum(['ACTIVE', 'DEGRADED', 'FAILING', 'DISABLED']);
+// PAUSED_AUTO: collected jobs but kept none for 30 days; not scanned until resumed (F2, D103).
+export const SourceStatus = z.enum(['ACTIVE', 'DEGRADED', 'FAILING', 'DISABLED', 'PAUSED_AUTO']);
 export type SourceStatus = z.infer<typeof SourceStatus>;
 
 export const ScanStatus = z.enum(['RUNNING', 'SUCCEEDED', 'FAILED', 'TIMED_OUT']);

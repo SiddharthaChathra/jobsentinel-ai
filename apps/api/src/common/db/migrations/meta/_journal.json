@@ -36,6 +36,13 @@
       "when": 1790193545658,
       "tag": "0004_happy_franklin_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792248225175,
+      "tag": "0005_source_auto_pause",
+      "breakpoints": true
     }
   ]
 }

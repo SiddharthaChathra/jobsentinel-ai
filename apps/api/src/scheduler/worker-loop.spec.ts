@@ -1,3 +1,4 @@
+import type { SourceReportService } from '../sources/source-report.service';
 import pino from 'pino';
 import type { Env } from '@jobsentinel/config';
 import { loadEnv } from '@jobsentinel/config';
@@ -70,6 +71,7 @@ describe('WorkerLoop', () => {
         recovery,
         housekeeping,
         audit,
+        { autoPause: jest.fn().mockResolvedValue([]) } as unknown as SourceReportService,
       ),
       scheduler,
       classification,

@@ -46,6 +46,10 @@ export const jobSources = pgTable(
     status: sourceStatusEnum('status').notNull().default('ACTIVE'),
     robotsCheckedAt: timestamp('robots_checked_at', { withTimezone: true }),
     robotsAllowed: boolean('robots_allowed'),
+    // Auto-pause (F2, D103): why and when; resumedAt restarts the 30-day grace period.
+    pausedAt: timestamp('paused_at', { withTimezone: true }),
+    pausedReason: text('paused_reason'),
+    resumedAt: timestamp('resumed_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => [

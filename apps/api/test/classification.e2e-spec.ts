@@ -327,6 +327,31 @@ describeIf('classification stage (integration)', () => {
     expect((await statusOf(remoteForeign)).status).toBe('CLASSIFIED');
   }, 60_000);
 
+  it('applies the fresher rule to remote jobs too: 0 to any is kept, a 2-year minimum is not (D96, D102)', async () => {
+    const remote = {
+      isRemote: true,
+      locationCity: null,
+      locationCountry: 'United States',
+      locationText: 'Remote - United States',
+    };
+    const zeroToThree = await seedJob(
+      'Graduate Software Engineer Five',
+      'Join our GET programme. 0-3 years of experience. B.E. 2027 batch. Java, SQL and REST APIs.',
+      remote,
+    );
+    const twoToFour = await seedJob(
+      'Software Engineer Six',
+      'We need 2-4 years of experience building Java services, SQL and REST APIs.',
+      remote,
+    );
+
+    await service.classifyPending({ batch: 500, maxAiCalls: 0, jobIds: [zeroToThree, twoToFour] });
+
+    expect((await statusOf(zeroToThree)).status).toBe('CLASSIFIED');
+    // Remote passes the location gate, but the experience gate still applies.
+    expect((await statusOf(twoToFour)).status).toBe('FILTERED_OUT');
+  }, 60_000);
+
   it('requeues classified jobs so a preferences change can be re-applied', async () => {
     const mine = (status: ('CLASSIFIED' | 'FILTERED_OUT' | 'DISCOVERED')[]) =>
       db

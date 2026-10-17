@@ -2,6 +2,15 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F2 — Source report card and auto-pause — 2026-10-17
+
+- **Report card (D103):** `GET /api/v1/sources/report?days=7|30` (admin) shows, per source, jobs collected and kept, rejections by reason (location, experience, batch, category, validation, expired, stale), the last day a job was kept, the last error and a health label.
+- **Auto-pause:** a source that collected jobs but kept none for 30 days is paused (`PAUSED_AUTO`, with the reason), skipped by the scheduler, and announced once to admins on Telegram and in the web inbox. Errors and "collected nothing" never pause a source; sources younger than 30 days are exempt. Resume: `POST /api/v1/sources/:id/resume`. Nothing is deleted.
+- Remote jobs follow the fresher rule like every other job ("0 to any"): a new test proves a remote "2-4 years" posting is filtered and a remote "0-3 years" one is kept.
+- Migration `0005_source_auto_pause` (additive: one enum value, three nullable columns).
+- Contract and sample responses for the admin page: `docs/contracts/source-report.mock.json`, checked against the schemas in CI.
+- Tests: validation 272 (+23), types 4 (+3), API e2e 100 (+7).
+
 ## [Phase 13] Remote jobs anywhere; commit guard — 2026-10-17
 
 - **Any remote job is listed (D102)**, whatever country it names; on-site jobs abroad are still filtered. Remote jobs abroad filtered under the old rule were sent back for classification. Fresher rule confirmed: a minimum of 0 years with any upper end.

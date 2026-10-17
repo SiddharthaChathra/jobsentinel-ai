@@ -206,6 +206,12 @@ export class NotificationsService {
     return true;
   }
 
+  /** Admins receive operational alerts such as an auto-paused source (F2, D103). */
+  async adminIds(): Promise<string[]> {
+    const rows = await this.db.select({ id: users.id }).from(users).where(eq(users.isAdmin, true));
+    return rows.map((r) => r.id);
+  }
+
   /** Everyone who could receive an alert, with the settings that govern it. */
   async contexts(userIds?: string[]): Promise<UserNotifyContext[]> {
     if (userIds?.length === 0) return [];

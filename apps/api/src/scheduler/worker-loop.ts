@@ -13,6 +13,7 @@ import { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import { HousekeepingService } from './housekeeping.service';
 import { RecoveryService } from './recovery.service';
 import { SchedulerService } from './scheduler.service';
+import { SourceReportService } from '../sources/source-report.service';
 
 export interface WorkerOptions {
   /** Run one tick and exit — used by cron-style hosts (docs 07 §1.1, 14 §1). */
@@ -47,7 +48,29 @@ export class WorkerLoop {
     private readonly recovery: RecoveryService,
     private readonly housekeeping: HousekeepingService,
     private readonly audit: AuditLogger,
+    private readonly sourceReport: SourceReportService,
   ) {}
+
+  /**
+   * Pauses sources that collected jobs but kept none for 30 days, and tells the admins once
+   * per pause: the update is conditional on ACTIVE, so a repeat finds nothing to pause (D103).
+   */
+  private async pauseIdleSources(): Promise<{ paused: number }> {
+    const paused = await this.sourceReport.autoPause();
+    if (paused.length === 0) return { paused: 0 };
+    const admins = await this.notifications.adminIds();
+    for (const p of paused) {
+      for (const adminId of admins) {
+        await this.notifications.enqueueSystemAlert(
+          adminId,
+          `source-paused:${p.id}`,
+          `Source paused: ${p.name}`,
+          `${p.reason}. It will not be scanned until resumed (System Status, Sources).`,
+        );
+      }
+    }
+    return { paused: paused.length };
+  }
 
   stop(): void {
     this.stopping = true;
@@ -129,6 +152,8 @@ export class WorkerLoop {
       },
       // Alerts: decide → deliver → summarise. Each is isolated, so a Telegram outage cannot
       // stop scanning, and the web inbox is written even when delivery fails (docs 10 §5).
+      // Before notify/dispatch, so a pause notice goes out in the same tick (F2, D103).
+      { name: 'source-health', run: () => this.pauseIdleSources() },
       {
         name: 'notify',
         run: () => this.notifications.enqueuePending(opts.once ? { batch: 200 } : {}),

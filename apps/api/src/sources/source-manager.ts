@@ -202,7 +202,8 @@ export class SourceManager {
         lastCursor: cursor,
         lastError: null,
         consecutiveFailures: 0,
-        status: 'ACTIVE',
+        // A manual scan of an auto-paused source must not resume it as a side effect (D103).
+        status: sql`case when ${jobSources.status} = 'PAUSED_AUTO' then ${jobSources.status} else 'ACTIVE' end`,
         leaseUntil: null,
         manualRequestedAt: null,
         nextScanAt: sql`now() + (${interval} * interval '1 second')`,

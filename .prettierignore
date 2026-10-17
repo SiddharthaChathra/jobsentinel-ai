@@ -6,3 +6,7 @@ pnpm-lock.yaml
 
 # Next.js regenerates this file with its own formatting
 apps/web/next-env.d.ts
+
+# Local test stack (D101): generated, git-ignored
+supabase/signing_keys.json
+supabase/.temp

@@ -32,7 +32,8 @@ export class SchedulerService {
           onlyIds.map((id) => sql`${id}::uuid`),
           sql`, `,
         )})`
-      : sql`and enabled and status <> 'DISABLED' and (next_scan_at is null or next_scan_at <= now())`;
+      : // An auto-paused source is never scanned on schedule; only a resume brings it back (F2, D103).
+        sql`and enabled and status not in ('DISABLED', 'PAUSED_AUTO') and (next_scan_at is null or next_scan_at <= now())`;
     const rows = await this.db.execute<SourceRow>(sql`
       update job_sources set lease_until = now() + (${LEASE_MINUTES} * interval '1 minute'), last_attempted_scan = now()
       where id in (
@@ -139,6 +140,9 @@ function mapRow(r: Record<string, unknown>): SourceRow {
     status: r.status as SourceRow['status'],
     robotsCheckedAt: d(r.robots_checked_at),
     robotsAllowed: (r.robots_allowed as boolean) ?? null,
+    pausedAt: d(r.paused_at),
+    pausedReason: (r.paused_reason as string) ?? null,
+    resumedAt: d(r.resumed_at),
     createdAt: d(r.created_at)!,
     updatedAt: d(r.updated_at)!,
   };
