@@ -286,7 +286,7 @@ describeIf('classification stage (integration)', () => {
     expect(JSON.stringify(event?.detail)).toContain('no AI verdict');
   }, 120_000);
 
-  it('keeps an India or country-less remote job and filters a foreign one (D73)', async () => {
+  it('keeps India and any remote job, and filters an on-site foreign one (D73, D102)', async () => {
     // Same proven fresher/SOFTWARE title and description for all four, so that location is the
     // only variable — a place name in the title steers the category classifier on its own.
     const desc = 'Join our GET programme. 0-1 years. B.E. 2027 batch. Java, SQL and REST APIs.';
@@ -323,7 +323,8 @@ describeIf('classification stage (integration)', () => {
     expect((await statusOf(remoteAnywhere)).status).toBe('CLASSIFIED');
     // Filtered, not deleted — a preferences change can requeue them (docs 02 §8).
     expect((await statusOf(foreign)).status).toBe('FILTERED_OUT');
-    expect((await statusOf(remoteForeign)).status).toBe('FILTERED_OUT');
+    // Remote is kept whatever country it names (D102); the card shows the country.
+    expect((await statusOf(remoteForeign)).status).toBe('CLASSIFIED');
   }, 60_000);
 
   it('requeues classified jobs so a preferences change can be re-applied', async () => {

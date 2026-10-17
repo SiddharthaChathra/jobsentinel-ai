@@ -168,7 +168,8 @@ export class JobsQueryService {
         or(
           sql`${jobs.locationCity} is null and ${jobs.locationCountry} is null and ${jobs.locationText} is null`,
           ...matchers,
-          and(eq(jobs.isRemote, true), sql`${jobs.locationCountry} is null`),
+          // Any remote role, whatever country it names (D102).
+          eq(jobs.isRemote, true),
         ),
       );
     }

@@ -243,10 +243,11 @@ export class ClassificationService {
       }
     }
 
-    // Location gate: India, or remote with no country named. A remote role that states a foreign
-    // country is not takeable from here, and a posting whose country never resolved is foreign in
-    // practice — measured across 3,394 live jobs, 530 of the 531 such postings were (D73). The one
-    // that was not lost to a normalizer gap, which is where that class of bug belongs. FILTERED_OUT
+    // Location gate: India, or any remote role (D102). On-site jobs abroad are filtered: a posting
+    // whose country never resolved is foreign in practice — measured across 3,394 live jobs, 530 of
+    // the 531 such postings were (D73). Remote roles are kept whatever country they name, at the
+    // owner's request: "Remote · United States" may still need local work rights, so the country
+    // stays visible on the card rather than deciding for the user. FILTERED_OUT
     // is recoverable by a preferences change; narrowing to the user's preferred places is the jobs
     // query's job, where it can be lifted per request (D62).
     const inIndia = isIndiaLocation({
@@ -255,7 +256,7 @@ export class ClassificationService {
       country: job.locationCountry,
       isRemote: job.isRemote,
     });
-    const indiaOk = inIndia || (job.isRemote && job.locationCountry === null);
+    const indiaOk = inIndia || job.isRemote;
 
     const jobBatchYear = extractJobBatchYear(job.description);
     const isBatchCompatible = Array.from(prefs.graduationYears).some((gy) =>

@@ -400,4 +400,25 @@ describeIf('jobs API (integration)', () => {
     );
     expect(summary.system).toHaveProperty('workerAlive');
   }, 60_000);
+  // Last in the file: it adds jobs to the suite's company, which earlier tests count exactly.
+  it('lists any remote job, whatever country it names, but not an on-site job abroad (D102)', async () => {
+    const remoteAbroad = await seedJob('Zephyrine Remote Developer', {
+      isRemote: true,
+      locationCity: null,
+      locationCountry: 'United States',
+      locationText: 'Remote - United States',
+    });
+    const onsiteAbroad = await seedJob('Zephyrine Onsite Developer', {
+      locationCity: 'Austin',
+      locationCountry: 'United States',
+      locationText: 'Austin, TX',
+    });
+    // Default list: scoped to the user's places (Bengaluru, India) — remote passes, on-site abroad not.
+    const res = await auth(api().get(`/api/v1/jobs?companyId=${companyId}&q=Zephyrine`)).expect(
+      200,
+    );
+    const ids = (res.body as { data: JobCard[] }).data.map((j) => j.id);
+    expect(ids).toContain(remoteAbroad);
+    expect(ids).not.toContain(onsiteAbroad);
+  }, 60_000);
 });
