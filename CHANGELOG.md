@@ -5,6 +5,7 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 ## [Phase 13] Remote jobs anywhere; commit guard — 2026-10-17
 
 - **Any remote job is listed (D102)**, whatever country it names; on-site jobs abroad are still filtered. Remote jobs abroad filtered under the old rule were sent back for classification. Fresher rule confirmed: a minimum of 0 years with any upper end.
+- **E2E runs on the laptop too:** Docker Desktop installed; the local stack runs 93 of 93 there as in CI.
 - **The pre-commit hook always refuses** `.env*` files (including `.env.test`), `supabase/signing_keys.json` and any private JWK — with or without gitleaks installed.
 
 ## [Phase 13] F1 — Separate test environment — 2026-10-17

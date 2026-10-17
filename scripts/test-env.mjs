@@ -5,20 +5,23 @@
 //
 // The local stack's keys are generated per machine and only work against 127.0.0.1, but they
 // are still credentials: .env.test is git-ignored (.env.*) and never printed here.
-import { execFileSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { generateKeyPairSync, randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const supabase = (...args) =>
-  execFileSync('npx', ['--yes', 'supabase', ...args], {
-    cwd: root,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'inherit'],
-    shell: process.platform === 'win32',
-  });
+// Windows resolves `npx` to npx.cmd, which Node runs only through a shell. Every argument here
+// is a constant from this file, so the command line is built from known-safe tokens only.
+const supabase = (...args) => {
+  const options = { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] };
+  if (process.platform !== 'win32') {
+    return execFileSync('npx', ['--yes', 'supabase', ...args], options);
+  }
+  if (!args.every((a) => /^[\w.,=-]+$/.test(a))) throw new Error(`unsafe argument in ${args}`);
+  return execSync(['npx', '--yes', 'supabase', ...args].join(' '), options);
+};
 
 if (!process.argv.includes('--no-start')) {
   // The API verifies tokens against the JWKS with ES256, as in production, so the stack must
