@@ -8,6 +8,7 @@ import {
   JobStatus,
   LogLevel,
   MatchScoring,
+  PostingType,
   NotificationChannel,
   NotificationMode,
   NotificationStatus,
@@ -54,6 +55,7 @@ export const scanStatusEnum = pgEnum('scan_status', tuple(ScanStatus.options));
 export const scanTriggerEnum = pgEnum('scan_trigger', tuple(ScanTrigger.options));
 export const priorityBandEnum = pgEnum('priority_band', tuple(PriorityBand.options));
 export const matchScoringEnum = pgEnum('match_scoring', tuple(MatchScoring.options));
+export const postingTypeEnum = pgEnum('posting_type', tuple(PostingType.options));
 export const applicationStatusEnum = pgEnum('application_status', tuple(ApplicationStatus.options));
 export const notificationChannelEnum = pgEnum(
   'notification_channel',

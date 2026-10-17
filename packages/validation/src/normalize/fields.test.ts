@@ -45,6 +45,8 @@ describe('normalizeLocation', () => {
 describe('parseEmploymentType', () => {
   it.each([
     ['Software Engineer Intern', 'INTERNSHIP'],
+    // Ashby's employmentType "Intern" (Sarvam AI) types the job even when the title does not.
+    ['Intern AI Research Engineer', 'INTERNSHIP'],
     ['Graduate Engineer Trainee', 'TRAINEE'],
     ['Full-time', 'FULL_TIME'],
     ['Contract (6 months)', 'CONTRACT'],

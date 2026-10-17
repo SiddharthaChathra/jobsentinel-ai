@@ -22,6 +22,7 @@ import {
   jobCategoryEnum,
   jobStatusEnum,
   matchScoringEnum,
+  postingTypeEnum,
   priorityBandEnum,
   urlStatusEnum,
   validationStatusEnum,
@@ -90,6 +91,8 @@ export const jobs = pgTable(
     // Why classification held this job for review (category or experience unknown, D105/D110).
     // A held job still goes through validation; a VALID verdict then leaves it NEEDS_REVIEW.
     holdReason: text('hold_reason'),
+    // Campus drive, off-campus fresher programme or regular opening, set at classification (D114).
+    postingType: postingTypeEnum('posting_type').notNull().default('REGULAR'),
     nextCheckAt: timestamp('next_check_at', { withTimezone: true }),
     ...timestamps,
   },

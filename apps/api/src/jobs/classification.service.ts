@@ -6,10 +6,11 @@ import {
   categoryVerdict,
   type AIService,
 } from '@jobsentinel/ai';
-import type { ExperienceLevel, JobCategory } from '@jobsentinel/types';
+import type { ExperienceLevel, JobCategory, PostingType } from '@jobsentinel/types';
 import {
   classifyCategory,
   classifyExperience,
+  classifyPostingType,
   isIndiaLocation,
   extractBatchYears,
   isBatchEligible,
@@ -56,6 +57,7 @@ interface JobDecision {
   aiUnavailable: boolean;
   /** Set when the AI was asked for the category on this run (D105). */
   categoryAsked: boolean;
+  postingType: PostingType;
   reason: string;
 }
 
@@ -429,6 +431,7 @@ ${job.description}`);
       aiCalls,
       aiUnavailable,
       categoryAsked,
+      postingType: classifyPostingType({ title: job.title, description: job.description }),
       reason,
     };
   }
@@ -515,7 +518,7 @@ ${job.description}`);
   private async persist(decisions: JobDecision[]): Promise<void> {
     const rows = decisions.map(
       (d) =>
-        sql`(${d.jobId}::uuid, ${d.category}::job_category, ${d.roleFamily}, ${d.level}::experience_level, ${d.fresherEligible}::boolean, ${d.confidence.toFixed(2)}::numeric, ${JSON.stringify(d.evidence)}::jsonb, ${d.minYears}::numeric, ${d.maxYears}::numeric, ${d.experienceText}::text, ${persistedStatus(d)}::job_status, ${d.status === 'NEEDS_REVIEW' ? d.reason : null}::text)`,
+        sql`(${d.jobId}::uuid, ${d.category}::job_category, ${d.roleFamily}, ${d.level}::experience_level, ${d.fresherEligible}::boolean, ${d.confidence.toFixed(2)}::numeric, ${JSON.stringify(d.evidence)}::jsonb, ${d.minYears}::numeric, ${d.maxYears}::numeric, ${d.experienceText}::text, ${persistedStatus(d)}::job_status, ${d.status === 'NEEDS_REVIEW' ? d.reason : null}::text, ${d.postingType}::posting_type)`,
     );
     await this.db.transaction(async (tx) => {
       await tx.execute(sql`
@@ -531,9 +534,10 @@ ${job.description}`);
           experience_text = v.experience_text,
           status = v.status,
           hold_reason = v.hold_reason,
+          posting_type = v.posting_type,
           stage_error = null,
           updated_at = now()
-        from (values ${sql.join(rows, sql`, `)}) as v(id, category, role_family, level, fresher_eligible, confidence, evidence, min_years, max_years, experience_text, status, hold_reason)
+        from (values ${sql.join(rows, sql`, `)}) as v(id, category, role_family, level, fresher_eligible, confidence, evidence, min_years, max_years, experience_text, status, hold_reason, posting_type)
         where j.id = v.id`);
       await tx.insert(jobEvents).values(
         decisions.map((d) => ({

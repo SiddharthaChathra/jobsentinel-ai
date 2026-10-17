@@ -11,7 +11,7 @@ import {
   telegramLinks,
 } from '../common/db/schema';
 import { DIGEST_MAX_JOBS, type DigestData } from './format';
-import { NotificationsService, toAlertData } from './notifications.service';
+import { ADZUNA_COUNTRY, NotificationsService, toAlertData } from './notifications.service';
 
 export interface DigestResult {
   considered: number;
@@ -137,6 +137,7 @@ export class DigestService {
           missingSkills: jobMatches.missingSkills,
           scoring: jobMatches.scoring,
         },
+        adzunaCountry: ADZUNA_COUNTRY,
       })
       .from(jobMatches)
       .innerJoin(jobs, eq(jobs.id, jobMatches.jobId))

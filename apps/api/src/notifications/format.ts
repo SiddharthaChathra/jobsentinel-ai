@@ -1,4 +1,4 @@
-import type { MatchScoring, PriorityBand } from '@jobsentinel/types';
+import type { MatchScoring, PriorityBand, SourceAttribution } from '@jobsentinel/types';
 import type { InlineButton } from './telegram.client';
 
 /** Telegram hard-limits a message to 4096 characters. */
@@ -20,6 +20,8 @@ export interface JobAlertData {
   priority: PriorityBand;
   /** RULES_ONLY is said in the alert (F8, D112). Optional: older queued snapshots lack it. */
   scoring?: MatchScoring;
+  /** Provider credit the advert must carry, e.g. Adzuna's (D115). */
+  attribution?: SourceAttribution | null;
   matchedSkills: string[];
   missingSkills: string[];
   companyVerified: boolean;
@@ -110,6 +112,10 @@ export function formatInstant(
   if (job.postedAt) timing.push(`🕒 Posted ${relativeTime(job.postedAt, now)}`);
   if (job.deadline) timing.push(`Deadline: ${formatDay(job.deadline)}`);
   if (timing.length) lines.push(timing.join(' · '));
+  // The provider's required credit, linked to its site (D115).
+  if (job.attribution) {
+    lines.push(`Jobs by <a href="${esc(job.attribution.url)}">${esc(job.attribution.label)}</a>`);
+  }
 
   if (fallbackNote) {
     lines.push(
@@ -168,7 +174,11 @@ export function formatDigest(digest: DigestData): string {
     digest.jobs.slice(0, DIGEST_MAX_JOBS).forEach((j, i) => {
       const place = j.isRemote ? 'Remote' : (j.location ?? '—');
       lines.push(
-        `${i + 1}. <a href="${esc(j.applicationUrl)}">${esc(j.title)}</a> — ${esc(j.company)}, ${esc(place)} — ${j.score}%`,
+        `${i + 1}. <a href="${esc(j.applicationUrl)}">${esc(j.title)}</a> — ${esc(j.company)}, ${esc(place)} — ${j.score}%${
+          j.attribution
+            ? ` · via <a href="${esc(j.attribution.url)}">${esc(j.attribution.label)}</a>`
+            : ''
+        }`,
       );
     });
   }

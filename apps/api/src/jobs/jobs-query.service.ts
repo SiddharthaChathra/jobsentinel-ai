@@ -9,7 +9,7 @@ import type {
   TrackerState,
   HeldInfo,
 } from '@jobsentinel/types';
-import { heldInfo, MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
+import { adzunaAttribution, heldInfo, MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
 import {
   applications,
@@ -103,6 +103,10 @@ export class JobsQueryService {
           matchedSkills: jobMatches.matchedSkills,
           scoring: jobMatches.scoring,
         },
+        // The country of the Adzuna search the displayed content came from, if it did (D115).
+        adzunaCountry: sql<
+          string | null
+        >`(select coalesce(s.config->>'country', 'in') from job_source_mappings m join job_sources s on s.id = m.source_id where m.job_id = ${jobs.id} and m.is_primary and s.adapter = 'adzuna' limit 1)`,
         saved: sql<boolean>`${savedJobs.jobId} is not null`,
         trackerStatus: applications.status,
         viewedAt: sql<Date | null>`case when ${applications.status} is null then null else ${applications.createdAt} end`,
@@ -210,6 +214,7 @@ export class JobsQueryService {
       );
     }
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
+    if (q.postingType?.length) where.push(inArray(jobs.postingType, q.postingType));
     // A posting older than 60 days is almost always filled, so the ceiling applies even when the
     // caller asks for more; a narrower `postedAfter` still narrows it further. `posted_at` is null
     // for boards that do not publish a date, hence the fall back to when we first saw the job.
@@ -405,6 +410,8 @@ function toCard(row: Row): JobCard {
       isRemote: j.isRemote,
     },
     employmentType: j.employmentType,
+    postingType: j.postingType,
+    attribution: row.adzunaCountry === null ? null : adzunaAttribution(row.adzunaCountry),
     experienceLevel: j.experienceLevel,
     fresherEligible: j.fresherEligible,
     experienceText: j.experienceText,

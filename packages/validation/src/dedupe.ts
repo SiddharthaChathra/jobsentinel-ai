@@ -138,3 +138,32 @@ export function titleSimilarity(a: string, b: string): number {
   for (const t of A) if (B.has(t)) inter++;
   return inter / (A.size + B.size - inter);
 }
+
+/**
+ * A description this short is a board's preview, not the posting: Adzuna returns ~500 characters
+ * (D113). Same bound the category prompt uses to tell the AI it is reading a preview.
+ */
+export const PREVIEW_MAX_CHARS = 600;
+
+export interface PreviewSide {
+  title: string;
+  city: string | null;
+  descriptionLength: number;
+}
+
+/**
+ * Cross-source duplicate when one copy is only a preview (F3, D113). SimHash cannot match a
+ * 500-character excerpt against the full posting, so an aggregator's copy and the company
+ * board's copy of one job became two jobs. Within one company (the caller's scope) they are the
+ * same job when the titles reduce to the same tokens and the cities do not contradict: level
+ * markers survive `dedupeTitleKey`, so "Software Engineer" never merges with "Senior Software
+ * Engineer", and two named cities that differ stay two openings, as the exact key has them.
+ */
+export function isPreviewDuplicate(a: PreviewSide, b: PreviewSide): boolean {
+  if (Math.min(a.descriptionLength, b.descriptionLength) > PREVIEW_MAX_CHARS) return false;
+  const key = dedupeTitleKey(a.title);
+  if (!key || key !== dedupeTitleKey(b.title)) return false;
+  const ca = a.city?.trim().toLowerCase() || null;
+  const cb = b.city?.trim().toLowerCase() || null;
+  return ca === null || cb === null || ca === cb;
+}

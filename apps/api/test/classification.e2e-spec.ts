@@ -357,6 +357,25 @@ describeIf('classification stage (integration)', () => {
     expect((await statusOf(twoToFour)).status).toBe('FILTERED_OUT');
   }, 60_000);
 
+  it('records the posting type: campus drive, off-campus programme or regular (F3, D114)', async () => {
+    const off = await seedJob(
+      'Software Engineer Off Campus Drive',
+      'Off-campus drive for the 2027 batch. 0 years of experience. Java and SQL.',
+    );
+    const campus = await seedJob(
+      'Software Engineer Campus',
+      'On-campus recruitment at partner colleges for the 2027 batch. 0 years. Java and SQL.',
+    );
+    const regular = await seedJob(
+      'Software Engineer Regular',
+      'Work from our Pune campus. 0-1 years of experience. Java and SQL.',
+    );
+    await service.classifyPending({ batch: 500, maxAiCalls: 0, jobIds: [off, campus, regular] });
+    expect((await statusOf(off)).postingType).toBe('OFF_CAMPUS_PROGRAM');
+    expect((await statusOf(campus)).postingType).toBe('CAMPUS_DRIVE');
+    expect((await statusOf(regular)).postingType).toBe('REGULAR'); // an office campus is not a drive
+  }, 60_000);
+
   it('requeues classified jobs so a preferences change can be re-applied', async () => {
     const mine = (status: ('CLASSIFIED' | 'FILTERED_OUT' | 'DISCOVERED')[]) =>
       db

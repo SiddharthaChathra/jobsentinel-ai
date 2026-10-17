@@ -1,13 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, inArray, ne, or, sql } from 'drizzle-orm';
-import { hammingDistance, simhashFromSigned, titleSimilarity } from '@jobsentinel/validation';
+import {
+  hammingDistance,
+  isPreviewDuplicate,
+  PREVIEW_MAX_CHARS,
+  simhashFromSigned,
+  titleSimilarity,
+} from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
 import { jobEvents, jobSourceMappings, jobs } from '../common/db/schema';
 import type { RawJob } from '../sources/job-source';
 import type { NormalizedJob } from './normalizer';
 
 export type DedupeOutcome = 'NEW' | 'UPDATED' | 'UNCHANGED' | 'ATTACHED';
-export type MatchedBy = 'MAPPING' | 'URL' | 'DEDUPE_KEY' | 'SIMHASH' | 'BATCH';
+export type MatchedBy = 'MAPPING' | 'URL' | 'DEDUPE_KEY' | 'SIMHASH' | 'PREVIEW' | 'BATCH';
 export interface DedupeResult {
   externalId: string;
   jobId: string;
@@ -27,7 +33,14 @@ const RAW_PAYLOAD_MAX_BYTES = 64 * 1024;
 
 type KnownMapping = { jobId: string; mappingId: string; isPrimary: boolean };
 type JobProbe = { id: string; contentHash: string | null; applicationUrl: string | null };
-type Candidate = { id: string; title: string; simhash: bigint | null; sourceIds: string[] };
+type Candidate = {
+  id: string;
+  title: string;
+  simhash: bigint | null;
+  sourceIds: string[];
+  city: string | null;
+  descriptionLength: number;
+};
 
 /**
  * Per-scan state so a batch of N jobs costs a handful of round-trips instead of ~8·N
@@ -162,7 +175,11 @@ export class DedupeService {
       byKey.set(e.dedupeKey, e.id);
     }
 
-    const toAttach: { item: DedupeItem; jobId: string; matchedBy: MatchedBy }[] = [];
+    const toAttach: {
+      item: DedupeItem;
+      jobId: string;
+      matchedBy: MatchedBy;
+    }[] = [];
     const toInsert: DedupeItem[] = [];
     // within-batch duplicates (same key/url twice in one scan) attach to the first one inserted
     const batchByKey = new Map<string, number>();
@@ -182,7 +199,7 @@ export class DedupeService {
       }
       const fuzzy = await this.findFuzzy(db, item, ctx);
       if (fuzzy) {
-        toAttach.push({ item, jobId: fuzzy, matchedBy: 'SIMHASH' });
+        toAttach.push({ item, jobId: fuzzy.id, matchedBy: fuzzy.by });
         continue;
       }
       const dupIndex = (url && batchByUrl.get(url)) ?? batchByKey.get(item.job.dedupeKey);
@@ -237,6 +254,8 @@ export class DedupeService {
             title: i.job.title,
             simhash: i.job.descriptionSimhash,
             sourceIds: [ctx.sourceId],
+            city: i.job.locationCity,
+            descriptionLength: i.job.description.length,
           });
       });
     }
@@ -267,12 +286,35 @@ export class DedupeService {
       await db.insert(jobEvents).values(
         resolved.map((a) => ({
           jobId: a.jobId,
-          type: a.matchedBy === 'SIMHASH' ? 'DEDUPED_FUZZY' : 'DEDUPED',
+          type:
+            a.matchedBy === 'SIMHASH' || a.matchedBy === 'PREVIEW' ? 'DEDUPED_FUZZY' : 'DEDUPED',
           detail: { sourceId: ctx.sourceId, matchedBy: a.matchedBy },
         })),
       );
+      // Whatever matched it (link, exact key, preview rule), a full posting replaces a canonical
+      // job that holds only a board preview (D113).
+      const lengths = new Map(
+        (
+          await db
+            .select({ id: jobs.id, length: sql<number>`length(${jobs.description})::int` })
+            .from(jobs)
+            .where(inArray(jobs.id, attachedIds))
+        ).map((r) => [r.id, r.length]),
+      );
+      const upgraded = new Set<string>();
       for (const a of resolved) {
-        ctx.known.set(a.item.raw.externalId, { jobId: a.jobId, mappingId: '', isPrimary: false });
+        const current = lengths.get(a.jobId) ?? Number.POSITIVE_INFINITY;
+        if (upgraded.has(a.jobId) || current > PREVIEW_MAX_CHARS) continue;
+        if (a.item.job.description.length <= PREVIEW_MAX_CHARS) continue;
+        await this.upgradePreview(db, a.jobId, a.item, ctx.sourceId, now);
+        upgraded.add(a.jobId);
+      }
+      for (const a of resolved) {
+        ctx.known.set(a.item.raw.externalId, {
+          jobId: a.jobId,
+          mappingId: '',
+          isPrimary: upgraded.has(a.jobId),
+        });
         results.push({
           externalId: a.item.raw.externalId,
           jobId: a.jobId,
@@ -303,8 +345,57 @@ export class DedupeService {
     await db.insert(jobEvents).values({ jobId, type: 'UPDATED', detail: { urlChanged } });
   }
 
-  /** Same company, recent, similar title AND near-identical description; never two postings of the same source. */
-  private async findFuzzy(db: Db, item: DedupeItem, ctx: DedupeContext): Promise<string | null> {
+  /**
+   * The full posting replaces a board's preview as the canonical content (F3, D113): the
+   * description, the employer's own application link (which validation can verify, where an
+   * Adzuna link never can), and the primary mapping. A job held or filtered on the preview is
+   * classified again on the full text; a listed or alerted job keeps its status — the database's
+   * unique index still allows one alert per canonical job.
+   */
+  private async upgradePreview(
+    db: Db,
+    jobId: string,
+    item: DedupeItem,
+    sourceId: string,
+    now: Date,
+  ): Promise<void> {
+    await db
+      .update(jobSourceMappings)
+      .set({
+        isPrimary: sql`${jobSourceMappings.sourceId} = ${sourceId}::uuid and ${jobSourceMappings.externalId} = ${item.raw.externalId}`,
+      })
+      .where(eq(jobSourceMappings.jobId, jobId));
+    const recheck = sql`${jobs.status} in ('NEEDS_REVIEW', 'FILTERED_OUT')`;
+    await db
+      .update(jobs)
+      .set({
+        ...contentFields(item.job),
+        descriptionSimhash: item.job.descriptionSimhash,
+        finalApplicationUrl: null,
+        lastSeenAt: now,
+        status: sql`case when ${recheck} then 'DISCOVERED'::job_status else ${jobs.status} end`,
+        stageAttempts: sql`case when ${recheck} then 0 else ${jobs.stageAttempts} end`,
+        holdReason: sql`case when ${recheck} then null else ${jobs.holdReason} end`,
+        updatedAt: now,
+      })
+      .where(eq(jobs.id, jobId));
+    await db.insert(jobEvents).values({
+      jobId,
+      type: 'UPDATED',
+      detail: { reason: 'full posting replaced a board preview', sourceId },
+    });
+  }
+
+  /**
+   * Same company, recent, similar title AND near-identical description; or, when one copy is only
+   * a board preview, the same title and a compatible city (D113). Never two postings of the same
+   * source.
+   */
+  private async findFuzzy(
+    db: Db,
+    item: DedupeItem,
+    ctx: DedupeContext,
+  ): Promise<{ id: string; by: 'SIMHASH' | 'PREVIEW' } | null> {
     let candidates = ctx.companyCandidates.get(item.companyId);
     if (!candidates) {
       const rows = await this.db
@@ -313,6 +404,8 @@ export class DedupeService {
           title: jobs.title,
           simhash: jobs.descriptionSimhash,
           sourceIds: sql<string[]>`coalesce(array_agg(${jobSourceMappings.sourceId}::text), '{}')`,
+          city: jobs.locationCity,
+          descriptionLength: sql<number>`length(${jobs.description})::int`,
         })
         .from(jobs)
         .leftJoin(jobSourceMappings, eq(jobSourceMappings.jobId, jobs.id))
@@ -329,11 +422,20 @@ export class DedupeService {
       ctx.companyCandidates.set(item.companyId, candidates);
     }
     const target = simhashFromSigned(item.job.descriptionSimhash);
-    for (const c of candidates) {
-      if (c.simhash === null || c.sourceIds.includes(ctx.sourceId)) continue;
+    const others = candidates.filter((c) => !c.sourceIds.includes(ctx.sourceId));
+    for (const c of others) {
+      if (c.simhash === null) continue;
       if (hammingDistance(simhashFromSigned(c.simhash), target) > SIMHASH_MAX_DISTANCE) continue;
       if (titleSimilarity(c.title, item.job.title) < TITLE_MIN_SIMILARITY) continue;
-      return c.id;
+      return { id: c.id, by: 'SIMHASH' };
+    }
+    const mine = {
+      title: item.job.title,
+      city: item.job.locationCity,
+      descriptionLength: item.job.description.length,
+    };
+    for (const c of others) {
+      if (isPreviewDuplicate(c, mine)) return { id: c.id, by: 'PREVIEW' };
     }
     return null;
   }

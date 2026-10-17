@@ -71,6 +71,13 @@
       "when": 1792262816698,
       "tag": "0009_ai_usage_and_match_scoring",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792263687523,
+      "tag": "0010_job_posting_type",
+      "breakpoints": true
     }
   ]
 }

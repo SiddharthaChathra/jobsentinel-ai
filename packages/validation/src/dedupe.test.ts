@@ -2,6 +2,7 @@ import {
   computeDedupeKey,
   dedupeTitleKey,
   hammingDistance,
+  isPreviewDuplicate,
   simhash,
   simhashFromSigned,
   simhashToSigned,
@@ -76,5 +77,27 @@ describe('titleSimilarity', () => {
     expect(titleSimilarity('Software Engineer', 'Software Engineer II')).toBeCloseTo(2 / 3);
     expect(titleSimilarity('Backend Software Engineer', 'Software Engineer')).toBeCloseTo(2 / 3);
     expect(titleSimilarity('Data Analyst', 'Network Engineer')).toBe(0);
+  });
+});
+
+describe('isPreviewDuplicate (F3, D113)', () => {
+  const preview = { title: 'Software Engineer - Fresher', city: 'Noida', descriptionLength: 500 };
+  const full = { title: 'Software Engineer', city: 'Noida', descriptionLength: 4_200 };
+
+  it('matches a board preview to the full posting of the same job', () => {
+    expect(isPreviewDuplicate(preview, full)).toBe(true);
+    expect(isPreviewDuplicate(full, preview)).toBe(true);
+    expect(isPreviewDuplicate(preview, { ...full, city: null })).toBe(true); // city unknown
+  });
+
+  it('never merges different jobs', () => {
+    // Two full postings: that is SimHash's call, not this rule's.
+    expect(isPreviewDuplicate({ ...preview, descriptionLength: 3_000 }, full)).toBe(false);
+    // A level marker is a different job for a fresher.
+    expect(isPreviewDuplicate({ ...preview, title: 'Senior Software Engineer' }, full)).toBe(false);
+    expect(isPreviewDuplicate({ ...preview, title: 'Software Engineer II' }, full)).toBe(false);
+    // Two named cities that differ are two openings.
+    expect(isPreviewDuplicate({ ...preview, city: 'Pune' }, full)).toBe(false);
+    expect(isPreviewDuplicate({ ...preview, title: 'Data Analyst' }, full)).toBe(false);
   });
 });
