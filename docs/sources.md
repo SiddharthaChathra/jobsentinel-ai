@@ -45,6 +45,10 @@ Verified crash behaviour: killing the worker mid-scan left `RUNNING` runs and a 
 
 Dashboard (Phase 8) or `POST /sources` with e.g. `{ "name": "Greenhouse: Acme", "adapter": "greenhouse", "config": { "boardToken": "acme" }, "priority": "NORMAL", "companyId": "<uuid>" }`. **Check the company behind a slug first**: slugs are global namespaces — Lever `porter` and Ashby `navi` belong to unrelated US companies, not the Indian ones, which is why they were removed from the seed. Look at the locations of a board's postings before trusting it.
 
+**Company check before enabling a board (D115).** Pass only when the postings name the company **and** either the company's own careers page links that exact board (`jobs.lever.co/<slug>`, `boards.greenhouse.io/<slug>`, `jobs.ashbyhq.com/<slug>`) or the postings carry the company's domain; the domain must resolve and its homepage load. Add a seeded source to a live database with `pnpm db:seed -- --only="Greenhouse: Acme"` — a full re-seed resets every source's `enabled` and `priority`.
+
+**Proposed, not enabled (2026-10-18, networking / cloud / DevOps).** Boards that exist and passed the company check, with India postings at that date; none had a fresher-titled India posting: Zscaler (Greenhouse `zscaler`, 68 India), Netskope (Greenhouse `netskope`, 19), Kong (Ashby `kong`, 13; konghq.com links it), Harness (Greenhouse `harnessinc`, 9), New Relic (Greenhouse `newrelic`, 8), JFrog (Greenhouse `jfrog`, 6), Sumo Logic (Greenhouse `sumologic`, 5), Aviatrix (Greenhouse `aviatrix`, 5). Fastly (3 India) is below the five-posting policy. Not found on a public Greenhouse/Lever/Ashby board under the obvious slug: DigitalOcean, HashiCorp, Couchbase, Infoblox, Cohesity, Postman, BrowserStack, Gigamon, A10, Extreme, Aryaka, Versa, HighRadius (many use Workday or their own sites, which are not supported).
+
 ## Known gaps (backlog)
 
 Adzuna adapter (key-gated), `career_page` HTML adapter (robots.txt-gated), SmartRecruiters/Workable. `since`/cursor support is unused by current adapters (they return the full board), so "missed jobs" cannot happen unless a posting appears and disappears between two scans.

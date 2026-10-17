@@ -100,6 +100,17 @@ export type ScanTrigger = z.infer<typeof ScanTrigger>;
 export const PriorityBand = z.enum(['VERY_HIGH', 'HIGH', 'MEDIUM', 'OTHER']);
 export type PriorityBand = z.infer<typeof PriorityBand>;
 
+/**
+ * How a match score was computed (F8, D112): the deterministic scorer alone, or refined by the
+ * AI. RULES_ONLY rows above the AI pre-filter are retried when budget returns (`refinePending`).
+ */
+export const MatchScoring = z.enum(['RULES_ONLY', 'AI_REFINED']);
+
+/** Kind of hiring (F3, D114): a college's campus drive, a fresher programme open to all, or a regular opening. */
+export const PostingType = z.enum(['CAMPUS_DRIVE', 'OFF_CAMPUS_PROGRAM', 'REGULAR']);
+export type PostingType = z.infer<typeof PostingType>;
+export type MatchScoring = z.infer<typeof MatchScoring>;
+
 export const ApplicationStatus = z.enum([
   'VIEWED',
   'APPLIED',

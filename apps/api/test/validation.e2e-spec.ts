@@ -171,6 +171,36 @@ describeIf('validation engine (integration)', () => {
     );
   }, 60_000);
 
+  it('a job held at classification passes every check but stays in Needs review (D110)', async () => {
+    // Same verified company and live ATS page as above: on its own this would be VALID.
+    const held = await seedJob(
+      companyIds.AcmePay!,
+      'Platform Engineer held',
+      'https://boards.greenhouse.io/acmepay/jobs/1',
+      'Build our payments platform.',
+    );
+    // And a held job that is also a fee scam: the scam check still runs, and wins.
+    const scam = await seedJob(
+      companyIds.RandomJobs!,
+      'Data Entry held',
+      'https://random-jobs.xyz/apply/9',
+      'Pay a registration fee to start.',
+    );
+    await db
+      .update(jobs)
+      .set({ holdReason: 'experience unknown (no AI verdict)' })
+      .where(inArray(jobs.id, [held, scam]));
+
+    await orchestrator.validatePending({ batch: 5, maxAiCalls: 0, jobIds: [held, scam] });
+
+    expect(await jobOf(held)).toMatchObject({
+      status: 'NEEDS_REVIEW',
+      validationStatus: 'VALID',
+      holdReason: 'experience unknown (no AI verdict)',
+    });
+    expect((await jobOf(scam)).status).toBe('SUSPICIOUS');
+  }, 60_000);
+
   it.each([
     ['closed-greenhouse', 'https://boards.greenhouse.io/acmepay/jobs/closed'],
     ['closed-lever', 'https://jobs.lever.co/acmepay/closed'],

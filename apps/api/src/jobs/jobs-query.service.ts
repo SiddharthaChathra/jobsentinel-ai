@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, gte, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
 import type {
   ApplicationStatus,
   EmploymentType,
@@ -9,7 +9,7 @@ import type {
   TrackerState,
   HeldInfo,
 } from '@jobsentinel/types';
-import { heldInfo, MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
+import { adzunaAttribution, heldInfo, MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
 import {
   applications,
@@ -101,7 +101,12 @@ export class JobsQueryService {
           overallScore: jobMatches.overallScore,
           priority: jobMatches.priority,
           matchedSkills: jobMatches.matchedSkills,
+          scoring: jobMatches.scoring,
         },
+        // The country of the Adzuna search the displayed content came from, if it did (D115).
+        adzunaCountry: sql<
+          string | null
+        >`(select coalesce(s.config->>'country', 'in') from job_source_mappings m join job_sources s on s.id = m.source_id where m.job_id = ${jobs.id} and m.is_primary and s.adapter = 'adzuna' limit 1)`,
         saved: sql<boolean>`${savedJobs.jobId} is not null`,
         trackerStatus: applications.status,
         viewedAt: sql<Date | null>`case when ${applications.status} is null then null else ${applications.createdAt} end`,
@@ -137,7 +142,11 @@ export class JobsQueryService {
       : [inArray(jobs.status, [...LISTABLE])];
 
     // Validation status defaults to VALID only: a job we could not confirm is opt-in (docs 08).
-    if (!review) where.push(inArray(jobs.validationStatus, q.validationStatus ?? ['VALID']));
+    // A job held at classification can be VALID too; it belongs to the review view only (D110).
+    if (!review) {
+      where.push(inArray(jobs.validationStatus, q.validationStatus ?? ['VALID']));
+      where.push(isNull(jobs.holdReason));
+    }
 
     const activity = q.status ?? 'ACTIVE';
     if (activity === 'ACTIVE') where.push(sql`${jobs.closedAt} is null`);
@@ -198,9 +207,14 @@ export class JobsQueryService {
     // rows classified under older rules out of the list. A user's own saved or tracked jobs stay
     // visible in those views whatever their level.
     if (q.saved !== true && !q.tracker?.length) {
-      where.push(fresherRoleSql('jobs'));
+      // The review view also shows jobs held because their experience is unknown (D110): the
+      // hold is set only when no stated requirement or EXPERIENCED verdict ruled the job out.
+      where.push(
+        review ? or(fresherRoleSql('jobs'), isNotNull(jobs.holdReason)) : fresherRoleSql('jobs'),
+      );
     }
     if (q.experienceLevel?.length) where.push(inArray(jobs.experienceLevel, q.experienceLevel));
+    if (q.postingType?.length) where.push(inArray(jobs.postingType, q.postingType));
     // A posting older than 60 days is almost always filled, so the ceiling applies even when the
     // caller asks for more; a narrower `postedAfter` still narrows it further. `posted_at` is null
     // for boards that do not publish a date, hence the fall back to when we first saw the job.
@@ -212,7 +226,12 @@ export class JobsQueryService {
     where.push(
       sql`coalesce(${jobs.postedAt}, ${jobs.firstSeenAt}) >= ${effectivePostedAfter.toISOString()}::timestamptz`,
     );
-    if (q.salaryMin !== undefined) where.push(gte(jobs.salaryMin, String(q.salaryMin)));
+    if (q.salaryMin !== undefined) {
+      const meets = gte(jobs.salaryMin, String(q.salaryMin));
+      // Undisclosed salaries are kept unless the user opts out (R6, D111): no figure is not a
+      // figure below the minimum.
+      where.push(q.includeUndisclosedSalary === false ? meets : or(meets, isNull(jobs.salaryMin)));
+    }
     if (q.sourceId) {
       where.push(
         sql`exists (select 1 from job_source_mappings m where m.job_id = ${jobs.id} and m.source_id = ${q.sourceId})`,
@@ -242,9 +261,13 @@ export class JobsQueryService {
       final_url: string | null;
     }>(sql`
       select j.id,
-        (select e.detail->>'reason' from job_events e
-          where e.job_id = j.id and e.type in ('HELD', 'VALIDATED')
-          order by e.created_at desc limit 1) as reason,
+        -- Classification's hold, unless validation itself found something to review: then its
+        -- reason (e.g. company not verified) is the one the user must check first (D110).
+        coalesce(
+          case when j.validation_status is distinct from 'NEEDS_REVIEW' then j.hold_reason end,
+          (select e.detail->>'reason' from job_events e
+            where e.job_id = j.id and e.type in ('HELD', 'VALIDATED')
+            order by e.created_at desc limit 1)) as reason,
         (select v.final_url from job_validation v where v.job_id = j.id) as final_url
       from jobs j
       where j.id in (${sql.join(
@@ -387,6 +410,8 @@ function toCard(row: Row): JobCard {
       isRemote: j.isRemote,
     },
     employmentType: j.employmentType,
+    postingType: j.postingType,
+    attribution: row.adzunaCountry === null ? null : adzunaAttribution(row.adzunaCountry),
     experienceLevel: j.experienceLevel,
     fresherEligible: j.fresherEligible,
     experienceText: j.experienceText,
@@ -407,6 +432,7 @@ function toCard(row: Row): JobCard {
             overallScore: row.match.overallScore,
             priority: row.match.priority,
             matchedSkills: row.match.matchedSkills ?? [],
+            scoring: row.match.scoring ?? 'RULES_ONLY',
           }
         : null,
     tracker: { saved: row.saved, status: row.trackerStatus ?? null },

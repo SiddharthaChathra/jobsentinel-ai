@@ -109,6 +109,7 @@ export class JobsDetailService {
             missingSkills: match.missingSkills,
             explanation: match.explanation,
             aiProvider: match.aiProvider,
+            scoring: match.scoring,
             aiPending: match.aiProvider === null && match.overallScore >= AI_PREFILTER_MIN,
           } satisfies JobMatchDetail)
         : null,

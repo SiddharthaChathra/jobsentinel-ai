@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gte, inArray, sql } from 'drizzle-orm';
-import type { NotificationChannel } from '@jobsentinel/types';
+import type { MatchScoring, NotificationChannel } from '@jobsentinel/types';
 import {
   INSTANT_FRESHNESS_HOURS,
+  adzunaAttribution,
   decideNotification,
   type NotifySettings,
 } from '@jobsentinel/validation';
@@ -68,7 +69,9 @@ export class NotificationsService {
             priority: jobMatches.priority,
             matchedSkills: jobMatches.matchedSkills,
             missingSkills: jobMatches.missingSkills,
+            scoring: jobMatches.scoring,
           },
+          adzunaCountry: ADZUNA_COUNTRY,
         })
         .from(jobMatches)
         .innerJoin(jobs, eq(jobs.id, jobMatches.jobId))
@@ -273,8 +276,15 @@ type AlertRow = {
     priority: string;
     matchedSkills: string[];
     missingSkills: string[];
+    scoring?: MatchScoring;
   };
+  adzunaCountry?: string | null;
 };
+
+/** The Adzuna search country when the displayed content is Adzuna's (D115); null otherwise. */
+export const ADZUNA_COUNTRY = sql<
+  string | null
+>`(select coalesce(s.config->>'country', 'in') from job_source_mappings m join job_sources s on s.id = m.source_id where m.job_id = ${jobs.id} and m.is_primary and s.adapter = 'adzuna' limit 1)`;
 
 /** Snapshots everything the message needs, so the dispatcher never re-queries mid-send. */
 export function toAlertData(row: AlertRow): JobAlertData {
@@ -291,6 +301,11 @@ export function toAlertData(row: AlertRow): JobAlertData {
     salaryDisclosed: row.job.salaryDisclosed,
     score: row.match.overallScore,
     priority: row.match.priority as JobAlertData['priority'],
+    scoring: row.match.scoring,
+    attribution:
+      row.adzunaCountry === undefined || row.adzunaCountry === null
+        ? null
+        : adzunaAttribution(row.adzunaCountry),
     matchedSkills: row.match.matchedSkills,
     missingSkills: row.match.missingSkills,
     companyVerified: row.company.verified === 'VERIFIED',

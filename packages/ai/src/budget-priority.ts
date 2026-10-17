@@ -38,3 +38,24 @@ export function allowedUnderPriority(
   const ceiling = PRIORITY_CEILING[AI_PURPOSE_PRIORITY[purpose]];
   return used.calls < budget.calls * ceiling && used.tokens < budget.tokens * ceiling;
 }
+
+/**
+ * Purposes the per-user daily limit does not apply to (F8, D112). Resume parsing has its own
+ * per-user cap (D93), and a user who spent their matching allowance must still be able to
+ * upload a corrected resume.
+ */
+export const USER_LIMIT_EXEMPT: ReadonlySet<AIPurpose> = new Set<AIPurpose>(['RESUME_PROFILE']);
+
+/**
+ * Whether a call made for one user fits that user's daily allowance, so no single account can
+ * spend the budget every user shares. Calls with no user (classification, validation) are
+ * system work and are limited only by the global budget.
+ */
+export function withinUserLimit(
+  purpose: AIPurpose,
+  userCallsToday: number | null,
+  limit: number,
+): boolean {
+  if (userCallsToday === null || USER_LIMIT_EXEMPT.has(purpose)) return true;
+  return userCallsToday < limit;
+}

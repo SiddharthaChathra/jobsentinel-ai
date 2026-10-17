@@ -229,6 +229,11 @@ export const envSchema = z
     AI_MIN_REQUEST_GAP_MS: int(4_500, { min: 0 }),
     AI_DAILY_CALL_BUDGET: int(500, { min: 0 }),
     AI_DAILY_TOKEN_BUDGET: int(1_500_000, { min: 0 }),
+    /**
+     * Daily AI calls made for one user (matching and its requirement extraction), so no single
+     * account can spend the budget all users share (F8, D112). Resume parsing has its own cap.
+     */
+    AI_USER_DAILY_CALL_LIMIT: int(100, { min: 1 }),
     AI_ALLOW_DETERMINISTIC_ALERTS: bool(true),
 
     // ── Notifications ───────────────────────────────────────────────────────

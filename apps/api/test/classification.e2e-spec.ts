@@ -140,8 +140,10 @@ describeIf('classification stage (integration)', () => {
     (await db.query.jobs.findFirst({ where: eq(jobs.id, id) }))!;
 
   it('classifies clear cases with rules alone and never calls the AI for them', async () => {
+    // A trainee title that names its discipline: the rules place it alone. (A bare "Graduate
+    // Engineer Trainee" names none, so its category goes to the AI — D109.)
     const fresherId = await seedJob(
-      'Graduate Engineer Trainee',
+      'Software Engineer Trainee (GET)',
       'Join our GET programme. 0-1 years. B.E. 2027 batch.',
     );
     const seniorId = await seedJob(
@@ -243,7 +245,7 @@ describeIf('classification stage (integration)', () => {
     ).toBe(true);
   }, 60_000);
 
-  it('ignores a low-confidence AI verdict, and does not list a job it cannot place (D96)', async () => {
+  it('ignores a low-confidence AI verdict, and holds a job it cannot place for review (D96, D110)', async () => {
     await moduleRef.close();
     await build({
       data: { level: 'EXPERIENCED', fresherEligible: false, confidence: 0.3, evidence: ['guess'] },
@@ -255,11 +257,13 @@ describeIf('classification stage (integration)', () => {
     await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
     const job = await statusOf(id);
     expect(job.experienceLevel).toBe('UNKNOWN');
-    // Fresher and 0-1 year roles only: unknown experience is filtered, not listed by default.
-    expect(job.status).toBe('FILTERED_OUT');
+    // Not listed (D96) and not filtered unseen either (R2, D110): held, with the reason, and sent
+    // on to validation — which can only leave it NEEDS_REVIEW, never VALID.
+    expect(job.status).toBe('CLASSIFIED');
+    expect(job.holdReason).toBe('experience unknown');
   }, 60_000);
 
-  it('survives an AI outage: an unknown job waits for a verdict, then is filtered with the reason', async () => {
+  it('survives an AI outage: an unknown job waits for a verdict, then is held with the reason', async () => {
     await moduleRef.close();
     await build({ status: 'BUDGET_EXCEEDED' });
     const id = await seedJob(
@@ -272,17 +276,18 @@ describeIf('classification stage (integration)', () => {
     expect(first.deferred).toBe(1);
     expect((await statusOf(id)).status).toBe('DISCOVERED');
 
-    // The wait is bounded: after the last allowed run it is filtered, and says why.
+    // The wait is bounded: after the last allowed run it is held for review, and says why (D110).
     for (let i = 0; i < 4; i++) {
       await service.classifyPending({ batch: 500, maxAiCalls: 5, jobIds: [id] });
     }
     const job = await statusOf(id);
-    expect(job.status).toBe('FILTERED_OUT');
+    expect(job.status).toBe('CLASSIFIED');
+    expect(job.holdReason).toBe('experience unknown (no AI verdict)');
     expect(job.experienceLevel).toBe('UNKNOWN');
     const [event] = await db
       .select({ detail: jobEvents.detail })
       .from(jobEvents)
-      .where(and(eq(jobEvents.jobId, id), eq(jobEvents.type, 'FILTERED_OUT')));
+      .where(and(eq(jobEvents.jobId, id), eq(jobEvents.type, 'HELD')));
     expect(JSON.stringify(event?.detail)).toContain('no AI verdict');
   }, 120_000);
 
@@ -350,6 +355,25 @@ describeIf('classification stage (integration)', () => {
     expect((await statusOf(zeroToThree)).status).toBe('CLASSIFIED');
     // Remote passes the location gate, but the experience gate still applies.
     expect((await statusOf(twoToFour)).status).toBe('FILTERED_OUT');
+  }, 60_000);
+
+  it('records the posting type: campus drive, off-campus programme or regular (F3, D114)', async () => {
+    const off = await seedJob(
+      'Software Engineer Off Campus Drive',
+      'Off-campus drive for the 2027 batch. 0 years of experience. Java and SQL.',
+    );
+    const campus = await seedJob(
+      'Software Engineer Campus',
+      'On-campus recruitment at partner colleges for the 2027 batch. 0 years. Java and SQL.',
+    );
+    const regular = await seedJob(
+      'Software Engineer Regular',
+      'Work from our Pune campus. 0-1 years of experience. Java and SQL.',
+    );
+    await service.classifyPending({ batch: 500, maxAiCalls: 0, jobIds: [off, campus, regular] });
+    expect((await statusOf(off)).postingType).toBe('OFF_CAMPUS_PROGRAM');
+    expect((await statusOf(campus)).postingType).toBe('CAMPUS_DRIVE');
+    expect((await statusOf(regular)).postingType).toBe('REGULAR'); // an office campus is not a drive
   }, 60_000);
 
   it('requeues classified jobs so a preferences change can be re-applied', async () => {

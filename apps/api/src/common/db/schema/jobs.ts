@@ -21,6 +21,8 @@ import {
   experienceLevelEnum,
   jobCategoryEnum,
   jobStatusEnum,
+  matchScoringEnum,
+  postingTypeEnum,
   priorityBandEnum,
   urlStatusEnum,
   validationStatusEnum,
@@ -86,6 +88,11 @@ export const jobs = pgTable(
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
     // When the AI was asked for this job's category: once per canonical job, never again (D105).
     categoryAiAt: timestamp('category_ai_at', { withTimezone: true }),
+    // Why classification held this job for review (category or experience unknown, D105/D110).
+    // A held job still goes through validation; a VALID verdict then leaves it NEEDS_REVIEW.
+    holdReason: text('hold_reason'),
+    // Campus drive, off-campus fresher programme or regular opening, set at classification (D114).
+    postingType: postingTypeEnum('posting_type').notNull().default('REGULAR'),
     nextCheckAt: timestamp('next_check_at', { withTimezone: true }),
     ...timestamps,
   },
@@ -196,6 +203,8 @@ export const jobMatches = pgTable(
     aiProvider: text('ai_provider'),
     aiModel: text('ai_model'),
     promptVersion: text('prompt_version'),
+    // Explicit, not inferred from ai_provider, so the UI and digest can say "rules only" (D112).
+    scoring: matchScoringEnum('scoring').notNull().default('RULES_ONLY'),
     computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
     ...timestamps,
   },

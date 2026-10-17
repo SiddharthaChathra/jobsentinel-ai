@@ -161,6 +161,9 @@ export class MatchingService {
           matchedSkills: final.matchedSkills,
           missingSkills: final.missingSkills,
           explanation: final.explanation,
+          // Explicit label (F8, D112): RULES_ONLY rows above the pre-filter are retried by
+          // `refinePending` once budget returns.
+          scoring: usedAi ? 'AI_REFINED' : 'RULES_ONLY',
           ...(usedAi
             ? {
                 aiProvider: this.ai?.primaryProvider.name ?? null,
@@ -240,6 +243,7 @@ export class MatchingService {
             aiProvider: this.ai.primaryProvider.name,
             aiModel: this.ai.primaryProvider.model,
             promptVersion: 'match.v1',
+            scoring: 'AI_REFINED',
             computedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -259,13 +263,17 @@ export class MatchingService {
     if (!this.ai) return { status: 'UNAVAILABLE' };
 
     // Requirements are extracted once per job and cached by content hash inside AIService.
-    const reqRes = await this.ai.run(
-      buildJobRequirementsRequest({
+    // Both calls are made for this user, so they count against the user's daily limit (D112).
+    // The cache key is the job's content alone, so another user still reuses the extraction.
+    const meta = { userId: ctx.userId, jobId: job.id };
+    const reqRes = await this.ai.run({
+      ...buildJobRequirementsRequest({
         title: job.title,
         description: job.description,
         requirements: job.requirements,
       }),
-    );
+      meta,
+    });
     if (reqRes.status !== 'OK') return { status: 'UNAVAILABLE' };
     const requirements: JobRequirements = reqRes.data;
 
@@ -276,8 +284,8 @@ export class MatchingService {
       niceToHaveSkills: requirements.niceToHaveSkills,
     });
 
-    const matchRes = await this.ai.run(
-      buildMatchRequest({
+    const matchRes = await this.ai.run({
+      ...buildMatchRequest({
         candidate: {
           skills: ctx.profile.skills,
           preferredRoles: ctx.preferredRoleTitles,
@@ -296,7 +304,8 @@ export class MatchingService {
           roleScore: withRequirements.roleScore,
         },
       }),
-    );
+      meta,
+    });
     if (matchRes.status !== 'OK') return { status: 'OK', score: withRequirements }; // requirements alone still improved it
     return { status: 'OK', score: applyAiRefinement(withRequirements, matchRes.data) };
   }
@@ -322,6 +331,12 @@ export class MatchingService {
               matchedSkills: sql`excluded.matched_skills`,
               missingSkills: sql`excluded.missing_skills`,
               explanation: sql`excluded.explanation`,
+              // The label and the provider move together, so `refinePending` (ai_provider null)
+              // and the RULES_ONLY label never disagree about a row.
+              scoring: sql`excluded.scoring`,
+              aiProvider: sql`excluded.ai_provider`,
+              aiModel: sql`excluded.ai_model`,
+              promptVersion: sql`excluded.prompt_version`,
               computedAt: new Date(),
               updatedAt: new Date(),
             },

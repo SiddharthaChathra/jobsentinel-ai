@@ -13,9 +13,11 @@ import {
   companies,
   jobMatches,
   jobs,
+  jobSourceMappings,
+  jobSources,
+  preferences,
   savedJobs,
   users,
-  preferences,
 } from '../src/common/db/schema';
 import { HTTP_CLIENT } from '../src/common/http/http.module';
 import { FakeHttpClient } from './helpers/fake-http';
@@ -420,5 +422,89 @@ describeIf('jobs API (integration)', () => {
     const ids = (res.body as { data: JobCard[] }).data.map((j) => j.id);
     expect(ids).toContain(remoteAbroad);
     expect(ids).not.toContain(onsiteAbroad);
+  }, 60_000);
+
+  it('shows and filters by posting type (F3, D114)', async () => {
+    const drive = await seedJob('Ondrel Campus Developer', { postingType: 'CAMPUS_DRIVE' });
+    const programme = await seedJob('Ondrel Programme Developer', {
+      postingType: 'OFF_CAMPUS_PROGRAM',
+    });
+    const regular = await seedJob('Ondrel Regular Developer');
+    const res = await auth(
+      api().get(
+        `/api/v1/jobs?companyId=${companyId}&q=Ondrel&postingType=CAMPUS_DRIVE,OFF_CAMPUS_PROGRAM`,
+      ),
+    ).expect(200);
+    const cards = (res.body as { data: JobCard[] }).data;
+    expect(cards.map((c) => c.id).sort()).toEqual([drive, programme].sort());
+    expect(cards.find((c) => c.id === drive)?.postingType).toBe('CAMPUS_DRIVE');
+    const all = await auth(api().get(`/api/v1/jobs?companyId=${companyId}&q=Ondrel`)).expect(200);
+    expect((all.body as { data: JobCard[] }).data.find((c) => c.id === regular)?.postingType).toBe(
+      'REGULAR',
+    );
+  }, 60_000);
+
+  it("credits Adzuna on a job whose displayed content is Adzuna's, and only there (D115)", async () => {
+    const [adzuna] = await db
+      .insert(jobSources)
+      .values({
+        name: `${tag} Adzuna`,
+        type: 'PUBLIC_API',
+        adapter: 'adzuna',
+        config: { country: 'in' },
+      })
+      .returning({ id: jobSources.id });
+    try {
+      const fromAdzuna = await seedJob('Brivane Adzuna Developer');
+      const fromBoard = await seedJob('Brivane Board Developer');
+      await db.insert(jobSourceMappings).values({
+        jobId: fromAdzuna,
+        sourceId: adzuna!.id,
+        externalId: `${tag}-adz-1`,
+        sourceUrl: 'https://www.adzuna.in/details/1',
+        isPrimary: true,
+      });
+      const res = await auth(api().get(`/api/v1/jobs?companyId=${companyId}&q=Brivane`)).expect(
+        200,
+      );
+      const cards = (res.body as { data: JobCard[] }).data;
+      expect(cards.find((c) => c.id === fromAdzuna)?.attribution).toEqual({
+        provider: 'ADZUNA',
+        label: 'Adzuna',
+        url: 'https://www.adzuna.in/',
+      });
+      expect(cards.find((c) => c.id === fromBoard)?.attribution).toBeNull();
+      const detail = await auth(api().get(`/api/v1/jobs/${fromAdzuna}`)).expect(200);
+      expect((detail.body as { data: JobDetail }).data.attribution?.label).toBe('Adzuna');
+    } finally {
+      await db.delete(jobSources).where(eq(jobSources.id, adzuna!.id));
+    }
+  }, 60_000);
+
+  it('keeps undisclosed salaries under a salary filter unless asked not to (R6, D111)', async () => {
+    const paid = await seedJob('Quillfeather Paid Developer', {
+      salaryMin: '600000',
+      salaryMax: '800000',
+      salaryDisclosed: true,
+      salaryText: '₹6-8 LPA',
+    });
+    const low = await seedJob('Quillfeather Low Developer', {
+      salaryMin: '200000',
+      salaryDisclosed: true,
+      salaryText: '₹2 LPA',
+    });
+    const hidden = await seedJob('Quillfeather Hidden Developer'); // no salary stated
+    const list = async (extra: string) => {
+      const res = await auth(
+        api().get(`/api/v1/jobs?companyId=${companyId}&q=Quillfeather&salaryMin=500000${extra}`),
+      ).expect(200);
+      return (res.body as { data: JobCard[] }).data.map((j) => j.id).sort();
+    };
+    // Default ON: the stated minimum must meet it; "Not disclosed" is kept.
+    expect(await list('')).toEqual([paid, hidden].sort());
+    expect(await list('&includeUndisclosedSalary=true')).toEqual([paid, hidden].sort());
+    // OFF: only jobs whose stated minimum meets the filter.
+    expect(await list('&includeUndisclosedSalary=false')).toEqual([paid]);
+    expect(await list('&includeUndisclosedSalary=false')).not.toContain(low);
   }, 60_000);
 });

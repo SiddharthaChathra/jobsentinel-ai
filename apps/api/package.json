@@ -30,7 +30,8 @@
     "repair:domains": "node dist/scripts/repair-borrowed-domains.js",
     "repair:adzuna-locations": "node dist/scripts/repair-adzuna-locations.js",
     "refilter": "node dist/scripts/refilter-listed.js",
-    "source-report": "node dist/scripts/source-report.js"
+    "source-report": "node dist/scripts/source-report.js",
+    "backfill:holds": "node dist/scripts/backfill-holds.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",

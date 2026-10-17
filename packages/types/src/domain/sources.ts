@@ -122,6 +122,8 @@ export const SystemStatus = z.object({
      * clients that predate it keep working.
      */
     byPurpose: z.record(z.string(), z.number().int()).optional(),
+    /** Per-user daily cap on AI calls made for one user's matches (F8, D112). Optional. */
+    userCallLimit: z.number().int().optional(),
   }),
 });
 export type SystemStatus = z.infer<typeof SystemStatus>;

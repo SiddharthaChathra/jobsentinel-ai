@@ -25,7 +25,12 @@ const CACHE_MAX_AGE_DAYS = 30;
     {
       provide: AI_BUDGET,
       useFactory: (env: Env, db: Db) =>
-        new DbBudget(db, env.AI_DAILY_CALL_BUDGET, env.AI_DAILY_TOKEN_BUDGET),
+        new DbBudget(
+          db,
+          env.AI_DAILY_CALL_BUDGET,
+          env.AI_DAILY_TOKEN_BUDGET,
+          env.AI_USER_DAILY_CALL_LIMIT,
+        ),
       inject: [ENV, DB],
     },
     {

@@ -362,9 +362,13 @@ export class ValidationOrchestrator {
     usedAi: boolean,
   ): Promise<void> {
     const now = new Date();
+    // A job classification held (category or experience unknown, D110) passes every check here
+    // like any other, but a VALID verdict does not make it alertable: it stays in Needs review.
     const jobStatus: JobStatus =
       decision.status === 'VALID'
-        ? 'VALID'
+        ? job.holdReason
+          ? 'NEEDS_REVIEW'
+          : 'VALID'
         : decision.status === 'EXPIRED'
           ? 'EXPIRED'
           : decision.status === 'INVALID'

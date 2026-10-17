@@ -216,6 +216,99 @@ describeIf('ingestion pipeline (integration)', () => {
     expect(mappings.map((m) => m.job_source_mappings.isPrimary).sort()).toEqual([false, true]);
   });
 
+  /** A fresh source of this suite's company, so the tests below start from a known state. */
+  const newSource = async (key: string) => {
+    const [row] = await db
+      .insert(jobSources)
+      .values({
+        name: `${tag}-${key}`,
+        type: 'ATS_API',
+        adapter: 'fixture',
+        config: { key },
+        companyId,
+        priority: 'NORMAL',
+        scanIntervalSec: 600,
+      })
+      .returning();
+    return row!;
+  };
+  const jobsTitled = (title: string) =>
+    db
+      .select({ id: jobs.id })
+      .from(jobs)
+      .where(sql`${jobs.companyId} = ${companyId} and ${jobs.title} like ${`${title}%`}`);
+
+  it('one ad listed under two ids is one job, in one scan or across scans (Adzuna 5921751606/08)', async () => {
+    const src = await newSource('ADZ');
+    const ad = (id: string) =>
+      rawJob(id, {
+        title: 'Graduate Engineer Trainee Allison',
+        applicationUrl: `https://www.adzuna.in/details/${id}`,
+        sourceUrl: `https://www.adzuna.in/details/${id}`,
+        descriptionHtml: '<p>Graduate engineer trainee for our transmission plant.</p>',
+        locationText: 'Kolhapur, India',
+      });
+    adapter.scripts.set('ADZ', { jobs: [ad('5921751606'), ad('5921751608')] });
+    const first = await manager.runScan(src, 'MANUAL');
+    expect(first).toMatchObject({ found: 2, new: 1, attached: 1 });
+    // A third id for the same ad on a later scan attaches too.
+    adapter.scripts.set('ADZ', { jobs: [ad('5921751606'), ad('5921751608'), ad('5921751610')] });
+    const second = await manager.runScan(await reload(src.id), 'MANUAL');
+    expect(second).toMatchObject({ new: 0, attached: 1 });
+    expect(await jobsTitled('Graduate Engineer Trainee Allison')).toHaveLength(1);
+  });
+
+  it('a board preview and the full posting of one job become one job, the full one canonical (D113)', async () => {
+    const board = await newSource('PREVIEW');
+    const ats = await newSource('FULL');
+    const preview = 'Associate Platform Engineer at our Noida office. Freshers can apply.';
+    adapter.scripts.set('PREVIEW', {
+      jobs: [
+        rawJob('p-1', {
+          title: 'Associate Platform Engineer - Fresher',
+          locationText: 'Noida, India',
+          descriptionHtml: `<p>${preview}</p>`,
+          applicationUrl: 'https://www.adzuna.in/details/777',
+          sourceUrl: 'https://www.adzuna.in/details/777',
+        }),
+      ],
+    });
+    await manager.runScan(board, 'MANUAL');
+    const [held] = await jobsTitled('Associate Platform Engineer');
+    // Held on the preview (Adzuna link: company not verifiable), as production holds them.
+    await db
+      .update(jobs)
+      .set({ status: 'NEEDS_REVIEW', validationStatus: 'NEEDS_REVIEW' })
+      .where(eq(jobs.id, held!.id));
+
+    const full = `<p>${'We build the platform that runs payments for millions. '.repeat(30)} 0-1 years.</p>`;
+    adapter.scripts.set('FULL', {
+      jobs: [
+        rawJob('f-1', {
+          title: 'Associate Platform Engineer',
+          locationText: 'Noida, India',
+          descriptionHtml: full,
+          applicationUrl: 'https://boards.example/acme/jobs/f-1',
+        }),
+      ],
+    });
+    const summary = await manager.runScan(ats, 'MANUAL');
+    expect(summary).toMatchObject({ new: 0, attached: 1 });
+
+    const all = await jobsTitled('Associate Platform Engineer');
+    expect(all).toHaveLength(1); // one canonical job, so one alert at most (unique index)
+    const job = (await db.query.jobs.findFirst({ where: eq(jobs.id, held!.id) }))!;
+    expect(job.description.length).toBeGreaterThan(600); // the full posting replaced the preview
+    expect(job.applicationUrl).toBe('https://boards.example/acme/jobs/f-1');
+    expect(job.status).toBe('DISCOVERED'); // re-classified, then re-validated, on the full text
+    const maps = await db
+      .select({ sourceId: jobSourceMappings.sourceId, isPrimary: jobSourceMappings.isPrimary })
+      .from(jobSourceMappings)
+      .where(eq(jobSourceMappings.jobId, held!.id));
+    expect(maps).toHaveLength(2);
+    expect(maps.find((m) => m.isPrimary)?.sourceId).toBe(ats.id);
+  });
+
   it('a failing source backs off without touching the cursor; a blocked one disables itself', async () => {
     const before = await reload(sourceA.id);
     adapter.scripts.set('A', { throws: new Error('ECONNRESET') });

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import type { CompanyVerification, EmploymentType } from '../enums';
+import type { CompanyVerification, EmploymentType, MatchScoring } from '../enums';
+import { PostingType } from '../enums';
 import {
   ApplicationStatus,
   ExperienceLevel,
@@ -53,6 +54,8 @@ export const JobsQuery = z.object({
   remote: bool,
   fresherOnly: bool,
   experienceLevel: csv(ExperienceLevel),
+  /** e.g. `postingType=CAMPUS_DRIVE,OFF_CAMPUS_PROGRAM` (F3, D114). */
+  postingType: csv(PostingType),
   minScore: int(0, 100),
   priority: csv(PriorityBand),
   validationStatus: csv(ValidationStatus),
@@ -60,6 +63,12 @@ export const JobsQuery = z.object({
   postedAfter: z.iso.datetime().optional(),
   sourceId: z.uuid().optional(),
   salaryMin: int(0, 100_000_000),
+  /**
+   * With `salaryMin`: also keep jobs that state no comparable salary ("Not disclosed").
+   * Default true — most fresher postings state none, so a salary filter would otherwise hide
+   * nearly all of them (R6, D111). `false` keeps only jobs whose stated minimum meets it.
+   */
+  includeUndisclosedSalary: bool,
   saved: bool,
   tracker: csv(ApplicationStatus),
   sort: JobSort.optional(),
@@ -103,11 +112,26 @@ export interface JobMatchSummary {
   overallScore: number;
   priority: PriorityBand;
   matchedSkills: string[];
+  /**
+   * RULES_ONLY: deterministic score only (AI budget spent, unavailable, or not worth a call).
+   * The API always sends it; optional so clients that predate it keep compiling (F8, D112).
+   */
+  scoring?: MatchScoring;
 }
 
 export interface TrackerState {
   saved: boolean;
   status: ApplicationStatus | null;
+}
+
+/**
+ * Credit a provider requires wherever its advert is shown (D115). Adzuna: the word "Adzuna",
+ * at least 116 × 23 px, linked to `url`. Present only when the displayed content is theirs.
+ */
+export interface SourceAttribution {
+  provider: 'ADZUNA';
+  label: string;
+  url: string;
 }
 
 export interface JobCard {
@@ -116,6 +140,10 @@ export interface JobCard {
   company: JobCompanyRef;
   location: JobLocation;
   employmentType: EmploymentType;
+  /** CAMPUS_DRIVE / OFF_CAMPUS_PROGRAM / REGULAR (F3, D114). Optional for older clients. */
+  postingType?: PostingType;
+  /** Required provider credit, e.g. Adzuna's (D115); null when the content is not theirs. */
+  attribution?: SourceAttribution | null;
   experienceLevel: ExperienceLevel;
   fresherEligible: boolean | null;
   experienceText: string | null;
@@ -141,6 +169,8 @@ export interface JobCard {
  */
 export const HeldKind = z.enum([
   'CATEGORY_UNKNOWN',
+  /** The posting states no experience and the AI could not place it (D110). */
+  'EXPERIENCE_UNKNOWN',
   'COMPANY_UNVERIFIED',
   'URL_UNREACHABLE',
   'OTHER',

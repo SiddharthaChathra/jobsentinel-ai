@@ -98,6 +98,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Redact PII from resume text before sending; send minimal job fields; never send user email/tokens.
 - AI influence is bounded: validation ±0.2 max; match skill/role scores within ±25 of deterministic values.
 - Budget priority (D105): resume parsing > fresher checks > matching > requirements/suspicion > category; each purpose stops at its tier's share of the daily budget (`budget-priority.ts`).
+- The budget reads `ai_usage` (daily totals per user and provider) before every call; a call made for a user carries `meta.userId` and counts against `AI_USER_DAILY_CALL_LIMIT` (resume parsing exempt). A match scored without the AI is stored and shown as `RULES_ONLY` (D112).
 - The AI may decide a job's **category only** when rules cannot (D105); location, batch, experience and recency stay deterministic and run first. Unsure → the job is held (`NEEDS_REVIEW`), never notified.
 - Model names come from env, never hard-coded.
 
@@ -113,7 +114,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - The deterministic scorer in `packages/validation/src/match` always runs and is always stored; the AI may only refine `skillScore`/`roleScore` within ±25 of it, and only for jobs already scoring ≥ 35.
 - A score never rejects a job: low matches are stored and ranked, never deleted or hidden.
 - Location: a job is listed if it is in India **or remote, whatever country it names** (D73, D102); on-site jobs abroad are filtered at classification, and the list applies the same rule.
-- Only roles that accept zero experience are listed (`isFresherRole`, D96): a stated minimum of 0 years with any upper end ("0-5 years"), or no stated years and a fresher/entry-level classification. Classification filters the rest before matching, and the read path applies the same rule (`fresherRoleSql`). Unknown experience with no stated years is listed only when the AI places it.
+- Only roles that accept zero experience are listed (`isFresherRole`, D96): a stated minimum of 0 years with any upper end ("0-5 years"), or no stated years and a fresher/entry-level classification. Classification filters the rest before matching, and the read path applies the same rule (`fresherRoleSql`). Unknown experience with no stated years is listed only when the AI places it; otherwise it is **held for review** (`hold_reason`, D110), never filtered unseen. A held job still goes through validation, and stays NEEDS_REVIEW whatever validation finds.
 - Every match row carries its `profile_version`. Editing a profile bumps the version and re-scores; old rows stay for history.
 - Scores are per user — `(job_id, user_id, profile_version)` is the idempotency key, so re-running a match run is always safe.
 
@@ -145,6 +146,9 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Before seeding/adding an ATS board, confirm the company behind the slug from its postings (slugs are global; see docs/sources.md).
 - A source's company and domain apply only to postings that name that company (`isSameCompany`). Keyword searches (the Adzuna employer sources) return other employers too; lending them the domain verifies the wrong company (D83).
 - All outbound HTTP goes through `HttpClient` (`HTTP_CLIENT` token); adapters never call `fetch` directly.
+- A board's preview (≤ 600 chars, e.g. Adzuna) and the full posting of one job are one job, and the full posting becomes canonical (`isPreviewDuplicate`, D113).
+- Adzuna's terms require the word "Adzuna", linked, on every displayed Adzuna advert: the card's `attribution` field and the alert line carry it (D115). Keep it.
+- Add sources to a live database with `pnpm db:seed -- --only="Name A;Name B"`: a full re-seed resets every source's `enabled` and `priority`.
 - A source with 20+ jobs collected and none kept over 30 days (`AUTO_PAUSE_MIN_COLLECTED`, `AUTO_PAUSE_WINDOW_DAYS`) is auto-paused (`PAUSED_AUTO`, D103, D104) and announced to admins once; errors and small samples never trigger it. India-scoped sources (Adzuna `in`, or `config.indiaScoped`) are never paused — they are alerted on once per window. Sources are never deleted; resume is `POST /sources/:id/resume`. The report card is `GET /sources/report`.
 
 ## 13. Testing requirements (docs/architecture/13-testing.md)

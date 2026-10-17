@@ -113,6 +113,21 @@ describeIf('review API (e2e)', () => {
     expect(events.map((e) => e.type)).toContain('USER_REVIEWED');
   }, 60_000);
 
+  it('accepting a job held at classification releases the hold, so it can be listed (D110)', async () => {
+    const id = await seedJob('Associate held', 'NEEDS_REVIEW');
+    await db
+      .update(jobs)
+      .set({ validationStatus: 'VALID', holdReason: 'experience unknown' })
+      .where(eq(jobs.id, id));
+    await request(app.getHttpServer())
+      .post(`/api/v1/jobs/${id}/review`)
+      .set(auth())
+      .send({ decision: 'ACCEPT' })
+      .expect(200);
+    const job = (await db.query.jobs.findFirst({ where: eq(jobs.id, id) }))!;
+    expect(job).toMatchObject({ status: 'VALID', validationStatus: 'VALID', holdReason: null });
+  }, 60_000);
+
   it('rejecting a suspicious job stops it and its re-checks', async () => {
     const id = await seedJob('Data Entry Executive', 'SUSPICIOUS');
     const res = await request(app.getHttpServer())

@@ -17,4 +17,6 @@ export * from './notify/decide';
 export * from './sources/report';
 export * from './review/held';
 export * from './classify/batch-years';
+export * from './classify/posting-type';
 export * from './sources/quota';
+export * from './sources/attribution';

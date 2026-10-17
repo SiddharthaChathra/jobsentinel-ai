@@ -1,4 +1,4 @@
-import { allowedUnderPriority, AI_PURPOSE_PRIORITY } from './budget-priority';
+import { allowedUnderPriority, AI_PURPOSE_PRIORITY, withinUserLimit } from './budget-priority';
 import {
   buildCategoryClassifyRequest,
   categoryVerdict,
@@ -44,6 +44,16 @@ describe('allowedUnderPriority (F8, D105)', () => {
     expect(await b.canSpend('CATEGORY_CLASSIFY')).toBe(false);
     expect(await b.canSpend('MATCH')).toBe(true);
     expect(await b.canSpend('RESUME_PROFILE')).toBe(true);
+  });
+});
+
+describe('withinUserLimit (F8, D112)', () => {
+  it('caps a user at the limit, exempts resume parsing, and ignores system calls', () => {
+    expect(withinUserLimit('MATCH', 49, 50)).toBe(true);
+    expect(withinUserLimit('MATCH', 50, 50)).toBe(false);
+    expect(withinUserLimit('JOB_REQUIREMENTS', 50, 50)).toBe(false);
+    expect(withinUserLimit('RESUME_PROFILE', 500, 50)).toBe(true);
+    expect(withinUserLimit('CATEGORY_CLASSIFY', null, 50)).toBe(true);
   });
 });
 

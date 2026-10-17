@@ -1,0 +1,2 @@
+CREATE TYPE "public"."posting_type" AS ENUM('CAMPUS_DRIVE', 'OFF_CAMPUS_PROGRAM', 'REGULAR');--> statement-breakpoint
+ALTER TABLE "jobs" ADD COLUMN "posting_type" "posting_type" DEFAULT 'REGULAR' NOT NULL;

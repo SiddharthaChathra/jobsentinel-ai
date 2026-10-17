@@ -17,6 +17,8 @@ export interface StarterSource {
   config: Record<string, unknown>;
   priority: SourcePriority;
   enabled?: boolean;
+  /** Overrides the priority's default cadence (never below the adapter's minimum, D108). */
+  scanIntervalSec?: number;
   company?: { name: string; domain: string };
 }
 
@@ -82,6 +84,22 @@ export const STARTER_SOURCES: StarterSource[] = [
   lever('fampay', 'FamPay', 'famapp.in', 'NORMAL'),
   lever('pocketfm', 'Pocket FM', 'pocketfm.com', 'NORMAL'),
   ashby('atlan', 'Atlan', 'atlan.com', 'NORMAL'),
+
+  // ── Added 2026-10-18 with the owner's approval (F3, D115). Each passed the company check:
+  // the postings name the company and either the company's own careers page links this exact
+  // board or the postings carry its domain. India / fresher-titled counts at that date.
+  // Sigmoid: 30 India of 35; all 35 name Sigmoid, one carries sigmoid.com.
+  gh('sigmoid', 'Sigmoid', 'sigmoid.com', 'NORMAL'),
+  // Hevo Data: 52 India of 54 (Associate SDE, SDE I); hevodata.com/careers links this board.
+  lever('hevodata', 'Hevo Data', 'hevodata.com', 'NORMAL'),
+  // Paytm: 153 India of 182, many non-engineering; paytm.com/careers links this board.
+  lever('paytm', 'Paytm', 'paytm.com', 'NORMAL'),
+  // HackerRank: 19 India of 31 (SDE Intern); all 31 postings carry hackerrank.com.
+  gh('hackerrank', 'HackerRank', 'hackerrank.com', 'NORMAL'),
+  // Agoda: 12 India of 324, none fresher-titled today; all postings carry agoda.com.
+  gh('agoda', 'Agoda', 'agoda.com', 'LOW'),
+  // Sarvam AI: 42 India of 42, internships typed "Intern" → INTERNSHIP; sarvam.ai/careers links it.
+  ashby('sarvam', 'Sarvam AI', 'sarvam.ai', 'NORMAL'),
 
   // ── Global companies with verified India offices (≥5 India postings) ────
   // MongoDB — verified 2026-09-23: 75/401 India jobs (Gurugram, Mumbai)
@@ -151,6 +169,33 @@ export const STARTER_SOURCES: StarterSource[] = [
     adapter: 'adzuna',
     config: { country: 'in', what: 'graduate engineer', maxDaysOld: 7 },
     priority: 'LOW',
+  },
+  // Fresher searches (F3, D115): one page, once a day — Adzuna's monthly quota is the binding one
+  // (2,500, refused at 90%). Counts are postings in the last 7 days on 2026-10-18. "2027 batch"
+  // (0), "campus" and "entry level engineer" (mostly unrelated or senior) were tried and left out.
+  {
+    name: 'Adzuna: India fresher engineer',
+    type: 'PUBLIC_API',
+    adapter: 'adzuna',
+    config: { country: 'in', what: 'fresher engineer', maxDaysOld: 3, maxPages: 1 },
+    priority: 'LOW',
+    scanIntervalSec: 86_400,
+  },
+  {
+    name: 'Adzuna: India trainee engineer',
+    type: 'PUBLIC_API',
+    adapter: 'adzuna',
+    config: { country: 'in', what: 'trainee engineer', maxDaysOld: 3, maxPages: 1 },
+    priority: 'LOW',
+    scanIntervalSec: 86_400,
+  },
+  {
+    name: 'Adzuna: India associate software engineer',
+    type: 'PUBLIC_API',
+    adapter: 'adzuna',
+    config: { country: 'in', what: 'associate software engineer', maxDaysOld: 3, maxPages: 1 },
+    priority: 'LOW',
+    scanIntervalSec: 86_400,
   },
   // Single-employer Adzuna searches. Adzuna has no company filter — a `company` parameter is
   // answered with HTTP 400 — so the employer name goes in `what`, which is a keyword match over

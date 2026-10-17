@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { allowedUnderPriority } from './budget-priority';
+import { allowedUnderPriority, withinUserLimit } from './budget-priority';
 import { parseJsonLoose } from './json-repair';
 import type { AIProvider, AIPurpose, AIRequest, AIResult, AIUsage } from './provider';
 
@@ -10,7 +10,11 @@ import type { AIProvider, AIPurpose, AIRequest, AIResult, AIUsage } from './prov
  * process (the worker is a short-lived `--once` process on a cron host).
  */
 export interface BudgetPort {
-  canSpend(purpose: AIPurpose): Promise<boolean>;
+  /**
+   * Checked before every provider call: the global daily budget by priority tier (D105) and,
+   * when the call is made for a user (`meta.userId`), that user's daily limit (D112).
+   */
+  canSpend(purpose: AIPurpose, meta?: AIRequest<unknown>['meta']): Promise<boolean>;
   record(entry: {
     purpose: AIPurpose;
     promptVersion: string;
@@ -36,19 +40,31 @@ export interface AILogger {
 
 export class InMemoryBudget implements BudgetPort {
   private calls = 0;
-  constructor(private readonly dailyCallBudget: number) {}
-  /** Same priority ceilings as the database budget (F8, D105); tokens are not tracked here. */
-  canSpend(purpose: AIPurpose): Promise<boolean> {
+  private readonly byUser = new Map<string, number>();
+  constructor(
+    private readonly dailyCallBudget: number,
+    private readonly userCallLimit = Number.POSITIVE_INFINITY,
+  ) {}
+  /** Same rules as the database budget (F8, D105, D112); tokens are not tracked here. */
+  canSpend(purpose: AIPurpose, meta?: AIRequest<unknown>['meta']): Promise<boolean> {
+    const userCalls = meta?.userId ? (this.byUser.get(meta.userId) ?? 0) : null;
     return Promise.resolve(
       allowedUnderPriority(
         purpose,
         { calls: this.calls, tokens: 0 },
         { calls: this.dailyCallBudget, tokens: Number.POSITIVE_INFINITY },
-      ),
+      ) && withinUserLimit(purpose, userCalls, this.userCallLimit),
     );
   }
-  record(entry: { status: AIResult<unknown>['status'] }): Promise<void> {
-    if (entry.status !== 'BUDGET_EXCEEDED' && entry.status !== 'UNAVAILABLE') this.calls += 1;
+  record(entry: {
+    status: AIResult<unknown>['status'];
+    meta?: AIRequest<unknown>['meta'];
+  }): Promise<void> {
+    if (entry.status !== 'BUDGET_EXCEEDED' && entry.status !== 'UNAVAILABLE') {
+      this.calls += 1;
+      const user = entry.meta?.userId;
+      if (user) this.byUser.set(user, (this.byUser.get(user) ?? 0) + 1);
+    }
     return Promise.resolve();
   }
   get used(): number {
@@ -143,7 +159,7 @@ export class AIService {
       }
     }
 
-    if (!(await this.budget.canSpend(req.purpose))) {
+    if (!(await this.budget.canSpend(req.purpose, req.meta))) {
       await this.budget.record({
         purpose: req.purpose,
         promptVersion: req.promptVersion,

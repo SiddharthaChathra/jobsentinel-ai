@@ -55,6 +55,8 @@ export class ValidationController {
         .set({
           status: accepted ? 'VALID' : 'REJECTED',
           validationStatus: accepted ? 'VALID' : 'INVALID',
+          // A person accepting the job answers the classification hold too (D110).
+          ...(accepted ? { holdReason: null } : {}),
           // Accepting re-opens the re-check cycle; rejecting stops it.
           nextCheckAt: accepted ? new Date(Date.now() + 6 * 3600_000) : null,
           updatedAt: now,

@@ -8,6 +8,9 @@ describe('classifyCategory', () => {
     ['Associate Cloud Engineer', 'CLOUD_DEVOPS'],
     ['Data Analyst Intern', 'DATA'],
     ['Mechanical Design Engineer', 'MECHANICAL'],
+    ['Software Engineers', 'SOFTWARE'], // was UNKNOWN (D109)
+    ['Field Service Engineers', 'OTHER_ENGINEERING'],
+    ['GET - Production', 'MECHANICAL'], // was SOFTWARE (D109)
   ])('%s → %s', (title, category) => {
     expect(classifyCategory({ title }).category).toBe(category);
   });
@@ -25,6 +28,19 @@ describe('classifyCategory', () => {
     const r = classifyCategory({ title });
     expect(r.category).toBe('NON_ENGINEERING');
     expect(r.isEngineering).toBe(false);
+  });
+
+  it('leaves a bare graduate-trainee title to the AI: engineering, category unknown (D109)', () => {
+    for (const title of ['Graduate Engineer Trainee', 'Graduate Engineer, Operations', 'GET']) {
+      expect(classifyCategory({ title })).toMatchObject({
+        category: 'UNKNOWN',
+        roleFamily: 'graduate_engineer_trainee',
+        isEngineering: true,
+      });
+    }
+    expect(
+      classifyCategory({ title: 'Graduate Engineer Trainee - Technical Sales' }).category,
+    ).toBe('NON_ENGINEERING');
   });
 
   it('keeps technical hybrids on the engineering side', () => {

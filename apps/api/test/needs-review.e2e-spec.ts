@@ -144,6 +144,23 @@ describeIf('Needs review view (C step 2, D106)', () => {
       type: 'VALIDATED',
       detail: { reason: 'company could not be verified', status: 'NEEDS_REVIEW' },
     });
+    // Held at classification because its experience is unknown (R2, D110), then VALID from
+    // validation: listed here with its reason, and nowhere else.
+    const unknownExp = {
+      experienceLevel: 'UNKNOWN' as const,
+      experienceMinYears: null,
+      fresherEligible: null,
+      validationStatus: 'VALID' as const,
+      holdReason: 'experience unknown (no AI verdict)',
+    };
+    await seed('experience-held', unknownExp);
+    // The same hold does not lift the other gates: not on-site abroad, not stale.
+    await seed('experience-held-abroad', {
+      ...unknownExp,
+      locationCity: 'Berlin',
+      locationCountry: 'Germany',
+    });
+    await seed('experience-held-stale', { ...unknownExp, firstSeenAt: daysAgo(75) });
     // Must NOT appear: each fails one gate the main list also applies.
     await seed('suspicious', { validationStatus: 'SUSPICIOUS' });
     await seed('stale', { firstSeenAt: daysAgo(75) });
@@ -181,11 +198,15 @@ describeIf('Needs review view (C step 2, D106)', () => {
         JSON.stringify({ ...res.body, data: cards }, null, 2),
       );
     }
-    expect(titles(cards).sort()).toEqual(['category-held', 'company-held']);
+    expect(titles(cards).sort()).toEqual(['category-held', 'company-held', 'experience-held']);
     const byTitle = new Map(cards.map((c) => [titles([c])[0], c]));
     expect(byTitle.get('category-held')!.held).toMatchObject({
       kind: 'CATEGORY_UNKNOWN',
       label: 'Category unclear: the posting does not say what kind of work it is',
+    });
+    expect(byTitle.get('experience-held')!.held).toMatchObject({
+      kind: 'EXPERIENCE_UNKNOWN',
+      label: 'Experience not stated: the posting does not say whether freshers can apply',
     });
     expect(byTitle.get('company-held')!.held).toMatchObject({
       kind: 'COMPANY_UNVERIFIED',

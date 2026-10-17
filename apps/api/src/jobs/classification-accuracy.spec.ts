@@ -41,6 +41,17 @@ describe('classification accuracy on labelled postings', () => {
     };
   });
 
+  // One line per run, so a change to the rules can quote its before/after numbers (AGENTS §13).
+  afterAll(() => {
+    const pct = (n: number) =>
+      `${n}/${results.length} (${((100 * n) / results.length).toFixed(1)}%)`;
+    console.info(
+      `accuracy: level ${pct(results.filter((r) => r.levelOk).length)}, engineering ${pct(
+        results.filter((r) => r.engOk).length,
+      )}, abstained ${pct(results.filter((r) => r.level.level === 'UNKNOWN').length)}`,
+    );
+  });
+
   it('has a meaningful, balanced fixture set', () => {
     expect(fixtures.length).toBeGreaterThanOrEqual(60);
     expect(

@@ -1,0 +1,1 @@
+ALTER TABLE "jobs" ADD COLUMN "hold_reason" text;

@@ -59,6 +59,34 @@ describe('formatInstant', () => {
     expect(text).toContain('Deadline: 30 Sep');
   });
 
+  it('says when a score is rules-only, and only then (F8, D112)', () => {
+    expect(formatInstant(job({ scoring: 'RULES_ONLY' }), now)).toContain(
+      '🎯 Match 91% — Very High · rules only',
+    );
+    expect(formatInstant(job({ scoring: 'AI_REFINED' }), now)).not.toContain('rules only');
+    expect(formatInstant(job(), now)).not.toContain('rules only'); // older queued snapshot
+  });
+
+  it("credits Adzuna, linked, when the advert is Adzuna's — and only then (D115)", () => {
+    const attribution = {
+      provider: 'ADZUNA' as const,
+      label: 'Adzuna',
+      url: 'https://www.adzuna.in/',
+    };
+    expect(formatInstant(job({ attribution }), now)).toContain(
+      'Jobs by <a href="https://www.adzuna.in/">Adzuna</a>',
+    );
+    expect(formatInstant(job(), now)).not.toContain('Adzuna');
+    const digest = formatDigest({
+      dateLabel: 'Sun 18 Oct',
+      counts: { veryHigh: 1, high: 0, medium: 0, other: 0, needsReview: 0 },
+      jobs: [job({ attribution })],
+      expiredSinceYesterday: 0,
+      failingSources: [],
+    });
+    expect(digest).toContain('via <a href="https://www.adzuna.in/">Adzuna</a>');
+  });
+
   it('never claims verification the job does not have', () => {
     const text = formatInstant(job({ companyVerified: false, applicationVerified: false }), now);
     expect(text).toContain('Company unverified');

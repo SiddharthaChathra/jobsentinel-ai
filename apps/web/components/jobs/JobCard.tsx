@@ -39,6 +39,15 @@ const HELD_CONFIG: Record<
     badgeClass:
       'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border-amber-300 dark:border-amber-700',
   },
+  // Added by Claude with the D110 contract change so main keeps building; Gemini owns the styling.
+  EXPERIENCE_UNKNOWN: {
+    tooltip: "The posting doesn't say how much experience it needs. Check before applying.",
+    icon: HelpCircle,
+    bannerClass:
+      'border-sky-300 bg-sky-50/80 text-sky-950 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200',
+    badgeClass:
+      'bg-sky-100 text-sky-800 dark:bg-sky-900/60 dark:text-sky-300 border-sky-300 dark:border-sky-700',
+  },
   COMPANY_UNVERIFIED: {
     tooltip: "We couldn't confirm the employer. Check the company before applying.",
     icon: ShieldAlert,
