@@ -95,6 +95,7 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
   sourceId?: string;
   salaryMin?: number;
   includeUndisclosedSalary?: boolean;     // default true: with salaryMin, keep "Not disclosed" jobs (D111)
+  postingType?: ('CAMPUS_DRIVE' | 'OFF_CAMPUS_PROGRAM' | 'REGULAR')[];   // D114
   saved?: boolean;
   tracker?: ApplicationStatus[];
   sort?: 'newest' | 'score' | 'posted' ;   // default newest
@@ -121,7 +122,9 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
 
 `JobDetail` = `JobCard` + `description`, `requirements[]`, `skills[]`, `sourceUrl`, `sources: [{name, url, firstSeenAt}]`, `validationDetail` (url check, evidence list, suspicious flags, AI assessment), `match.explanation`, `match.skillScore/roleScore/experienceScore/locationScore`, `match.missingSkills`, `events[]` (last 10).
 
-**Needs review (C step 2, D106).** `GET /jobs/needs-review` lists jobs with `status = NEEDS_REVIEW` — held by classification (category unknown, D105) or by verification (company not verified, page unreachable, …) — with the same filters and gates as `/jobs`: the user's places, India-or-remote and batch (applied at classification), "0 to any" experience, the 60-day window and open jobs. Suspected scams (`SUSPICIOUS`) are excluded. `held.kind` ∈ `CATEGORY_UNKNOWN | COMPANY_UNVERIFIED | URL_UNREACHABLE | OTHER`; `held.label` is the sentence to show. These jobs are never in `/jobs` and never sent to Telegram. Samples: `docs/contracts/needs-review.mock.json` (captured from the real API).
+**Needs review (C step 2, D106).** `GET /jobs/needs-review` lists jobs with `status = NEEDS_REVIEW` — held by classification (category or experience unknown, D105, D110; such a job is validated too and keeps its hold) or by verification (company not verified, page unreachable, …) — with the same filters and gates as `/jobs`: the user's places, India-or-remote and batch (applied at classification), "0 to any" experience, the 60-day window and open jobs. Suspected scams (`SUSPICIOUS`) are excluded. `held.kind` ∈ `CATEGORY_UNKNOWN | EXPERIENCE_UNKNOWN | COMPANY_UNVERIFIED | URL_UNREACHABLE | OTHER` (a client must handle a kind it does not know as `OTHER`); `held.label` is the sentence to show. These jobs are never in `/jobs` and never sent to Telegram. Samples: `docs/contracts/needs-review.mock.json` (captured from the real API).
+
+**Card fields added in Phase 13 (all optional for older clients).** `postingType` (D114); `attribution: { provider: 'ADZUNA', label: 'Adzuna', url } | null` — when present, the card and the detail page must show `label` as a link to `url`, at least 116 × 23 px (Adzuna's terms, D115); `match.scoring: 'RULES_ONLY' | 'AI_REFINED'` (D112). `SystemStatus.ai.userCallLimit` is the per-user daily AI limit.
 
 ### Saved & applications (tracker)
 

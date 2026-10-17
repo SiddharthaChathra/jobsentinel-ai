@@ -2,6 +2,18 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] Owner decisions, F8 completion, F3 (part 2) — 2026-10-18
+
+- **Classification fixes (D109):** graduate-trainee titles take their discipline from the title or its qualifier ("GET – Production" → Mechanical, "for Power Plant" → Electrical); a bare "Graduate Engineer Trainee" goes to the AI category check instead of being called SOFTWARE. "Software Engineers" (plural) classifies like the singular. Accuracy gate before and after each fix: level 72/72, engineering 72/72, abstained 10/72.
+- **Unknown experience is held, not filtered (R2, D110):** shown in Needs review with "Experience not stated", never sent to Telegram; India, batch and recency rules still apply. Held jobs now also pass the scam, link and company checks.
+- **Salary filter (R6, D111):** keeps jobs with no stated salary unless `includeUndisclosedSalary=false`.
+- **AI budget (F8, D112):** new `ai_usage` daily totals; per-user daily AI limit (`AI_USER_DAILY_CALL_LIMIT`, default 100; resume parsing exempt); matches labelled `RULES_ONLY` or `AI_REFINED`, and alerts say "rules only".
+- **Duplicates across sources (D113):** an Adzuna preview and the company board's full posting of the same job become one job, and the full posting (with the employer's own link) replaces the preview. The "duplicate" Adzuna ad from the verification report was one job with two Adzuna ids — already merged.
+- **Posting types (D114):** Campus drive / Off-campus programme / Regular, on each job and filterable.
+- **Sources (D115):** Adzuna attribution on cards (API) and Telegram alerts; boards added after the company check — Sigmoid, Hevo Data, Paytm, HackerRank, Agoda, Sarvam AI; three daily Adzuna fresher searches within the quota.
+- **Auto-pause (D104)** switched on after the owner's confirmation.
+- Tests: validation 347 (+41), ai 25 (+2), API unit 140 (+2), API e2e 128 (+9).
+
 ## [Phase 13] F3 (part 1) — Adzuna quota guard; multi-batch parsing — 2026-10-17
 
 - **Adzuna quota (D108):** production had made 462 Adzuna requests in 24 hours, above the published 250/day. Fixed at the root — sources are never scanned more often than their adapter allows (Adzuna: every 6 h; seeded sources were running hourly) — and guarded: every Adzuna scan, manual ones included, is refused before it would pass 90% of the per-minute, daily, weekly or monthly quota.
