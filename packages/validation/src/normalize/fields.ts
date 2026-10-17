@@ -24,40 +24,88 @@ export interface ParsedExperience {
 const YEAR_WORDS = '(?:years?|yrs?|y)';
 
 /**
+ * Above this, a "required experience" figure is a parse error, not a requirement (D116): what
+ * real postings put there is company history — "over 80 years as an industrial leader", "more
+ * than 60 years since SYSTRA…", Thoughtworks' "For 30+ years, we've…" on every posting.
+ */
+export const MAX_PLAUSIBLE_EXPERIENCE_YEARS = 15;
+
+/** Wording that makes a nearby "N years" a requirement rather than a fact about the company. */
+const REQUIREMENT_WORDS =
+  /\b(experience|experienced|exp|work(ing)?|relevant|professional|industry|hands[- ]on|minimum|min|at ?least|required|requires?|requirement|must|need(ed|s)?|looking for|candidates?|background|proficien\w*)\b/;
+
+/** Right after the figure: the sentence is about the company ("…years, we've…", "…helping…"). */
+const COMPANY_HISTORY_AFTER =
+  /^[^.\n]{0,40}?\b(we(['’](ve|re)| have| are)|helping|serving|delivering|since|as an? (\w+ ){0,3}(leader|company|provider|partner)|in business|of excellence|of innovation|of (our )?(history|heritage|legacy))\b/;
+
+type ExperienceCandidate = { min: number; max: number | null; text: string; index: number };
+
+/** Every match of one pattern, in text order. */
+function candidates(
+  t: string,
+  pattern: string,
+  read: (m: RegExpMatchArray) => { min: number; max: number | null },
+): ExperienceCandidate[] {
+  return [...t.matchAll(new RegExp(pattern, 'g'))].map((m) => ({
+    ...read(m),
+    text: m[0].trim(),
+    index: m.index ?? 0,
+  }));
+}
+
+/**
  * Extracts an experience range from free text: "0-2 years", "2+ yrs", "minimum 3 years",
- * "fresher", "0 to 1 year". Returns the first, most specific match.
+ * "fresher", "0 to 1 year". Patterns are tried most specific first; within a pattern, the first
+ * match that reads as a requirement wins (D116): its minimum is at most
+ * `MAX_PLAUSIBLE_EXPERIENCE_YEARS`, requirement wording sits next to it (the source's own
+ * experience field, the first hint, needs none), and it is not followed by company history.
  */
 export function parseExperience(...hints: (string | null | undefined)[]): ParsedExperience {
-  const text = hints.filter(Boolean).join(' \n ');
+  const parts = hints.filter(Boolean) as string[];
+  const text = parts.join(' \n ');
   if (!text) return { minYears: null, maxYears: null, text: null };
   const t = text.toLowerCase();
+  // The structured experience field, when the source gave one: it is about experience already.
+  const fieldEnd = hints[0] ? hints[0].length : 0;
 
-  const range = t.match(new RegExp(`(\\d{1,2})\\s*(?:-|–|to)\\s*(\\d{1,2})\\+?\\s*${YEAR_WORDS}`));
-  if (range)
-    return { minYears: Number(range[1]), maxYears: Number(range[2]), text: range[0].trim() };
+  const plausible = (c: ExperienceCandidate): boolean => {
+    if (c.min > MAX_PLAUSIBLE_EXPERIENCE_YEARS) return false;
+    const end = c.index + c.text.length;
+    if (COMPANY_HISTORY_AFTER.test(t.slice(end, end + 60))) return false;
+    if (c.index < fieldEnd) return true;
+    const around = `${t.slice(Math.max(0, c.index - 40), c.index)} ${c.text} ${t.slice(end, end + 40)}`;
+    return REQUIREMENT_WORDS.test(around);
+  };
 
-  const plus = t.match(new RegExp(`(\\d{1,2})\\s*\\+\\s*${YEAR_WORDS}`));
-  if (plus) return { minYears: Number(plus[1]), maxYears: null, text: plus[0].trim() };
-
-  const minimum = t.match(
-    new RegExp(
-      `(?:minimum|min\\.?|at least|atleast|over|more than)\\s*(?:of\\s*)?(\\d{1,2})\\s*${YEAR_WORDS}`,
+  const ordered: ExperienceCandidate[][] = [
+    candidates(t, String.raw`(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\+?\s*${YEAR_WORDS}\b`, (m) => ({
+      min: Number(m[1]),
+      max: Number(m[2]),
+    })),
+    candidates(t, String.raw`(\d{1,2})\s*\+\s*${YEAR_WORDS}\b`, (m) => ({
+      min: Number(m[1]),
+      max: null,
+    })),
+    candidates(
+      t,
+      String.raw`(?:minimum|min\.?|at least|atleast|over|more than)\s*(?:of\s*)?(\d{1,2})\s*${YEAR_WORDS}\b`,
+      (m) => ({ min: Number(m[1]), max: null }),
     ),
-  );
-  if (minimum) return { minYears: Number(minimum[1]), maxYears: null, text: minimum[0].trim() };
-
-  const upTo = t.match(
-    new RegExp(`(?:up to|upto|maximum|max\\.?|less than|under)\\s*(\\d{1,2})\\s*${YEAR_WORDS}`),
-  );
-  if (upTo) return { minYears: 0, maxYears: Number(upTo[1]), text: upTo[0].trim() };
-
-  const exact = t.match(
-    new RegExp(
-      `(\\d{1,2})\\s*${YEAR_WORDS}(?:\\s*(?:of)?\\s*(?:relevant|professional|industry|work|hands[- ]on)?\\s*experience)`,
+    candidates(
+      t,
+      String.raw`(?:up to|upto|maximum|max\.?|less than|under)\s*(\d{1,2})\s*${YEAR_WORDS}\b`,
+      (m) => ({ min: 0, max: Number(m[1]) }),
     ),
-  );
-  if (exact)
-    return { minYears: Number(exact[1]), maxYears: Number(exact[1]), text: exact[0].trim() };
+    candidates(
+      t,
+      String.raw`(\d{1,2})\s*${YEAR_WORDS}(?:\s*(?:of)?\s*(?:relevant|professional|industry|work|hands[- ]on)?\s*experience)`,
+      (m) => ({ min: Number(m[1]), max: Number(m[1]) }),
+    ),
+  ];
+  for (const list of ordered) {
+    const hit = list.find(plausible);
+    if (hit) return { minYears: hit.min, maxYears: hit.max, text: hit.text };
+  }
 
   if (
     /\b(fresher|freshers|fresh graduate|no (prior )?experience (required|needed|necessary)|0 years?)\b/.test(
