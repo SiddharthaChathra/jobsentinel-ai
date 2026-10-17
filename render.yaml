@@ -54,5 +54,11 @@ services:
       # /api/v1/telegram/webhook, registered on boot (D98). The API never long-polls.
       - key: TELEGRAM_MODE
         value: webhook
+      # Keep the free instance awake 07:00-24:00 India time only, so a second free Render service
+      # has hours left in the workspace's 750 a month (D99). Overnight it sleeps until a request.
+      - key: KEEP_AWAKE_HOURS
+        value: '7-24'
+      - key: KEEP_AWAKE_TZ
+        value: Asia/Kolkata
       - key: TELEGRAM_POLLING
         value: 'false'

@@ -151,6 +151,29 @@ export const envSchema = z
     WEB_ORIGIN: originList('http://localhost:3000'),
     // Set by Render itself to the service's public URL; turns on the keep-awake ping (D94).
     RENDER_EXTERNAL_URL: optUrl(),
+    // Local hours the keep-awake ping runs, "start-end" (end exclusive, may wrap past midnight).
+    // Outside them the free instance may sleep, which saves Render's shared free hours (D99).
+    KEEP_AWAKE_HOURS: z.preprocess(
+      emptyToUndefined,
+      z
+        .string()
+        .regex(/^([01]?\d|2[0-4])-([01]?\d|2[0-4])$/, 'expected "HH-HH", e.g. 7-24')
+        .default('0-24'),
+    ),
+    KEEP_AWAKE_TZ: z.preprocess(
+      emptyToUndefined,
+      z
+        .string()
+        .refine((tz) => {
+          try {
+            new Intl.DateTimeFormat('en', { timeZone: tz });
+            return true;
+          } catch {
+            return false;
+          }
+        }, 'unknown IANA time zone')
+        .default('Asia/Kolkata'),
+    ),
     // Optional: the API starts the GitHub-hosted worker on its own clock (D95). A fine-grained
     // token limited to "Actions: read and write" on this repository; unset = off.
     WORKER_DISPATCH_TOKEN: optStr(),

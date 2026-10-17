@@ -104,3 +104,22 @@ describe('web origins', () => {
     expect(() => loadEnv({ WEB_ORIGIN: 'https://ok.example, not a url' })).toThrow(/WEB_ORIGIN/);
   });
 });
+
+describe('keep-awake window (D99)', () => {
+  it('defaults to all day in India', () => {
+    const env = loadEnv({});
+    expect(env.KEEP_AWAKE_HOURS).toBe('0-24');
+    expect(env.KEEP_AWAKE_TZ).toBe('Asia/Kolkata');
+  });
+
+  it('accepts HH-HH and a real time zone', () => {
+    const env = loadEnv({ KEEP_AWAKE_HOURS: '07-24', KEEP_AWAKE_TZ: 'UTC' });
+    expect(env.KEEP_AWAKE_HOURS).toBe('07-24');
+  });
+
+  it('rejects a malformed window or an unknown zone at boot', () => {
+    expect(() => loadEnv({ KEEP_AWAKE_HOURS: '7am-midnight' })).toThrow(/KEEP_AWAKE_HOURS/);
+    expect(() => loadEnv({ KEEP_AWAKE_HOURS: '7-25' })).toThrow(/KEEP_AWAKE_HOURS/);
+    expect(() => loadEnv({ KEEP_AWAKE_TZ: 'Mars/Olympus' })).toThrow(/KEEP_AWAKE_TZ/);
+  });
+});

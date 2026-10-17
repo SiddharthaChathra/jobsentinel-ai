@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 12] Room for a second free Render service — 2026-10-17
+
+- **The API sleeps overnight (D99).** Render's 750 free hours a month are shared by every free service, and keeping the API awake all day used ~744 of them, leaving nothing for NetSentinel. It is now kept awake 07:00-24:00 India time (`KEEP_AWAKE_HOURS`), using ~530 hours. Between midnight and 07:00 the first page or bot message waits 30-60 s while the API wakes; scanning continues on GitHub's schedule.
+- Tests: API unit 137 (+9), config 22 (+3).
+
 ## [Phase 12] Every user can link their own Telegram — 2026-10-16
 
 - **Telegram linking works on the deployed site (D98).** Each account always had its own Telegram link, and alerts go only to that account's chat, but nothing was reading the bot's messages, so a new user's `/start` code was never answered. Telegram now pushes bot messages to the API (`/api/v1/telegram/webhook`, secret-checked), so linking, `/status`, `/pause`, `/digest` and the Save / Not interested buttons all respond.

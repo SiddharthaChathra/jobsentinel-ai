@@ -5,13 +5,18 @@
 # A free Render instance spins down after 15 minutes without inbound requests, and the next
 # visitor then waits 30-60 s while it boots — every signed-in page asks the API first, so the
 # whole site looks broken. A request every 10 minutes keeps it awake. Running all month uses
-# ~744 of the workspace's 750 free instance-hours, so this assumes the API is the only free
-# Render service. GitHub can delay scheduled runs, so an occasional cold start is still possible.
+# ~744 of the workspace's 750 free instance-hours, which leaves nothing for a second free service,
+# so the API is kept awake only 07:00-24:00 India time (KEEP_AWAKE_HOURS on Render, D99) and this
+# job follows the same hours. It is also what wakes the API when the window opens: a sleeping
+# process cannot ping itself. GitHub can delay scheduled runs, so a cold start remains possible.
 name: keep-api-warm
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    # 07:00-24:00 IST = 01:30-18:30 UTC.
+    - cron: '30-59/10 1 * * *'
+    - cron: '*/10 2-17 * * *'
+    - cron: '0-20/10 18 * * *'
   workflow_dispatch:
 
 permissions: {}
