@@ -114,9 +114,10 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
   return (
     <article
       className={cn(
-        'card-hover relative overflow-hidden rounded-xl border bg-card p-4 sm:p-5',
+        'card-hover relative rounded-xl border bg-card p-4 sm:p-5',
         job.isNew ? 'border-primary/40' : 'border-border/60',
-        held ? 'border-amber-300/60 dark:border-amber-700/60' : '',
+        // Clip only held cards (their banner is full-bleed): the "New" pill sits above the edge.
+        held ? 'overflow-hidden border-amber-300/60 dark:border-amber-700/60' : '',
       )}
     >
       {/* Held banner (C step 2, D106) */}

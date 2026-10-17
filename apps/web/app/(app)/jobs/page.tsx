@@ -29,7 +29,9 @@ export default function JobsPage() {
             ? 'Held jobs waiting for manual review before application'
             : isLoading
               ? 'Loading…'
-              : `${jobs.length}${hasMore ? '+' : ''} ${jobs.length === 1 ? 'job' : 'jobs'} matching your filters`
+              : // The API pages by cursor and returns no total, so report what is actually loaded
+                // rather than implying a count we do not have.
+                `${jobs.length}${hasMore ? '+' : ''} ${jobs.length === 1 ? 'job' : 'jobs'} matching your filters`
         }
         actions={
           <Button
@@ -97,7 +99,8 @@ export default function JobsPage() {
         </aside>
 
         <section className="min-w-0 md:col-span-8 lg:col-span-9">
-          {/* On a phone the filters stay collapsed */}
+          {/* On a phone the filters stay collapsed: otherwise they fill the first screen and the
+              jobs — the reason for the page — are pushed below the fold. */}
           {filtersOpen && (
             <div id="job-filters-mobile" className="mb-4 md:hidden">
               <JobFilters />

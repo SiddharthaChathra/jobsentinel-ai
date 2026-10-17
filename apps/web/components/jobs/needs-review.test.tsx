@@ -333,7 +333,7 @@ describe('Needs Review View (C step 2, D106)', () => {
               tokenBudget: 50000,
               byPurpose: {
                 CATEGORY_CLASSIFY: 73,
-                RESUME_PARSE: 12,
+                RESUME_PROFILE: 12,
               },
             },
             sources: { active: 1, total: 1 },

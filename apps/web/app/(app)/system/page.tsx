@@ -46,12 +46,13 @@ function sourceStatusVariant(status: string): 'default' | 'secondary' | 'destruc
 }
 
 const PURPOSE_LABELS: Record<string, string> = {
+  // Keys are packages/ai AIPurpose values; an unknown future purpose falls back to its key.
   CATEGORY_CLASSIFY: 'Category check',
-  RESUME_PARSE: 'Resume parsing',
-  MATCHING: 'Job matching',
-  REQUIREMENTS: 'Requirements check',
+  RESUME_PROFILE: 'Resume parsing',
+  MATCH: 'Job matching',
+  JOB_REQUIREMENTS: 'Requirements check',
   SUSPICION: 'Suspicion check',
-  FRESHER_CHECK: 'Fresher check',
+  FRESHER_CLASSIFY: 'Fresher check',
 };
 
 function formatPurpose(key: string): string {
