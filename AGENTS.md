@@ -97,6 +97,8 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Every purpose has: versioned prompt file, Zod output schema, deterministic fallback, cache key, budget accounting (`ai_calls`).
 - Redact PII from resume text before sending; send minimal job fields; never send user email/tokens.
 - AI influence is bounded: validation ±0.2 max; match skill/role scores within ±25 of deterministic values.
+- Budget priority (D105): resume parsing > fresher checks > matching > requirements/suspicion > category; each purpose stops at its tier's share of the daily budget (`budget-priority.ts`).
+- The AI may decide a job's **category only** when rules cannot (D105); location, batch, experience and recency stay deterministic and run first. Unsure → the job is held (`NEEDS_REVIEW`), never notified.
 - Model names come from env, never hard-coded.
 
 ## 10. Validation rules (docs/architecture/08-validation.md)

@@ -2,7 +2,12 @@ import type { z } from 'zod';
 
 /** Purposes are fixed so budgets, caching and prompt versions can be tracked per purpose. */
 export type AIPurpose =
-  'RESUME_PROFILE' | 'JOB_REQUIREMENTS' | 'FRESHER_CLASSIFY' | 'MATCH' | 'SUSPICION';
+  | 'RESUME_PROFILE'
+  | 'JOB_REQUIREMENTS'
+  | 'FRESHER_CLASSIFY'
+  | 'MATCH'
+  | 'SUSPICION'
+  | 'CATEGORY_CLASSIFY';
 
 export interface AIUsage {
   inputTokens: number;

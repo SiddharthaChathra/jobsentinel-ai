@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
+import { allowedUnderPriority } from './budget-priority';
 import { parseJsonLoose } from './json-repair';
 import type { AIProvider, AIPurpose, AIRequest, AIResult, AIUsage } from './provider';
 
@@ -36,8 +37,15 @@ export interface AILogger {
 export class InMemoryBudget implements BudgetPort {
   private calls = 0;
   constructor(private readonly dailyCallBudget: number) {}
-  canSpend(): Promise<boolean> {
-    return Promise.resolve(this.calls < this.dailyCallBudget);
+  /** Same priority ceilings as the database budget (F8, D105); tokens are not tracked here. */
+  canSpend(purpose: AIPurpose): Promise<boolean> {
+    return Promise.resolve(
+      allowedUnderPriority(
+        purpose,
+        { calls: this.calls, tokens: 0 },
+        { calls: this.dailyCallBudget, tokens: Number.POSITIVE_INFINITY },
+      ),
+    );
   }
   record(entry: { status: AIResult<unknown>['status'] }): Promise<void> {
     if (entry.status !== 'BUDGET_EXCEEDED' && entry.status !== 'UNAVAILABLE') this.calls += 1;

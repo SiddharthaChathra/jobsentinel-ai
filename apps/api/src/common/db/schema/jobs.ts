@@ -84,6 +84,8 @@ export const jobs = pgTable(
     notifiedAt: timestamp('notified_at', { withTimezone: true }),
     closedAt: timestamp('closed_at', { withTimezone: true }),
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+    // When the AI was asked for this job's category: once per canonical job, never again (D105).
+    categoryAiAt: timestamp('category_ai_at', { withTimezone: true }),
     nextCheckAt: timestamp('next_check_at', { withTimezone: true }),
     ...timestamps,
   },

@@ -50,6 +50,13 @@
       "when": 1792249882962,
       "tag": "0006_source_kept_zero_alert",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792253785354,
+      "tag": "0007_job_category_ai",
+      "breakpoints": true
     }
   ]
 }

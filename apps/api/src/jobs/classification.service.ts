@@ -1,6 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, or, sql } from 'drizzle-orm';
-import { buildFresherClassifyRequest, type AIService } from '@jobsentinel/ai';
+import {
+  buildCategoryClassifyRequest,
+  buildFresherClassifyRequest,
+  categoryVerdict,
+  type AIService,
+} from '@jobsentinel/ai';
 import type { ExperienceLevel, JobCategory } from '@jobsentinel/types';
 import {
   classifyCategory,
@@ -30,7 +35,8 @@ type JobRow = typeof jobs.$inferSelect;
 
 interface JobDecision {
   jobId: string;
-  status: 'CLASSIFIED' | 'FILTERED_OUT' | 'DEFERRED';
+  /** NEEDS_REVIEW: held — category unknown after the AI was asked or could not answer (D105). */
+  status: 'CLASSIFIED' | 'FILTERED_OUT' | 'DEFERRED' | 'NEEDS_REVIEW';
   category: JobCategory;
   roleFamily: string;
   level: ExperienceLevel;
@@ -41,7 +47,11 @@ interface JobDecision {
   maxYears: string | null;
   experienceText: string | null;
   usedAi: boolean;
+  /** AI calls this decision made (category and/or experience). */
+  aiCalls: number;
   aiUnavailable: boolean;
+  /** Set when the AI was asked for the category on this run (D105). */
+  categoryAsked: boolean;
   reason: string;
 }
 
@@ -52,6 +62,9 @@ interface MonitoringPrefs {
 }
 
 const AI_CONFIDENCE_FLOOR = 0.6;
+
+/** Reason for a job held because its category could not be placed (A, D105). */
+export const CATEGORY_HELD_REASON = 'category unknown';
 
 /** Reason prefix for a job filtered only because its experience could not be placed (D96). */
 export const UNKNOWN_EXPERIENCE_REASON = 'experience unknown';
@@ -144,6 +157,7 @@ export class ClassificationService {
     // Decisions are computed first (pure + optional AI), then written in two statements per batch:
     // per-job transactions cost ~0.4 s each over the pooler, which made a full re-classify unusable.
     const decisions: JobDecision[] = [];
+    const categoryAskedIds: string[] = [];
     const deferredIds: string[] = [];
     for (const job of pending) {
       result.processed++;
@@ -153,7 +167,8 @@ export class ClassificationService {
           prefs,
           result.aiUsed < maxAiCalls && Date.now() < aiDeadline,
         );
-        if (decision.usedAi) result.aiUsed++;
+        result.aiUsed += decision.aiCalls;
+        if (decision.categoryAsked) categoryAskedIds.push(decision.jobId);
         if (decision.aiUnavailable) result.aiUnavailable++;
         if (decision.status === 'DEFERRED') {
           result.deferred++;
@@ -173,6 +188,13 @@ export class ClassificationService {
       }
     }
     if (decisions.length > 0) await this.persist(decisions);
+    if (categoryAskedIds.length > 0) {
+      // Recorded even for a deferred job, so its category is never asked again (D105).
+      await this.db
+        .update(jobs)
+        .set({ categoryAiAt: new Date() })
+        .where(inArray(jobs.id, categoryAskedIds));
+    }
     if (deferredIds.length > 0) {
       // Still DISCOVERED, so the next run picks them up; the attempt count bounds the waiting.
       await this.db
@@ -206,8 +228,68 @@ export class ClassificationService {
     let usedAi = false;
     let aiUnavailable = false;
 
-    // Category gate first: never spend an AI call on a job nobody monitors.
-    const monitored = prefs.categories.has(category.category);
+    // Location gate: India, or any remote role (D102). On-site jobs abroad are filtered: a posting
+    // whose country never resolved is foreign in practice — measured across 3,394 live jobs, 530 of
+    // the 531 such postings were (D73). Remote roles are kept whatever country they name, at the
+    // owner's request: "Remote · United States" may still need local work rights, so the country
+    // stays visible on the card rather than deciding for the user. FILTERED_OUT
+    // is recoverable by a preferences change; narrowing to the user's preferred places is the jobs
+    // query's job, where it can be lifted per request (D62).
+    const inIndia = isIndiaLocation({
+      text: job.locationText,
+      city: job.locationCity,
+      country: job.locationCountry,
+      isRemote: job.isRemote,
+    });
+    const indiaOk = inIndia || job.isRemote;
+
+    const jobBatchYear = extractJobBatchYear(job.description);
+    const isBatchCompatible = Array.from(prefs.graduationYears).some((gy) =>
+      isBatchYearCompatible(jobBatchYear, gy),
+    );
+
+    // Category (A, D105). The rules could not place it: ask the AI for the CATEGORY only — once
+    // per canonical job, lowest AI priority — and only for a job the deterministic gates have not
+    // already ruled out (location, batch, a stated experience requirement). The answer can make a
+    // job eligible for the category gate; it can never override the gates above or below.
+    let resolvedCategory: JobCategory = category.category;
+    let categoryHeld = false;
+    let categoryPending = false;
+    let categoryAsked = false;
+    let aiCalls = 0;
+    const statedNotFresher =
+      rules.level === 'EXPERIENCED' || (rules.minYears !== null && rules.minYears > 0);
+    if (category.category === 'UNKNOWN' && indiaOk && isBatchCompatible && !statedNotFresher) {
+      if (job.categoryAiAt) {
+        // Asked before: reuse the stored verdict, never ask again.
+        if (job.category !== 'UNKNOWN') resolvedCategory = job.category;
+        else categoryHeld = true;
+      } else if (!aiAllowed || !this.ai) {
+        categoryPending = true;
+        aiUnavailable = !this.ai;
+      } else {
+        const res = await this.ai.run(
+          buildCategoryClassifyRequest({
+            jobId: job.id,
+            title: job.title,
+            description: job.description,
+          }),
+        );
+        if (res.status === 'OK') {
+          categoryAsked = true;
+          if (!res.cached) aiCalls++;
+          const verdict = categoryVerdict(res.data);
+          if (verdict.placed) resolvedCategory = verdict.category;
+          else categoryHeld = true;
+        } else {
+          categoryPending = true;
+          aiUnavailable = true;
+        }
+      }
+    }
+
+    // Category gate: never spend an experience AI call on a job nobody monitors.
+    const monitored = prefs.categories.has(resolvedCategory);
     if (monitored && rules.needsAi && aiAllowed) {
       if (!this.ai) {
         aiUnavailable = true;
@@ -222,6 +304,7 @@ export class ClassificationService {
         );
         if (res.status === 'OK') {
           usedAi = true;
+          if (!res.cached) aiCalls++;
           // A hesitant model never overrides the rules (docs 09 §1: AI is a signal, not a judge).
           if (res.data.confidence >= AI_CONFIDENCE_FLOOR) {
             level = res.data.level;
@@ -242,26 +325,6 @@ export class ClassificationService {
         }
       }
     }
-
-    // Location gate: India, or any remote role (D102). On-site jobs abroad are filtered: a posting
-    // whose country never resolved is foreign in practice — measured across 3,394 live jobs, 530 of
-    // the 531 such postings were (D73). Remote roles are kept whatever country they name, at the
-    // owner's request: "Remote · United States" may still need local work rights, so the country
-    // stays visible on the card rather than deciding for the user. FILTERED_OUT
-    // is recoverable by a preferences change; narrowing to the user's preferred places is the jobs
-    // query's job, where it can be lifted per request (D62).
-    const inIndia = isIndiaLocation({
-      text: job.locationText,
-      city: job.locationCity,
-      country: job.locationCountry,
-      isRemote: job.isRemote,
-    });
-    const indiaOk = inIndia || job.isRemote;
-
-    const jobBatchYear = extractJobBatchYear(job.description);
-    const isBatchCompatible = Array.from(prefs.graduationYears).some((gy) =>
-      isBatchYearCompatible(jobBatchYear, gy),
-    );
 
     if (!isBatchCompatible) {
       // Not `level = 'EXPERIENCED'`: a "2025 batch only" posting is a fresher role for a different
@@ -288,19 +351,46 @@ export class ClassificationService {
     const batchExcluded = !isBatchCompatible;
     // Only the AI can place an ambiguous job; until it has answered, the job waits (bounded).
     const verdictMissing = monitored && rules.needsAi && !usedAi && level === 'UNKNOWN';
-    const status: JobDecision['status'] =
-      !indiaOk || !monitored || batchExcluded
-        ? 'FILTERED_OUT'
-        : notFresher
-          ? verdictMissing && job.stageAttempts < MAX_AI_WAITS
-            ? 'DEFERRED'
-            : 'FILTERED_OUT'
-          : 'CLASSIFIED';
+    // Gates in a fixed order; the first that fails decides. Deterministic ones first (D105).
+    let status: JobDecision['status'];
+    let reason: string;
+    if (!indiaOk) {
+      status = 'FILTERED_OUT';
+      reason = `location outside India (${job.locationCountry ?? 'unknown'})`;
+    } else if (batchExcluded) {
+      status = 'FILTERED_OUT';
+      reason = `targets the ${jobBatchYear} batch`;
+    } else if (statedNotFresher) {
+      status = 'FILTERED_OUT';
+      reason = notFresherReason(level, minYears, false);
+    } else if (categoryPending) {
+      // The category AI has not answered yet (budget, time box, outage): wait, bounded.
+      status = job.stageAttempts < MAX_AI_WAITS ? 'DEFERRED' : 'NEEDS_REVIEW';
+      reason = `${CATEGORY_HELD_REASON} (no AI verdict)`;
+    } else if (categoryHeld) {
+      // Unsure or "unknown": held for review — only if it would otherwise be a fresher role.
+      status = notFresher ? 'FILTERED_OUT' : 'NEEDS_REVIEW';
+      reason = notFresher
+        ? notFresherReason(level, minYears, verdictMissing)
+        : CATEGORY_HELD_REASON;
+    } else if (!monitored) {
+      status = 'FILTERED_OUT';
+      reason = 'category not monitored';
+    } else if (notFresher) {
+      status = verdictMissing && job.stageAttempts < MAX_AI_WAITS ? 'DEFERRED' : 'FILTERED_OUT';
+      reason = notFresherReason(level, minYears, verdictMissing);
+    } else {
+      status = 'CLASSIFIED';
+      reason =
+        category.category === resolvedCategory
+          ? category.reason
+          : `category from AI: ${resolvedCategory}`;
+    }
 
     return {
       jobId: job.id,
       status,
-      category: category.category,
+      category: resolvedCategory,
       roleFamily: category.roleFamily,
       level,
       fresherEligible,
@@ -309,17 +399,11 @@ export class ClassificationService {
       minYears: rules.minYears === null ? job.experienceMinYears : String(rules.minYears),
       maxYears: rules.maxYears === null ? job.experienceMaxYears : String(rules.maxYears),
       experienceText: rules.experienceText ?? job.experienceText,
-      usedAi,
+      usedAi: usedAi || categoryAsked,
+      aiCalls,
       aiUnavailable,
-      reason: !indiaOk
-        ? `location outside India (${job.locationCountry ?? 'unknown'})`
-        : !monitored
-          ? 'category not monitored'
-          : notFresher
-            ? notFresherReason(level, minYears, verdictMissing)
-            : batchExcluded
-              ? `targets the ${jobBatchYear} batch`
-              : category.reason,
+      categoryAsked,
+      reason,
     };
   }
 
@@ -425,7 +509,12 @@ export class ClassificationService {
       await tx.insert(jobEvents).values(
         decisions.map((d) => ({
           jobId: d.jobId,
-          type: d.status === 'FILTERED_OUT' ? 'FILTERED_OUT' : 'CLASSIFIED',
+          type:
+            d.status === 'FILTERED_OUT'
+              ? 'FILTERED_OUT'
+              : d.status === 'NEEDS_REVIEW'
+                ? 'HELD'
+                : 'CLASSIFIED',
           detail: {
             category: d.category,
             level: d.level,

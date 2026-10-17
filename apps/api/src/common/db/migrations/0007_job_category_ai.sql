@@ -1,0 +1,1 @@
+ALTER TABLE "jobs" ADD COLUMN "category_ai_at" timestamp with time zone;

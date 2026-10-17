@@ -1,5 +1,10 @@
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
-import type { BudgetPort, CachePort } from '@jobsentinel/ai';
+import {
+  allowedUnderPriority,
+  type AIPurpose,
+  type BudgetPort,
+  type CachePort,
+} from '@jobsentinel/ai';
 import { aiCalls } from '../db/schema';
 import type { Db } from '../db/db.module';
 
@@ -23,7 +28,11 @@ export class DbBudget implements BudgetPort {
     private readonly dailyTokenBudget: number,
   ) {}
 
-  async canSpend(): Promise<boolean> {
+  /**
+   * Today's usage across every purpose against the ceiling of `purpose`'s priority tier (F8,
+   * D105): low-priority work stops first, so resume parsing always has budget left.
+   */
+  async canSpend(purpose: AIPurpose): Promise<boolean> {
     const [row] = await this.db
       .select({
         calls: sql<number>`count(*) filter (where ${aiCalls.status} not in ('BUDGET_EXCEEDED','UNAVAILABLE'))::int`,
@@ -32,7 +41,10 @@ export class DbBudget implements BudgetPort {
       .from(aiCalls)
       .where(gte(aiCalls.createdAt, startOfUtcDay()));
     if (!row) return true;
-    return row.calls < this.dailyCallBudget && row.tokens < this.dailyTokenBudget;
+    return allowedUnderPriority(purpose, row, {
+      calls: this.dailyCallBudget,
+      tokens: this.dailyTokenBudget,
+    });
   }
 
   async record(entry: BudgetEntry): Promise<void> {
@@ -62,7 +74,17 @@ export class DbBudget implements BudgetPort {
     tokens: number;
     callBudget: number;
     tokenBudget: number;
+    /** Calls today per purpose, for System Status (F8, D105). */
+    byPurpose: Record<string, number>;
   }> {
+    const perPurpose = await this.db
+      .select({
+        purpose: aiCalls.purpose,
+        calls: sql<number>`count(*) filter (where ${aiCalls.status} not in ('BUDGET_EXCEEDED','UNAVAILABLE'))::int`,
+      })
+      .from(aiCalls)
+      .where(gte(aiCalls.createdAt, startOfUtcDay()))
+      .groupBy(aiCalls.purpose);
     const [row] = await this.db
       .select({
         calls: sql<number>`count(*) filter (where ${aiCalls.status} not in ('BUDGET_EXCEEDED','UNAVAILABLE'))::int`,
@@ -75,6 +97,7 @@ export class DbBudget implements BudgetPort {
       tokens: row?.tokens ?? 0,
       callBudget: this.dailyCallBudget,
       tokenBudget: this.dailyTokenBudget,
+      byPurpose: Object.fromEntries(perPurpose.map((r) => [r.purpose, r.calls])),
     };
   }
 }

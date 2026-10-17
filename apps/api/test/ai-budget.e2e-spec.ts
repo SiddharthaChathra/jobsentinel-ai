@@ -179,4 +179,27 @@ describeIf('AI budget and cache (integration)', () => {
     expect(result.status).toBe('OK');
     expect(provider.calls).toBe(1);
   }, 60_000);
+  it('enforces the priority ceilings against the real ledger (F8, D105)', async () => {
+    // Budget sized so today's existing calls plus 6 of ours sit at exactly 60% of it.
+    const used = (await new DbBudget(db, 1, 1).usage()).calls;
+    await db.insert(aiCalls).values(
+      Array.from({ length: 6 }, () => ({
+        provider: 'fake',
+        model: 'fake',
+        purpose: 'MATCH',
+        promptVersion,
+        inputHash: `prio-${Math.random()}`,
+        inputTokens: 1,
+        outputTokens: 1,
+        latencyMs: 1,
+        status: 'OK',
+      })),
+    );
+    const budget = new DbBudget(db, Math.floor((used + 6) / 0.6), 10_000_000);
+    expect(await budget.canSpend('CATEGORY_CLASSIFY')).toBe(false); // at its 60% ceiling
+    expect(await budget.canSpend('MATCH')).toBe(true);
+    expect(await budget.canSpend('RESUME_PROFILE')).toBe(true);
+    const usage = await budget.usage();
+    expect(usage.byPurpose.MATCH).toBeGreaterThanOrEqual(6);
+  });
 });

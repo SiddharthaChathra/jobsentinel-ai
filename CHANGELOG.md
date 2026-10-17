@@ -2,6 +2,13 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] A — AI category decision; F8 budget priority — 2026-10-17
+
+- **Unknown-category jobs get an AI category decision (D105)** instead of being filtered unseen. Category only — location, batch, experience and recency stay rule-based and run first; the AI cannot override them. An unsure or "unknown" answer holds the job for review (never notified). Each job is asked once. The model is told when a description is only a preview (Adzuna) and to answer "unknown" rather than guess.
+- **AI budget priority:** resume parsing, then fresher checks, then matching, then the rest, with the category check last; lower priorities stop earlier as the day's budget fills. System Status reports AI calls per purpose.
+- Migration `0007_job_category_ai` (one nullable column).
+- Tests: ai 23 (+7), API e2e 112 (+10).
+
 ## [Phase 13] F2 — Safer auto-pause rule — 2026-10-17
 
 - **Auto-pause needs 20+ collected jobs with none kept over 30 days (D104)** — both values are settings (`AUTO_PAUSE_MIN_COLLECTED`, `AUTO_PAUSE_WINDOW_DAYS`). Smaller samples are never paused.

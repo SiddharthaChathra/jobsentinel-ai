@@ -117,6 +117,11 @@ export const SystemStatus = z.object({
     callBudget: z.number().int(),
     tokensToday: z.number().int(),
     tokenBudget: z.number().int(),
+    /**
+     * Calls today per purpose, e.g. CATEGORY_CLASSIFY (F8, D105). Optional for compatibility:
+     * clients that predate it keep working.
+     */
+    byPurpose: z.record(z.string(), z.number().int()).optional(),
   }),
 });
 export type SystemStatus = z.infer<typeof SystemStatus>;
