@@ -194,6 +194,9 @@ export function JobFilters() {
               data-testid="salary-undisclosed-toggle"
               type="checkbox"
               checked={query.includeUndisclosedSalary !== false}
+              // Only meaningful with a minimum: without one the API ignores it (D111), and the
+              // hook drops it, so an enabled box would silently re-check itself.
+              disabled={query.salaryMin === undefined}
               onChange={(e) => {
                 const checked = e.target.checked;
                 if (checked) {

@@ -258,6 +258,16 @@ describe('Phase 13 F3 Web Features', () => {
       expect(screen.getByLabelText(/Include jobs that don't state a salary/i)).toBeInTheDocument();
     });
 
+    it('renders JobFilters: the toggle is disabled until a minimum is set, enabled after', () => {
+      currentParams = new URLSearchParams();
+      const { unmount } = render(<JobFilters />, { wrapper: createWrapper() });
+      expect(screen.getByTestId('salary-undisclosed-toggle')).toBeDisabled();
+      unmount();
+      currentParams = new URLSearchParams('salaryMin=600000');
+      render(<JobFilters />, { wrapper: createWrapper() });
+      expect(screen.getByTestId('salary-undisclosed-toggle')).toBeEnabled();
+    });
+
     it('renders JobFilters: setting minimum salary sends salaryMin in URL', () => {
       currentParams = new URLSearchParams();
 

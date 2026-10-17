@@ -6,7 +6,7 @@ import { JobDetail } from '@/components/jobs/JobDetail';
 import { TrackerActions } from '@/components/jobs/TrackerActions';
 import { MatchBreakdown } from '@/components/jobs/MatchBreakdown';
 import { VerificationBadge } from '@/components/jobs/VerificationBadge';
-import { Building, MapPin, Banknote, Clock } from 'lucide-react';
+import { Building, MapPin, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RelativeTime } from '@/components/common/RelativeTime';
 
@@ -45,12 +45,6 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 <span>{job.location.isRemote ? 'Remote' : (job.location.text ?? 'Unknown')}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Banknote className="h-4 w-4" />
-                <span>
-                  {job.salary?.disclosed && job.salary?.text ? job.salary.text : 'Not disclosed'}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 {job.postedAt ? <RelativeTime date={job.postedAt} /> : 'Unknown'}
               </div>
@@ -63,44 +57,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           {job.fresherEligible && (
             <Badge className="bg-green-600 hover:bg-green-700">Fresher Eligible</Badge>
           )}
-          {job.postingType === 'CAMPUS_DRIVE' && (
-            <Badge
-              variant="secondary"
-              data-testid={`posting-type-${job.id}`}
-              className="border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300"
-            >
-              Campus drive
-            </Badge>
-          )}
-          {job.postingType === 'OFF_CAMPUS_PROGRAM' && (
-            <Badge
-              variant="secondary"
-              data-testid={`posting-type-${job.id}`}
-              className="border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
-            >
-              Off-campus programme
-            </Badge>
-          )}
           {job.employmentType !== 'UNKNOWN' && (
             <Badge variant="outline">{job.employmentType.replace('_', ' ')}</Badge>
           )}
           {job.isNew && <Badge className="bg-blue-500 hover:bg-blue-600">New</Badge>}
-          {job.attribution && (
-            <a
-              href={job.attribution.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              data-testid={`attribution-${job.id}`}
-              className="inline-flex min-h-[23px] min-w-[116px] items-center justify-center rounded-md border border-border/80 bg-background/80 px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              style={{ minWidth: 116, minHeight: 23 }}
-              aria-label={`Jobs by ${job.attribution.label}`}
-            >
-              Jobs by{' '}
-              <span className="ml-1 font-semibold text-primary underline">
-                {job.attribution.label}
-              </span>
-            </a>
-          )}
         </div>
       </header>
 
