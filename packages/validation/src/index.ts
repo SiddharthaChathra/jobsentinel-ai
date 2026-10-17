@@ -16,3 +16,5 @@ export * from './match/score';
 export * from './notify/decide';
 export * from './sources/report';
 export * from './review/held';
+export * from './classify/batch-years';
+export * from './sources/quota';

@@ -1,6 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import type { ScanTrigger } from '@jobsentinel/types';
+import {
+  checkQuota,
+  windowStart,
+  type QuotaDecision,
+  type QuotaWindow,
+} from '@jobsentinel/validation';
 import { SCAN_INTERVAL_SEC, type Env } from '@jobsentinel/config';
 import { ENV } from '../common/config/config.module';
 import { DB, type Db } from '../common/db/db.module';
@@ -16,9 +22,18 @@ import { SourceRegistry } from './source-registry';
 
 export type SourceRow = typeof jobSources.$inferSelect;
 
+/** When to look again after a quota refusal: soon for a short window, later for a long one. */
+const QUOTA_RETRY_MS: Record<QuotaWindow, number> = {
+  perMinute: 2 * 60_000,
+  perDay: 60 * 60_000,
+  perWeek: 6 * 3_600_000,
+  perMonth: 12 * 3_600_000,
+};
+
 export interface ScanSummary {
   scanRunId: string;
-  status: 'SUCCEEDED' | 'FAILED' | 'TIMED_OUT';
+  /** SKIPPED_QUOTA: not run — it would have exceeded the provider's published quota (D108). */
+  status: 'SUCCEEDED' | 'FAILED' | 'TIMED_OUT' | 'SKIPPED_QUOTA';
   found: number;
   new: number;
   updated: number;
@@ -53,6 +68,33 @@ export class SourceManager {
   ) {}
 
   async runScan(source: SourceRow, trigger: ScanTrigger): Promise<ScanSummary> {
+    // Quota first, manual scans included: a refused scan creates no run, makes no request and is
+    // not a failure (no backoff) — it is simply postponed (D108).
+    const quota = await this.quotaFor(source);
+    if (quota && !quota.allowed) {
+      const retryMs = QUOTA_RETRY_MS[quota.window];
+      await this.db
+        .update(jobSources)
+        .set({
+          leaseUntil: null,
+          nextScanAt: sql`now() + (${Math.round(retryMs / 1000)} * interval '1 second')`,
+        })
+        .where(eq(jobSources.id, source.id));
+      this.logger.warn(
+        `${source.name}: skipped — ${quota.window} quota ${quota.used}/${quota.cap} would be exceeded`,
+      );
+      return {
+        scanRunId: '',
+        status: 'SKIPPED_QUOTA',
+        found: 0,
+        new: 0,
+        updated: 0,
+        attached: 0,
+        skipped: 0,
+        durationMs: 0,
+        error: `quota ${quota.window} ${quota.used}/${quota.cap}`,
+      };
+    }
     const startedAt = new Date();
     const [run] = await this.db
       .insert(scanRuns)
@@ -68,7 +110,10 @@ export class SourceManager {
     const counts = { found: 0, new: 0, updated: 0, attached: 0, skipped: 0, requests: 0 };
     let cursor: string | null = source.lastCursor;
 
-    const finish = async (status: ScanSummary['status'], error?: string): Promise<ScanSummary> => {
+    const finish = async (
+      status: Exclude<ScanSummary['status'], 'SKIPPED_QUOTA'>,
+      error?: string,
+    ): Promise<ScanSummary> => {
       const durationMs = Date.now() - startedAt.getTime();
       await this.db
         .update(scanRuns)
@@ -188,12 +233,54 @@ export class SourceManager {
   }
 
   /** On success the cursor moves to the scan's *start* time and health resets (docs 07 §2.1). */
+  /**
+   * The source's scan interval, never below what its adapter declares safe. The adapter's minimum
+   * was enforced only when a source was created or edited through the API, so seeded Adzuna sources
+   * fell back to the hourly LOW default and ran ~34 scans a day against a 250/day quota (D108).
+   */
+  private intervalSec(source: SourceRow): number {
+    const configured = source.scanIntervalSec ?? SCAN_INTERVAL_SEC[source.priority];
+    const floor = this.registry.get(source.adapter)?.metadata.minIntervalSec ?? 0;
+    return Math.max(configured, floor);
+  }
+
+  /** Rolling-window usage for providers with a published quota; null for those without. */
+  private async quotaFor(source: SourceRow): Promise<QuotaDecision | null> {
+    if (source.adapter !== 'adzuna') return null;
+    const now = new Date();
+    const at = (w: QuotaWindow) => windowStart(w, now).toISOString();
+    const maxPages = Number((source.config as { maxPages?: unknown } | null)?.maxPages ?? 2) || 2;
+    // A scan still RUNNING has made requests that are not counted yet: reserve its pages.
+    const [row] = await this.db.execute<Record<QuotaWindow, number>>(sql`
+      select
+        coalesce(sum(case when r.status = 'RUNNING' then ${maxPages} else r.requests_made end)
+          filter (where r.started_at >= ${at('perMinute')}::timestamptz), 0)::int as "perMinute",
+        coalesce(sum(case when r.status = 'RUNNING' then ${maxPages} else r.requests_made end)
+          filter (where r.started_at >= ${at('perDay')}::timestamptz), 0)::int as "perDay",
+        coalesce(sum(case when r.status = 'RUNNING' then ${maxPages} else r.requests_made end)
+          filter (where r.started_at >= ${at('perWeek')}::timestamptz), 0)::int as "perWeek",
+        coalesce(sum(case when r.status = 'RUNNING' then ${maxPages} else r.requests_made end), 0)::int as "perMonth"
+      from scan_runs r join job_sources s on s.id = r.source_id
+      where s.adapter = 'adzuna' and r.started_at >= ${at('perMonth')}::timestamptz`);
+    return checkQuota(
+      row ?? { perMinute: 0, perDay: 0, perWeek: 0, perMonth: 0 },
+      {
+        perMinute: this.env.ADZUNA_LIMIT_PER_MINUTE,
+        perDay: this.env.ADZUNA_LIMIT_PER_DAY,
+        perWeek: this.env.ADZUNA_LIMIT_PER_WEEK,
+        perMonth: this.env.ADZUNA_LIMIT_PER_MONTH,
+      },
+      maxPages,
+      this.env.SOURCE_QUOTA_SAFETY,
+    );
+  }
+
   private async markSuccess(
     source: SourceRow,
     startedAt: Date,
     cursor: string | null,
   ): Promise<void> {
-    const interval = source.scanIntervalSec ?? SCAN_INTERVAL_SEC[source.priority];
+    const interval = this.intervalSec(source);
     await this.db
       .update(jobSources)
       .set({
@@ -214,7 +301,7 @@ export class SourceManager {
   /** Backoff table from docs 06 §7; blocked sources disable themselves after 3 strikes. */
   private async markFailure(source: SourceRow, error: string, blocked: boolean): Promise<void> {
     const failures = source.consecutiveFailures + 1;
-    const interval = source.scanIntervalSec ?? SCAN_INTERVAL_SEC[source.priority];
+    const interval = this.intervalSec(source);
     let delaySec: number;
     let status: SourceRow['status'];
     if (failures <= 2) {

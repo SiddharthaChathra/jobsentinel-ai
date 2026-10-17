@@ -2,6 +2,12 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F3 (part 1) — Adzuna quota guard; multi-batch parsing — 2026-10-17
+
+- **Adzuna quota (D108):** production had made 462 Adzuna requests in 24 hours, above the published 250/day. Fixed at the root — sources are never scanned more often than their adapter allows (Adzuna: every 6 h; seeded sources were running hourly) — and guarded: every Adzuna scan, manual ones included, is refused before it would pass 90% of the per-minute, daily, weekly or monthly quota.
+- **Multi-batch postings (D107):** "2025/2026/2027 batch", "2026/27", "2024-2027", "Class of 2027" and batches named in the title are all read. A job is eligible when it names no batch or your year is among those it names.
+- Tests: validation 306 (+25), API e2e 119 (+2).
+
 ## [Phase 13] C — Needs review — 2026-10-17
 
 - **Why the 18 fresher jobs were held (D106):** every one was "company could not be verified" — Adzuna links only to its own pages, and Adzuna blocks automated requests, so we do not follow them. No scam flag, no trainee-title rule involved.

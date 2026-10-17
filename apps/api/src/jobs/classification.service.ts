@@ -11,8 +11,8 @@ import {
   classifyCategory,
   classifyExperience,
   isIndiaLocation,
-  extractJobBatchYear,
-  isBatchYearCompatible,
+  extractBatchYears,
+  isBatchEligible,
   isFresherRole,
   MAX_FRESHER_MIN_YEARS,
   type ExperienceEvidence,
@@ -243,9 +243,13 @@ export class ClassificationService {
     });
     const indiaOk = inIndia || job.isRemote;
 
-    const jobBatchYear = extractJobBatchYear(job.description);
+    // Every batch the posting names, title included ("Freshers 2026/27"): eligible only if the
+    // user's year is among them (D107). "2025/2026/2027" includes a 2027 graduate; "2025 only" not.
+    const batchYears = extractBatchYears(`${job.title}
+${job.description}`);
+    const jobBatchYear = batchYears?.join('/') ?? null;
     const isBatchCompatible = Array.from(prefs.graduationYears).some((gy) =>
-      isBatchYearCompatible(jobBatchYear, gy),
+      isBatchEligible(batchYears, gy),
     );
 
     // Category (A, D105). The rules could not place it: ask the AI for the CATEGORY only — once

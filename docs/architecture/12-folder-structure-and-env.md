@@ -113,6 +113,11 @@ TELEGRAM_WEBHOOK_SECRET=                      # optional; derived from the bot t
 # ───────── Sources (optional keys) ─────────
 ADZUNA_APP_ID=
 ADZUNA_APP_KEY=
+ADZUNA_LIMIT_PER_MINUTE=25                    # Adzuna's published quota (terms, 2026-10-17); scans stop before it (D108)
+ADZUNA_LIMIT_PER_DAY=250
+ADZUNA_LIMIT_PER_WEEK=1000
+ADZUNA_LIMIT_PER_MONTH=2500
+SOURCE_QUOTA_SAFETY=0.9                       # use at most this share of any quota window
 
 # ───────── Tests ─────────
 TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres

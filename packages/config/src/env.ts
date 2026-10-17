@@ -243,6 +243,16 @@ export const envSchema = z
     // ── Sources ─────────────────────────────────────────────────────────────
     ADZUNA_APP_ID: optStr(),
     ADZUNA_APP_KEY: optStr(),
+    // Adzuna's published API quota (developer.adzuna.com terms, checked 2026-10-17); the scan path
+    // refuses any scan that would take a rolling window past QUOTA_SAFETY of it (D108).
+    ADZUNA_LIMIT_PER_MINUTE: int(25, { min: 1 }),
+    ADZUNA_LIMIT_PER_DAY: int(250, { min: 1 }),
+    ADZUNA_LIMIT_PER_WEEK: int(1000, { min: 1 }),
+    ADZUNA_LIMIT_PER_MONTH: int(2500, { min: 1 }),
+    SOURCE_QUOTA_SAFETY: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().min(0.1).max(1).default(0.9),
+    ),
 
     // ── Tests ───────────────────────────────────────────────────────────────
     TEST_DATABASE_URL: optStr(),

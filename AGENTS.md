@@ -141,7 +141,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - A source is supported only if it is a public API/feed or a public page allowed by `robots.txt`/terms.
 - Adapters implement `JobSource`, emit `RawJob`, never classify, never evade blocks (403/429/challenge ⇒ back off, mark BLOCKED, eventually disable).
 - One scan = one `scan_runs` row = one unit of failure isolation; a failed scan never advances the cursor.
-- Respect per-source politeness (`min_request_gap_ms`) and documented rate guidelines.
+- Respect per-source politeness (`min_request_gap_ms`) and documented rate guidelines. A provider's published quota is enforced in code before every scan (`checkQuota`, D108: Adzuna 25/min, 250/day, 1,000/week, 2,500/month, at 90%), and a source is never scanned more often than its adapter's `minIntervalSec`.
 - Before seeding/adding an ATS board, confirm the company behind the slug from its postings (slugs are global; see docs/sources.md).
 - A source's company and domain apply only to postings that name that company (`isSameCompany`). Keyword searches (the Adzuna employer sources) return other employers too; lending them the domain verifies the wrong company (D83).
 - All outbound HTTP goes through `HttpClient` (`HTTP_CLIENT` token); adapters never call `fetch` directly.
