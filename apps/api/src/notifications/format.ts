@@ -1,4 +1,4 @@
-import type { PriorityBand } from '@jobsentinel/types';
+import type { MatchScoring, PriorityBand } from '@jobsentinel/types';
 import type { InlineButton } from './telegram.client';
 
 /** Telegram hard-limits a message to 4096 characters. */
@@ -18,6 +18,8 @@ export interface JobAlertData {
   salaryDisclosed: boolean;
   score: number;
   priority: PriorityBand;
+  /** RULES_ONLY is said in the alert (F8, D112). Optional: older queued snapshots lack it. */
+  scoring?: MatchScoring;
   matchedSkills: string[];
   missingSkills: string[];
   companyVerified: boolean;
@@ -76,7 +78,9 @@ export function formatInstant(
   if (job.fresherEligible) facts.push('Fresher ✓');
   lines.push(facts.join(' · '));
 
-  lines.push(`🎯 Match ${job.score}% — ${BAND_LABEL[job.priority]}`);
+  lines.push(
+    `🎯 Match ${job.score}% — ${BAND_LABEL[job.priority]}${job.scoring === 'RULES_ONLY' ? ' · rules only' : ''}`,
+  );
 
   const skills: string[] = [];
   if (job.matchedSkills.length)

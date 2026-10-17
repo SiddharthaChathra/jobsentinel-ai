@@ -95,6 +95,30 @@ describe('AIService', () => {
     expect(p.calls).toHaveLength(0);
   });
 
+  it('stops one user at their daily limit, without touching other users or resume parsing (F8, D112)', async () => {
+    const ok = '{"level":"FRESHER","confidence":0.9}';
+    const p = new FakeProvider('a', [ok, ok, ok, ok]);
+    const svc = new AIService([p], new InMemoryBudget(100, 2), new InMemoryCache(), logger, 0);
+    const forUser = (userId: string, n: number, purpose: AIRequest<unknown>['purpose']) => ({
+      ...req(),
+      purpose,
+      cacheKeyInput: { userId, n }, // distinct inputs: no cache hits
+      meta: { userId },
+    });
+    expect((await svc.run(forUser('u1', 1, 'MATCH'))).status).toBe('OK');
+    expect((await svc.run(forUser('u1', 2, 'MATCH'))).status).toBe('OK');
+    const third = await svc.run(forUser('u1', 3, 'MATCH'));
+    expect(third.status).toBe('BUDGET_EXCEEDED');
+    expect(p.calls).toHaveLength(2); // the provider was never asked for the third
+    // Resume parsing is exempt (its own cap, D93); another user has their own allowance.
+    expect((await svc.run(forUser('u1', 4, 'RESUME_PROFILE'))).status).toBe('OK');
+    expect((await svc.run(forUser('u2', 1, 'MATCH'))).status).toBe('OK');
+    // System work (no user) is limited only by the global budget.
+    expect((await svc.run({ ...req(), cacheKeyInput: { n: 9 } })).status).not.toBe(
+      'BUDGET_EXCEEDED',
+    );
+  });
+
   it('hashInput is stable across key order', () => {
     expect(hashInput('MATCH', 'v1', { a: 1, b: [1, 2] })).toBe(
       hashInput('MATCH', 'v1', { b: [1, 2], a: 1 }),

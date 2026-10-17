@@ -1,15 +1,17 @@
 import './helpers/test-env';
 import { z } from 'zod';
 import { AIService, type AIProvider, type AIRequest } from '@jobsentinel/ai';
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
+import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 import { Test } from '@nestjs/testing';
 import { DbBudget, DbCache } from '../src/common/ai/db-ai';
 import { DB, type Db } from '../src/common/db/db.module';
-import { aiCalls } from '../src/common/db/schema';
+import { aiCalls, aiUsage } from '../src/common/db/schema';
 import { WorkerModule } from '../src/worker.module';
 
 /**
- * The AI budget and cache are backed by `ai_calls`, not process memory (docs 09 §6): the worker
+ * The AI budget and cache are backed by the database, not process memory (docs 09 §6): `ai_calls`
+ * logs and caches each call, `ai_usage` holds the daily totals the budget checks (F8, D112). The worker
  * is a short-lived `--once` process, so an in-memory counter would reset the daily cap every tick
  * and an in-memory cache would never live long enough to save a call.
  */
@@ -65,8 +67,12 @@ describeIf('AI budget and cache (integration)', () => {
     usedToday = (await new DbBudget(db, 1, 1).usage()).calls;
   }, 60_000);
 
+  /** Providers only this spec uses: its `ai_usage` rows are removed with them. */
+  const TEST_PROVIDERS = ['counting', 'fake'];
+
   afterAll(async () => {
     await db.delete(aiCalls).where(eq(aiCalls.promptVersion, promptVersion));
+    await db.delete(aiUsage).where(inArray(aiUsage.provider, TEST_PROVIDERS));
     await moduleRef.close();
   }, 60_000);
 
@@ -94,6 +100,14 @@ describeIf('AI budget and cache (integration)', () => {
       outputTokens: 7,
     });
     expect(rows[0]!.response).toEqual({ answer: 'forty-two' });
+
+    // …and adds it to today's ai_usage row for its user (none: system work) and provider (D112).
+    const today = new Date().toISOString().slice(0, 10);
+    const [usage] = await db
+      .select()
+      .from(aiUsage)
+      .where(and(eq(aiUsage.provider, 'counting'), eq(aiUsage.usageDate, today)));
+    expect(usage).toMatchObject({ userId: null, calls: 1, tokens: 18 });
   }, 60_000);
 
   it('serves an identical input from the database, so a new process pays nothing', async () => {
@@ -154,6 +168,10 @@ describeIf('AI budget and cache (integration)', () => {
       .update(aiCalls)
       .set({ createdAt: sql`now() - interval '2 days'` })
       .where(eq(aiCalls.promptVersion, promptVersion));
+    await db
+      .update(aiUsage)
+      .set({ usageDate: sql`${aiUsage.usageDate} - 2` })
+      .where(inArray(aiUsage.provider, TEST_PROVIDERS));
 
     const usage = await new DbBudget(db, roomFor(10), 1_000_000_000).usage();
     const mine = await db
@@ -195,6 +213,12 @@ describeIf('AI budget and cache (integration)', () => {
         status: 'OK',
       })),
     );
+    await db.insert(aiUsage).values({
+      usageDate: new Date().toISOString().slice(0, 10),
+      provider: 'fake',
+      calls: 6,
+      tokens: 12,
+    });
     const budget = new DbBudget(db, Math.floor((used + 6) / 0.6), 10_000_000);
     expect(await budget.canSpend('CATEGORY_CLASSIFY')).toBe(false); // at its 60% ceiling
     expect(await budget.canSpend('MATCH')).toBe(true);
@@ -202,4 +226,40 @@ describeIf('AI budget and cache (integration)', () => {
     const usage = await budget.usage();
     expect(usage.byPurpose.MATCH).toBeGreaterThanOrEqual(6);
   });
+
+  it('holds each user to the per-user daily limit from ai_usage (F8, D112)', async () => {
+    const provider = new CountingProvider();
+    const budget = new DbBudget(db, 1_000_000, 1_000_000_000, 2);
+    const svc = new AIService([provider], budget, new DbCache(db, 30), silent);
+    const alice = randomUUID();
+    const bob = randomUUID();
+    const forUser = (
+      userId: string,
+      marker: string,
+      p: AIRequest<unknown>['purpose'] = 'MATCH',
+    ) => ({
+      ...request(`${userId}-${marker}`),
+      purpose: p,
+      meta: { userId },
+    });
+
+    expect((await svc.run(forUser(alice, '1'))).status).toBe('OK');
+    expect((await svc.run(forUser(alice, '2'))).status).toBe('OK');
+    expect((await svc.run(forUser(alice, '3'))).status).toBe('BUDGET_EXCEEDED');
+    expect(provider.calls).toBe(2);
+    // Exempt: resume parsing has its own cap (D93). Another user has their own allowance.
+    expect((await svc.run(forUser(alice, '4', 'RESUME_PROFILE'))).status).toBe('OK');
+    expect((await svc.run(forUser(bob, '1'))).status).toBe('OK');
+
+    const rows = await db
+      .select({ userId: aiUsage.userId, calls: aiUsage.calls })
+      .from(aiUsage)
+      .where(and(eq(aiUsage.provider, 'counting'), inArray(aiUsage.userId, [alice, bob])));
+    // Alice: 2 matches + 1 resume parse; the refused third call spent nothing.
+    expect(Object.fromEntries(rows.map((r) => [r.userId, r.calls]))).toEqual({
+      [alice]: 3,
+      [bob]: 1,
+    });
+    expect((await budget.usage()).userCallLimit).toBe(2);
+  }, 60_000);
 });

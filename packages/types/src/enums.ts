@@ -100,6 +100,13 @@ export type ScanTrigger = z.infer<typeof ScanTrigger>;
 export const PriorityBand = z.enum(['VERY_HIGH', 'HIGH', 'MEDIUM', 'OTHER']);
 export type PriorityBand = z.infer<typeof PriorityBand>;
 
+/**
+ * How a match score was computed (F8, D112): the deterministic scorer alone, or refined by the
+ * AI. RULES_ONLY rows above the AI pre-filter are retried when budget returns (`refinePending`).
+ */
+export const MatchScoring = z.enum(['RULES_ONLY', 'AI_REFINED']);
+export type MatchScoring = z.infer<typeof MatchScoring>;
+
 export const ApplicationStatus = z.enum([
   'VIEWED',
   'APPLIED',

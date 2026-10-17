@@ -86,6 +86,7 @@ export class StatusService {
         tokensToday: aiUsage.tokens,
         tokenBudget: aiUsage.tokenBudget,
         byPurpose: aiUsage.byPurpose,
+        userCallLimit: aiUsage.userCallLimit,
       },
     };
   }

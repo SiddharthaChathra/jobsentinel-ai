@@ -135,6 +135,7 @@ export class DigestService {
           priority: jobMatches.priority,
           matchedSkills: jobMatches.matchedSkills,
           missingSkills: jobMatches.missingSkills,
+          scoring: jobMatches.scoring,
         },
       })
       .from(jobMatches)

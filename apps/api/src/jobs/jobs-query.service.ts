@@ -101,6 +101,7 @@ export class JobsQueryService {
           overallScore: jobMatches.overallScore,
           priority: jobMatches.priority,
           matchedSkills: jobMatches.matchedSkills,
+          scoring: jobMatches.scoring,
         },
         saved: sql<boolean>`${savedJobs.jobId} is not null`,
         trackerStatus: applications.status,
@@ -424,6 +425,7 @@ function toCard(row: Row): JobCard {
             overallScore: row.match.overallScore,
             priority: row.match.priority,
             matchedSkills: row.match.matchedSkills ?? [],
+            scoring: row.match.scoring ?? 'RULES_ONLY',
           }
         : null,
     tracker: { saved: row.saved, status: row.trackerStatus ?? null },

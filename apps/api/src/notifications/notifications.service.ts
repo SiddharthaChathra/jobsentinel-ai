@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gte, inArray, sql } from 'drizzle-orm';
-import type { NotificationChannel } from '@jobsentinel/types';
+import type { MatchScoring, NotificationChannel } from '@jobsentinel/types';
 import {
   INSTANT_FRESHNESS_HOURS,
   decideNotification,
@@ -68,6 +68,7 @@ export class NotificationsService {
             priority: jobMatches.priority,
             matchedSkills: jobMatches.matchedSkills,
             missingSkills: jobMatches.missingSkills,
+            scoring: jobMatches.scoring,
           },
         })
         .from(jobMatches)
@@ -273,6 +274,7 @@ type AlertRow = {
     priority: string;
     matchedSkills: string[];
     missingSkills: string[];
+    scoring?: MatchScoring;
   };
 };
 
@@ -291,6 +293,7 @@ export function toAlertData(row: AlertRow): JobAlertData {
     salaryDisclosed: row.job.salaryDisclosed,
     score: row.match.overallScore,
     priority: row.match.priority as JobAlertData['priority'],
+    scoring: row.match.scoring,
     matchedSkills: row.match.matchedSkills,
     missingSkills: row.match.missingSkills,
     companyVerified: row.company.verified === 'VERIFIED',

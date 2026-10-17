@@ -1,4 +1,14 @@
-import { index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  date,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { logLevelEnum } from './enums';
 import { timestamps } from './shared';
 
@@ -50,6 +60,29 @@ export const aiCalls = pgTable(
     // Cache hits look up by (purpose, prompt_version, input_hash) among successful calls.
     index('ai_calls_cache_idx').on(t.purpose, t.promptVersion, t.inputHash),
     index('ai_calls_created_idx').on(t.createdAt.desc()),
+  ],
+).enableRLS();
+
+// ── ai_usage (daily totals per user and provider; the budget reads this) ──────
+/**
+ * One row per UTC day, user and provider (F8, D112). `ai_calls` stays the per-call ledger and
+ * response cache (60-day retention); this is what the budget checks before every call, so the
+ * check is a single small read rather than a count over the day's calls. `user_id` null is
+ * system work (classification, validation) that serves every user.
+ */
+export const aiUsage = pgTable(
+  'ai_usage',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    usageDate: date('usage_date', { mode: 'string' }).notNull(),
+    userId: uuid('user_id'),
+    provider: text('provider').notNull(),
+    calls: integer('calls').notNull().default(0),
+    tokens: integer('tokens').notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    unique('ai_usage_day_user_provider').on(t.usageDate, t.userId, t.provider).nullsNotDistinct(),
   ],
 ).enableRLS();
 

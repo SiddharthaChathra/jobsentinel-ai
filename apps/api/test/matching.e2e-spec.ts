@@ -297,12 +297,22 @@ describeIf('matching stage (integration)', () => {
       aiProvider: 'fake',
       aiModel: 'fake-1',
       promptVersion: 'match.v1',
+      scoring: 'AI_REFINED',
     });
+    // The AI calls were made for this user, so they count against their daily limit (D112).
+    expect(
+      fakeAi.calls.filter((c) => c.purpose === 'MATCH').every((c) => c.meta?.userId === userId),
+    ).toBe(true);
 
     // The hopeless job was scored deterministically but never sent to the AI.
     // skills 0 · role 10 · experience 0 (EXPERIENCED, fresherOnly) · location 25 → 6
     const skipped = await matchOf(hopelessId);
-    expect(skipped).toMatchObject({ overallScore: 6, priority: 'OTHER', aiProvider: null });
+    expect(skipped).toMatchObject({
+      overallScore: 6,
+      priority: 'OTHER',
+      aiProvider: null,
+      scoring: 'RULES_ONLY',
+    });
   }, 120_000);
 
   it('falls back to the deterministic score when the AI is unavailable', async () => {
@@ -320,11 +330,13 @@ describeIf('matching stage (integration)', () => {
     expect(result).toMatchObject({ scored: 1, aiUsed: 0, aiUnavailable: 1 });
 
     const row = await matchOf(id);
+    // Budget spent or provider down: the deterministic score stands, labelled as such (F8, D112).
     expect(row).toMatchObject({
       overallScore: 100,
       priority: 'VERY_HIGH',
       aiProvider: null,
       promptVersion: null,
+      scoring: 'RULES_ONLY',
     });
   }, 120_000);
 
@@ -362,6 +374,7 @@ describeIf('matching stage (integration)', () => {
       aiProvider: 'fake',
       promptVersion: 'match.v1',
       skillScore: 83,
+      scoring: 'AI_REFINED', // the label follows the refinement
     });
     expect(rows[0]!.explanation).toBe('Recovered provider verdict.');
 

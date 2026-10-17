@@ -103,6 +103,8 @@ AI_LOCAL_BASE_URL=http://localhost:11434
 AI_LOCAL_MODEL=llama3.1
 AI_DAILY_CALL_BUDGET=500
 AI_DAILY_TOKEN_BUDGET=1500000
+# AI calls per user per day for their matches (resume parsing is capped separately, D93/D112)
+AI_USER_DAILY_CALL_LIMIT=100
 AI_ALLOW_DETERMINISTIC_ALERTS=true
 
 # ───────── Notifications ─────────

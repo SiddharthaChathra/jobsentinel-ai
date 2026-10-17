@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { CompanyVerification, EmploymentType } from '../enums';
+import type { CompanyVerification, EmploymentType, MatchScoring } from '../enums';
 import {
   ApplicationStatus,
   ExperienceLevel,
@@ -109,6 +109,11 @@ export interface JobMatchSummary {
   overallScore: number;
   priority: PriorityBand;
   matchedSkills: string[];
+  /**
+   * RULES_ONLY: deterministic score only (AI budget spent, unavailable, or not worth a call).
+   * The API always sends it; optional so clients that predate it keep compiling (F8, D112).
+   */
+  scoring?: MatchScoring;
 }
 
 export interface TrackerState {

@@ -59,6 +59,14 @@ describe('formatInstant', () => {
     expect(text).toContain('Deadline: 30 Sep');
   });
 
+  it('says when a score is rules-only, and only then (F8, D112)', () => {
+    expect(formatInstant(job({ scoring: 'RULES_ONLY' }), now)).toContain(
+      '🎯 Match 91% — Very High · rules only',
+    );
+    expect(formatInstant(job({ scoring: 'AI_REFINED' }), now)).not.toContain('rules only');
+    expect(formatInstant(job(), now)).not.toContain('rules only'); // older queued snapshot
+  });
+
   it('never claims verification the job does not have', () => {
     const text = formatInstant(job({ companyVerified: false, applicationVerified: false }), now);
     expect(text).toContain('Company unverified');

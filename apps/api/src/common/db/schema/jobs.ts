@@ -21,6 +21,7 @@ import {
   experienceLevelEnum,
   jobCategoryEnum,
   jobStatusEnum,
+  matchScoringEnum,
   priorityBandEnum,
   urlStatusEnum,
   validationStatusEnum,
@@ -199,6 +200,8 @@ export const jobMatches = pgTable(
     aiProvider: text('ai_provider'),
     aiModel: text('ai_model'),
     promptVersion: text('prompt_version'),
+    // Explicit, not inferred from ai_provider, so the UI and digest can say "rules only" (D112).
+    scoring: matchScoringEnum('scoring').notNull().default('RULES_ONLY'),
     computedAt: timestamp('computed_at', { withTimezone: true }).notNull().defaultNow(),
     ...timestamps,
   },

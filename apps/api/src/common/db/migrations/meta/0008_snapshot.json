@@ -113,12 +113,8 @@
           "name": "preferences_user_id_users_id_fk",
           "tableFrom": "preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -130,9 +126,7 @@
           "name": "preferences_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -234,12 +228,8 @@
           "name": "preferred_roles_user_id_users_id_fk",
           "tableFrom": "preferred_roles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -251,9 +241,7 @@
           "name": "preferred_roles_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -311,12 +299,8 @@
           "name": "profile_skills_profile_id_profiles_id_fk",
           "tableFrom": "profile_skills",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -324,12 +308,8 @@
           "name": "profile_skills_skill_id_skills_id_fk",
           "tableFrom": "profile_skills",
           "tableTo": "skills",
-          "columnsFrom": [
-            "skill_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["skill_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -337,10 +317,7 @@
       "compositePrimaryKeys": {
         "profile_skills_profile_id_skill_id_pk": {
           "name": "profile_skills_profile_id_skill_id_pk",
-          "columns": [
-            "profile_id",
-            "skill_id"
-          ]
+          "columns": ["profile_id", "skill_id"]
         }
       },
       "uniqueConstraints": {},
@@ -349,9 +326,7 @@
           "name": "profile_skills_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "profile_id in (select id from profiles where user_id = (select auth.uid()))",
           "withCheck": "profile_id in (select id from profiles where user_id = (select auth.uid()))"
         }
@@ -481,12 +456,8 @@
           "name": "profiles_user_id_users_id_fk",
           "tableFrom": "profiles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -496,9 +467,7 @@
         "profiles_user_id_unique": {
           "name": "profiles_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         }
       },
       "policies": {
@@ -506,9 +475,7 @@
           "name": "profiles_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -671,12 +638,8 @@
           "name": "resumes_user_id_users_id_fk",
           "tableFrom": "resumes",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -688,9 +651,7 @@
           "name": "resumes_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -756,9 +717,7 @@
         "skills_normalized_name_unique": {
           "name": "skills_normalized_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "normalized_name"
-          ]
+          "columns": ["normalized_name"]
         }
       },
       "policies": {
@@ -766,9 +725,7 @@
           "name": "skills_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -839,9 +796,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {
@@ -849,9 +804,7 @@
           "name": "users_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "id = (select auth.uid())",
           "withCheck": "id = (select auth.uid())"
         }
@@ -992,9 +945,7 @@
         "companies_normalized_name_unique": {
           "name": "companies_normalized_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "normalized_name"
-          ]
+          "columns": ["normalized_name"]
         }
       },
       "policies": {
@@ -1002,9 +953,7 @@
           "name": "companies_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -1230,12 +1179,8 @@
           "name": "job_sources_company_id_companies_id_fk",
           "tableFrom": "job_sources",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1245,9 +1190,7 @@
         "job_sources_name_unique": {
           "name": "job_sources_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {
@@ -1255,9 +1198,7 @@
           "name": "job_sources_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -1412,12 +1353,8 @@
           "name": "scan_runs_source_id_job_sources_id_fk",
           "tableFrom": "scan_runs",
           "tableTo": "job_sources",
-          "columnsFrom": [
-            "source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1429,9 +1366,7 @@
           "name": "scan_runs_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -1552,12 +1487,8 @@
           "name": "applications_user_id_users_id_fk",
           "tableFrom": "applications",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1565,12 +1496,8 @@
           "name": "applications_job_id_jobs_id_fk",
           "tableFrom": "applications",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -1582,9 +1509,7 @@
           "name": "applications_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -1658,12 +1583,8 @@
           "name": "job_events_job_id_jobs_id_fk",
           "tableFrom": "job_events",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1675,9 +1596,7 @@
           "name": "job_events_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -1880,12 +1799,8 @@
           "name": "job_matches_job_id_jobs_id_fk",
           "tableFrom": "job_matches",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1893,12 +1808,8 @@
           "name": "job_matches_user_id_users_id_fk",
           "tableFrom": "job_matches",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1910,9 +1821,7 @@
           "name": "job_matches_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -2045,12 +1954,8 @@
           "name": "job_source_mappings_job_id_jobs_id_fk",
           "tableFrom": "job_source_mappings",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2058,12 +1963,8 @@
           "name": "job_source_mappings_source_id_job_sources_id_fk",
           "tableFrom": "job_source_mappings",
           "tableTo": "job_sources",
-          "columnsFrom": [
-            "source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2075,9 +1976,7 @@
           "name": "job_source_mappings_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -2246,12 +2145,8 @@
           "name": "job_validation_job_id_jobs_id_fk",
           "tableFrom": "job_validation",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2263,9 +2158,7 @@
           "name": "job_validation_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -2779,12 +2672,8 @@
           "name": "jobs_company_id_companies_id_fk",
           "tableFrom": "jobs",
           "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["company_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2796,9 +2685,7 @@
           "name": "jobs_read",
           "as": "PERMISSIVE",
           "for": "SELECT",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "true"
         }
       },
@@ -2848,12 +2735,8 @@
           "name": "saved_jobs_user_id_users_id_fk",
           "tableFrom": "saved_jobs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2861,12 +2744,8 @@
           "name": "saved_jobs_job_id_jobs_id_fk",
           "tableFrom": "saved_jobs",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -2874,10 +2753,7 @@
       "compositePrimaryKeys": {
         "saved_jobs_user_id_job_id_pk": {
           "name": "saved_jobs_user_id_job_id_pk",
-          "columns": [
-            "user_id",
-            "job_id"
-          ]
+          "columns": ["user_id", "job_id"]
         }
       },
       "uniqueConstraints": {},
@@ -2886,9 +2762,7 @@
           "name": "saved_jobs_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -2981,12 +2855,8 @@
           "name": "notification_settings_user_id_users_id_fk",
           "tableFrom": "notification_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2998,9 +2868,7 @@
           "name": "notification_settings_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -3218,12 +3086,8 @@
           "name": "notifications_user_id_users_id_fk",
           "tableFrom": "notifications",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3231,12 +3095,8 @@
           "name": "notifications_job_id_jobs_id_fk",
           "tableFrom": "notifications",
           "tableTo": "jobs",
-          "columnsFrom": [
-            "job_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["job_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3248,9 +3108,7 @@
           "name": "notifications_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -3319,12 +3177,8 @@
           "name": "telegram_links_user_id_users_id_fk",
           "tableFrom": "telegram_links",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3334,16 +3188,12 @@
         "telegram_links_chat_id_unique": {
           "name": "telegram_links_chat_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "chat_id"
-          ]
+          "columns": ["chat_id"]
         },
         "telegram_links_link_code_unique": {
           "name": "telegram_links_link_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "link_code"
-          ]
+          "columns": ["link_code"]
         }
       },
       "policies": {
@@ -3351,9 +3201,7 @@
           "name": "telegram_links_owner",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "authenticated"
-          ],
+          "to": ["authenticated"],
           "using": "user_id = (select auth.uid())",
           "withCheck": "user_id = (select auth.uid())"
         }
@@ -3718,46 +3566,22 @@
     "public.application_status": {
       "name": "application_status",
       "schema": "public",
-      "values": [
-        "VIEWED",
-        "APPLIED",
-        "INTERVIEW",
-        "SELECTED",
-        "REJECTED",
-        "NOT_INTERESTED"
-      ]
+      "values": ["VIEWED", "APPLIED", "INTERVIEW", "SELECTED", "REJECTED", "NOT_INTERESTED"]
     },
     "public.company_verification": {
       "name": "company_verification",
       "schema": "public",
-      "values": [
-        "UNVERIFIED",
-        "VERIFIED",
-        "SUSPICIOUS",
-        "BLOCKED"
-      ]
+      "values": ["UNVERIFIED", "VERIFIED", "SUSPICIOUS", "BLOCKED"]
     },
     "public.employment_type": {
       "name": "employment_type",
       "schema": "public",
-      "values": [
-        "FULL_TIME",
-        "PART_TIME",
-        "INTERNSHIP",
-        "CONTRACT",
-        "TRAINEE",
-        "UNKNOWN"
-      ]
+      "values": ["FULL_TIME", "PART_TIME", "INTERNSHIP", "CONTRACT", "TRAINEE", "UNKNOWN"]
     },
     "public.experience_level": {
       "name": "experience_level",
       "schema": "public",
-      "values": [
-        "FRESHER",
-        "ENTRY_LEVEL",
-        "EXPERIENCED",
-        "UNKNOWN"
-      ]
+      "values": ["FRESHER", "ENTRY_LEVEL", "EXPERIENCED", "UNKNOWN"]
     },
     "public.job_category": {
       "name": "job_category",
@@ -3798,138 +3622,72 @@
     "public.log_level": {
       "name": "log_level",
       "schema": "public",
-      "values": [
-        "DEBUG",
-        "INFO",
-        "WARN",
-        "ERROR"
-      ]
+      "values": ["DEBUG", "INFO", "WARN", "ERROR"]
     },
     "public.notification_channel": {
       "name": "notification_channel",
       "schema": "public",
-      "values": [
-        "TELEGRAM",
-        "WEB"
-      ]
+      "values": ["TELEGRAM", "WEB"]
     },
     "public.notification_mode": {
       "name": "notification_mode",
       "schema": "public",
-      "values": [
-        "INSTANT",
-        "DIGEST",
-        "BOTH",
-        "DISABLED"
-      ]
+      "values": ["INSTANT", "DIGEST", "BOTH", "DISABLED"]
     },
     "public.notification_status": {
       "name": "notification_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "SENT",
-        "FAILED",
-        "SKIPPED"
-      ]
+      "values": ["PENDING", "SENT", "FAILED", "SKIPPED"]
     },
     "public.notification_type": {
       "name": "notification_type",
       "schema": "public",
-      "values": [
-        "INSTANT",
-        "DIGEST",
-        "SYSTEM",
-        "TEST"
-      ]
+      "values": ["INSTANT", "DIGEST", "SYSTEM", "TEST"]
     },
     "public.priority_band": {
       "name": "priority_band",
       "schema": "public",
-      "values": [
-        "VERY_HIGH",
-        "HIGH",
-        "MEDIUM",
-        "OTHER"
-      ]
+      "values": ["VERY_HIGH", "HIGH", "MEDIUM", "OTHER"]
     },
     "public.remote_preference": {
       "name": "remote_preference",
       "schema": "public",
-      "values": [
-        "ANY",
-        "REMOTE_ONLY",
-        "ONSITE_ONLY",
-        "HYBRID_OK"
-      ]
+      "values": ["ANY", "REMOTE_ONLY", "ONSITE_ONLY", "HYBRID_OK"]
     },
     "public.resume_parse_status": {
       "name": "resume_parse_status",
       "schema": "public",
-      "values": [
-        "UPLOADED",
-        "PARSED",
-        "ANALYZED",
-        "FAILED"
-      ]
+      "values": ["UPLOADED", "PARSED", "ANALYZED", "FAILED"]
     },
     "public.role_tier": {
       "name": "role_tier",
       "schema": "public",
-      "values": [
-        "PRIMARY",
-        "SECONDARY",
-        "OTHER"
-      ]
+      "values": ["PRIMARY", "SECONDARY", "OTHER"]
     },
     "public.scan_status": {
       "name": "scan_status",
       "schema": "public",
-      "values": [
-        "RUNNING",
-        "SUCCEEDED",
-        "FAILED",
-        "TIMED_OUT"
-      ]
+      "values": ["RUNNING", "SUCCEEDED", "FAILED", "TIMED_OUT"]
     },
     "public.scan_trigger": {
       "name": "scan_trigger",
       "schema": "public",
-      "values": [
-        "SCHEDULED",
-        "MANUAL",
-        "RECOVERY"
-      ]
+      "values": ["SCHEDULED", "MANUAL", "RECOVERY"]
     },
     "public.source_priority": {
       "name": "source_priority",
       "schema": "public",
-      "values": [
-        "HIGH",
-        "NORMAL",
-        "LOW"
-      ]
+      "values": ["HIGH", "NORMAL", "LOW"]
     },
     "public.source_status": {
       "name": "source_status",
       "schema": "public",
-      "values": [
-        "ACTIVE",
-        "DEGRADED",
-        "FAILING",
-        "DISABLED",
-        "PAUSED_AUTO"
-      ]
+      "values": ["ACTIVE", "DEGRADED", "FAILING", "DISABLED", "PAUSED_AUTO"]
     },
     "public.source_type": {
       "name": "source_type",
       "schema": "public",
-      "values": [
-        "ATS_API",
-        "PUBLIC_API",
-        "RSS",
-        "CAREER_PAGE"
-      ]
+      "values": ["ATS_API", "PUBLIC_API", "RSS", "CAREER_PAGE"]
     },
     "public.url_status": {
       "name": "url_status",
@@ -3948,14 +3706,7 @@
     "public.validation_status": {
       "name": "validation_status",
       "schema": "public",
-      "values": [
-        "VALID",
-        "SUSPICIOUS",
-        "EXPIRED",
-        "INVALID",
-        "NEEDS_REVIEW",
-        "PENDING"
-      ]
+      "values": ["VALID", "SUSPICIOUS", "EXPIRED", "INVALID", "NEEDS_REVIEW", "PENDING"]
     }
   },
   "schemas": {},
