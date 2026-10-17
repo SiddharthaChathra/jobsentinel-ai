@@ -76,6 +76,18 @@ describe('formatInstant', () => {
     expect(text).not.toMatch(/<b>NOW<\/b>/);
   });
 
+  // R6: a missing salary is shown as "Not disclosed", never left out or blank.
+  it('says "Not disclosed" when there is no salary, and the salary when there is', () => {
+    expect(formatInstant(job(), now)).toContain('💰 Not disclosed');
+    expect(formatInstant(job({ salaryDisclosed: true, salaryText: '₹6–8 LPA' }), now)).toContain(
+      '💰 ₹6–8 LPA',
+    );
+    // Disclosed but with no text is still "Not disclosed", not an empty line.
+    expect(formatInstant(job({ salaryDisclosed: true, salaryText: null }), now)).toContain(
+      '💰 Not disclosed',
+    );
+  });
+
   it('says Remote instead of a city for a remote job', () => {
     expect(formatInstant(job({ isRemote: true, location: null }), now)).toContain('📍 Remote');
   });

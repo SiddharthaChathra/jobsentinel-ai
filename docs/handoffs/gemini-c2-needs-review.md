@@ -38,6 +38,11 @@ You are Gemini, owner of `apps/web` in JobSentinel AI. Build a separate **Needs 
   - `held-kind-<jobId>` (its text is the kind)
   - `apply-caution-confirm`
 
+### Also in this task (small, from the verification report)
+
+- **System Status:** show today's AI calls per purpose from `status.ai.byPurpose`, which is optional. Show a short table (for example "Category check: 73"); hide it when the field is absent.
+- **R6 test:** add a Vitest test proving that `JobCard` and the job detail page show **"Not disclosed"** when `salary.disclosed` is false or `salary.text` is null.
+
 ## 3. Tests (Vitest + Testing Library), driven by `docs/contracts/needs-review.mock.json`
 
 1. Each of the 4 `held.kind` values renders its banner, icon and label (the label verbatim from the mock).
