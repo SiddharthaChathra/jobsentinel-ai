@@ -2,13 +2,24 @@ import {
   Inject,
   Injectable,
   Logger,
+  Optional,
   type OnApplicationBootstrap,
   type OnModuleDestroy,
 } from '@nestjs/common';
 import type { Env } from '@jobsentinel/config';
+import { sql } from 'drizzle-orm';
 import { ENV } from '../common/config/config.module';
+import { DB, type Db } from '../common/db/db.module';
 import { HTTP_CLIENT } from '../common/http/http.module';
 import type { HttpClientPort } from '../common/http/http-client';
+
+/** How long after boot the catch-up check runs: past start-up, before the first interval. */
+export const CATCH_UP_DELAY_MS = 60_000;
+
+/** The worker is overdue when it has not beaten for longer than one dispatch interval. */
+export function isOverdue(lastBeatAt: Date | null, now: Date, intervalMin: number): boolean {
+  return !lastBeatAt || now.getTime() - lastBeatAt.getTime() > intervalMin * 60_000;
+}
 
 /**
  * Starts the GitHub-hosted worker on a dependable clock (D95).
@@ -26,10 +37,12 @@ import type { HttpClientPort } from '../common/http/http-client';
 export class WorkerDispatchService implements OnApplicationBootstrap, OnModuleDestroy {
   private readonly logger = new Logger(WorkerDispatchService.name);
   private timer: NodeJS.Timeout | null = null;
+  private catchUpTimer: NodeJS.Timeout | null = null;
 
   constructor(
     @Inject(ENV) private readonly env: Env,
     @Inject(HTTP_CLIENT) private readonly http: HttpClientPort,
+    @Optional() @Inject(DB) private readonly db?: Db,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -37,6 +50,11 @@ export class WorkerDispatchService implements OnApplicationBootstrap, OnModuleDe
     const everyMs = this.env.WORKER_DISPATCH_INTERVAL_MIN * 60_000;
     this.timer = setInterval(() => void this.dispatch(), everyMs);
     this.timer.unref();
+    // Every restart (a deploy, a wake from sleep) restarts the interval, so a run of deploys less
+    // than an interval apart once kept the worker from running for 75 minutes (D124). A minute
+    // after boot, run it now if the last heartbeat is already older than one interval.
+    this.catchUpTimer = setTimeout(() => void this.catchUp(), CATCH_UP_DELAY_MS);
+    this.catchUpTimer.unref();
     this.logger.log(
       `worker-dispatch: starting ${this.env.WORKER_DISPATCH_REPO} worker.yml every ${this.env.WORKER_DISPATCH_INTERVAL_MIN} min`,
     );
@@ -44,7 +62,30 @@ export class WorkerDispatchService implements OnApplicationBootstrap, OnModuleDe
 
   onModuleDestroy(): void {
     if (this.timer) clearInterval(this.timer);
+    if (this.catchUpTimer) clearTimeout(this.catchUpTimer);
     this.timer = null;
+    this.catchUpTimer = null;
+  }
+
+  /** Dispatches at once when the worker has been quiet for longer than one interval. */
+  async catchUp(now = new Date()): Promise<boolean> {
+    if (!this.db) return false;
+    try {
+      const [row] = await this.db.execute<{ at: string | Date | null }>(
+        sql`select max(last_beat_at) as at from worker_heartbeats`,
+      );
+      const last = row?.at ? new Date(row.at) : null;
+      if (!isOverdue(last, now, this.env.WORKER_DISPATCH_INTERVAL_MIN)) return false;
+      this.logger.log(
+        `worker-dispatch: last heartbeat ${last ? `${Math.round((now.getTime() - last.getTime()) / 60_000)} min ago` : 'never'}; running the worker now`,
+      );
+      return await this.dispatch();
+    } catch (err) {
+      this.logger.warn(
+        `worker-dispatch: catch-up check failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return false;
+    }
   }
 
   async dispatch(): Promise<boolean> {
