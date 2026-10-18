@@ -198,6 +198,10 @@ pnpm lint | format | typecheck | test
 pnpm --filter @jobsentinel/api test:e2e
 ```
 
+## 17a. Owner tasks
+
+Anything only the owner can do (secrets, keys, dashboard settings, approvals, account sign-ups) gets a numbered guide in `docs/owner-tasks.md`, with the checklist at the top kept current. Each guide gives the exact page (real repository and project URLs; say so when one cannot be determined), the exact setting or secret names and what value goes in each (never ask for secret values in chat), how to check it worked, and what breaks if skipped. Mark any step you could not verify yourself.
+
 ## 18. Phase loop
 
 Every phase: **PLAN → IMPLEMENT → RUN → TEST → DEBUG → VERIFY → DOCUMENT → COMMIT**. Update `docs/`, `CHANGELOG.md` and this file when conventions change. Do not start the next phase until the current one runs and its tests pass.
