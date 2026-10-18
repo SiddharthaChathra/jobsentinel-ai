@@ -257,6 +257,16 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
             Off-campus programme
           </Badge>
         )}
+        {job.company.hiresFreshersOften && (
+          <Badge
+            variant="secondary"
+            data-testid={`fresher-badge-${job.id}`}
+            title="This company often posts roles open to freshers. Shown for information only; it never hides or ranks jobs."
+            className="border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+          >
+            Hires freshers often
+          </Badge>
+        )}
         {job.employmentType !== 'UNKNOWN' && (
           <Badge variant="outline">{job.employmentType.replace(/_/g, ' ').toLowerCase()}</Badge>
         )}

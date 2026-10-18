@@ -35,7 +35,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 ## [Phase 13] F4 Company fresher score — 2026-10-18
 
 - **Fresher score (D118):** `company_fresher_stats` per company — postings seen, fresher-eligible count, last fresher posting, a 0-100 score with recency decay (UNKNOWN under 5 postings). A company board's next scan is ×0.5 when HIGH and ×2 when LOW (never below the adapter floor); HIGH boards lease first. Cards carry `company.hiresFreshersOften`. Never used to reject a job. Formula in docs/sources.md.
-- Tests: validation +12 (formula), API e2e +4 (SQL equals the formula, UNKNOWN, scan spacing, lease order, badge).
+- **Web UI for "Hires freshers often" badge (Gemini, F4, D118):** Small badge "Hires freshers often" with tooltip shown on JobCard (next to posting-type badge) and on JobDetail header when `job.company.hiresFreshersOften` is true; hidden when false or absent (`fresher-badge-<jobId>`). Never filters, sorts, or hides jobs.
+- Tests: validation +12 (formula), API e2e +4 (SQL equals the formula, UNKNOWN, scan spacing, lease order, badge), web 81 (+6).
 
 ## [Phase 13] Placeholder postings — 2026-10-18
 
