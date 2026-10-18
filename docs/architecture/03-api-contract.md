@@ -154,7 +154,7 @@ Rules: FOLLOW_UP when APPLIED with no status change for `followUpDays` (3-14, de
 | ------ | ------------- | --------------------------------------------------------------------------------------------------- |
 | GET    | `/skill-gaps` | `SkillGapReport`: `{ basedOn, generatedAt, gaps: [{ skill, missingIn, of, jobs[≤3], links[≤3] }] }` |
 
-Built from the user's top 15 matches in the `/jobs` list (sorted by score): India or remote, zero-experience, validated, inside 60 days, never held or a placeholder. Aliases merged (`canonicalSkill`); soft skills left out; ties alphabetical. `links` come only from `packages/config/src/taxonomy/learning-links.json` entries the owner approved; otherwise empty. Rules only, no AI. Samples: `docs/contracts/skill-gaps.mock.json`.
+Built from the user's top 15 matches in the `/jobs` list (sorted by score): India or remote, zero-experience, validated, inside 60 days, never held or a placeholder. Aliases merged (`canonicalSkill`); soft skills left out of `gaps` and listed separately in `softSkills` (top 3, counts only, no links); ties alphabetical. `links` come only from `packages/config/src/taxonomy/learning-links.json` entries the owner approved; otherwise empty. Rules only, no AI. Samples: `docs/contracts/skill-gaps.mock.json`.
 
 ### Dashboard
 

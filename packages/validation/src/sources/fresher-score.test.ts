@@ -115,7 +115,8 @@ describe('company fresher score (F4, D118)', () => {
     );
     expect(fresh.score).toBe(20);
     expect(stale.score).toBe(10);
-    expect(fresh.band).toBe('MEDIUM');
+    expect(fresh.band).toBe('HIGH');
+    expect(stale.band).toBe('HIGH');
   });
 
   it('a recent fresher posting outweighs old non-fresher ones', () => {
@@ -135,7 +136,7 @@ describe('company fresher score (F4, D118)', () => {
     expect(recent).toEqual({ score: 80, band: 'HIGH' });
   });
 
-  it('band edges: 30 is HIGH, 29 MEDIUM, 10 MEDIUM, 9 LOW', () => {
+  it('band edges: 10 is HIGH, 9 MEDIUM, 5 MEDIUM, 4 LOW', () => {
     const at = (share: number) =>
       fresherScore({
         postingsSeen: 10,
@@ -144,22 +145,22 @@ describe('company fresher score (F4, D118)', () => {
         weightedFresher: share,
         daysSinceLastFresher: 0,
       });
-    expect(at(0.3).band).toBe('HIGH');
-    expect(at(0.29).band).toBe('MEDIUM');
-    expect(at(0.1).band).toBe('MEDIUM');
-    expect(at(0.09).band).toBe('LOW');
+    expect(at(0.1).band).toBe('HIGH');
+    expect(at(0.09).band).toBe('MEDIUM');
+    expect(at(0.05).band).toBe('MEDIUM');
+    expect(at(0.04).band).toBe('LOW');
   });
 });
 
 describe('board scan interval from the band (F4)', () => {
   const base = { configuredSec: null, priority: 'NORMAL' as const, floorSec: 0 };
 
-  it('HIGH scans twice as often, LOW half as often, MEDIUM/UNKNOWN/no stats unchanged', () => {
+  it('HIGH scans twice as often; MEDIUM, LOW, UNKNOWN and no stats keep the default (never slower)', () => {
     expect(boardIntervalSec({ ...base, band: 'HIGH' })).toBe(900);
     expect(boardIntervalSec({ ...base, band: 'MEDIUM' })).toBe(1800);
     expect(boardIntervalSec({ ...base, band: 'UNKNOWN' })).toBe(1800);
     expect(boardIntervalSec({ ...base, band: null })).toBe(1800);
-    expect(boardIntervalSec({ ...base, band: 'LOW' })).toBe(3600);
+    expect(boardIntervalSec({ ...base, band: 'LOW' })).toBe(1800);
   });
 
   it('never goes below the adapter floor, however high the score', () => {
@@ -169,7 +170,11 @@ describe('board scan interval from the band (F4)', () => {
     ).toBe(21_600);
   });
 
-  it('starts from the configured interval when one is set', () => {
-    expect(boardIntervalSec({ ...base, configuredSec: 7200, band: 'LOW' })).toBe(14_400);
+  it('starts from the configured interval when one is set, and a low score never lengthens it', () => {
+    expect(boardIntervalSec({ ...base, configuredSec: 7200, band: 'LOW' })).toBe(7200);
+    expect(boardIntervalSec({ ...base, configuredSec: 7200, band: 'HIGH' })).toBe(3600);
+    for (const band of ['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN', null] as const) {
+      expect(boardIntervalSec({ ...base, band })).toBeLessThanOrEqual(1800);
+    }
   });
 });

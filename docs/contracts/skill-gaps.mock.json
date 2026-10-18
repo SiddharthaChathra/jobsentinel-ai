@@ -48,6 +48,18 @@
             ],
             "links": []
           }
+        ],
+        "softSkills": [
+          {
+            "skill": "Communication",
+            "missingIn": 11,
+            "of": 15
+          },
+          {
+            "skill": "Teamwork",
+            "missingIn": 8,
+            "of": 15
+          }
         ]
       },
       "meta": {}
@@ -56,7 +68,12 @@
   "GET /api/v1/skill-gaps (no matches yet)": {
     "status": 200,
     "body": {
-      "data": { "basedOn": 0, "generatedAt": "2026-10-18T06:00:00.000Z", "gaps": [] },
+      "data": {
+        "basedOn": 0,
+        "generatedAt": "2026-10-18T06:00:00.000Z",
+        "gaps": [],
+        "softSkills": []
+      },
       "meta": {}
     }
   }

@@ -31,11 +31,17 @@ export const FRESHER_SCORE = {
   shareHalfLifeDays: 30,
   /** The score halves for every 90 days since the company's last fresher posting. */
   recencyHalfLifeDays: 90,
-  /** Band thresholds on the 0-100 score. HIGH shows the "Hires freshers often" badge. */
-  highMin: 30,
-  mediumMin: 10,
-  /** Scan-interval multiplier per band, applied to company boards only, never below the adapter's floor. */
-  intervalFactor: { HIGH: 0.5, MEDIUM: 1, LOW: 2, UNKNOWN: 1 },
+  /**
+   * Band thresholds on the 0-100 score. HIGH shows the "Hires freshers often" badge. Lowered by
+   * the owner on 2026-10-18 (30 → 10) while data is thin; revisit around 2026-11-18.
+   */
+  highMin: 10,
+  mediumMin: 5,
+  /**
+   * Scan-interval multiplier per band, company boards only, never below the adapter's floor. The
+   * score only ever speeds a board up: LOW and UNKNOWN keep the default interval (owner, D118).
+   */
+  intervalFactor: { HIGH: 0.5, MEDIUM: 1, LOW: 1, UNKNOWN: 1 },
 } as const;
 
 /** Tracker reminders (F5, D119). */

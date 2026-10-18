@@ -47,17 +47,18 @@ export class SkillGapsService {
               ),
             );
     const byJob = new Map(missing.map((m) => [m.jobId, m.missing]));
-    const gaps = rankSkillGaps(
-      top.map((c) => ({
-        id: c.id,
-        title: c.title,
-        company: c.company.name,
-        missingSkills: byJob.get(c.id) ?? [],
-      })),
-      opts.limit ?? 10,
-    );
+    const inputs = top.map((c) => ({
+      id: c.id,
+      title: c.title,
+      company: c.company.name,
+      missingSkills: byJob.get(c.id) ?? [],
+    }));
+    const gaps = rankSkillGaps(inputs, opts.limit ?? 10);
+    // Soft skills never take a top-3 place; they get their own short note (owner, D120).
+    const soft = rankSkillGaps(inputs, 3, { soft: 'only' });
     return {
       basedOn: top.length,
+      softSkills: soft.map(({ skill, missingIn, of }) => ({ skill, missingIn, of })),
       generatedAt: new Date().toISOString(),
       gaps: gaps.map((g) => ({
         ...g,

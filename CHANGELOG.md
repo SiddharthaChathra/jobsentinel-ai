@@ -2,6 +2,12 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] Owner decisions: F4 thresholds, F7 soft skills, workflow watch — 2026-10-18
+
+- **F4 (D118 amended):** HIGH ≥ 10 (was 30), MEDIUM ≥ 5. Only HIGH changes scanning (×0.5, leased first); LOW and UNKNOWN keep the default interval and order.
+- **Workflow watch (D125):** the API checks `backup.yml` and `uptime.yml` twice a day; disabled or silent for 10 days alerts the admins (once a day), and one disabled by GitHub's 60-day rule is re-enabled. docs/deployment.md gains decrypt steps and the 60-day warning.
+- **F7 (D120 amended):** `SkillGapReport.softSkills` — the top 3 soft skills as a separate note; still never in the gaps.
+
 ## [Phase 13] F11 Uptime monitoring — 2026-10-18
 
 - **Health (D124):** `GET /health/worker` — 503 past 2× the dispatch interval, inside the active hours only. `uptime.yml` checks the API and worker every 15 minutes in the active window and alerts on Telegram on a change only; rehearsed against the real API and a stub Telegram. UptimeRobot not used: no Telegram on the free plan, and a 24/7 ping would spend the Render hours D99 saves.

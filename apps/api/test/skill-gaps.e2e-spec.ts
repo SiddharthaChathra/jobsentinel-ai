@@ -147,6 +147,9 @@ describeIf('skill gaps (F7, D120)', () => {
       ['PostgreSQL', 2, 4],
     ]);
     expect(report.gaps.some((g) => g.skill === 'Rust')).toBe(false);
+    // Soft skills stay out of the gaps and appear only in their own note.
+    expect(report.gaps.some((g) => g.skill === 'Communication')).toBe(false);
+    expect(report.softSkills).toEqual([{ skill: 'Communication', missingIn: 1, of: 4 }]);
     // Best match first among the examples.
     expect(report.gaps[0]!.jobs[0]!.title).toBe('Graduate Engineer Trainee');
   });

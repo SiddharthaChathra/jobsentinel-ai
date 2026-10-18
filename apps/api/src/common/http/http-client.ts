@@ -11,7 +11,7 @@ export const CONNECT_ATTEMPT_TIMEOUT_MS = 2_500;
 setDefaultAutoSelectFamilyAttemptTimeout(CONNECT_ATTEMPT_TIMEOUT_MS);
 
 export interface HttpRequestOptions {
-  method?: 'GET' | 'HEAD' | 'POST';
+  method?: 'GET' | 'HEAD' | 'POST' | 'PUT';
   headers?: Record<string, string>;
   body?: string;
   timeoutMs?: number;
