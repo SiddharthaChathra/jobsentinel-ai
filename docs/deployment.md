@@ -54,6 +54,20 @@ pnpm --filter @jobsentinel/api clean:test [--dry]   # remove fixtures from a kil
 
 Every one is idempotent. Re-running never duplicates a job, a match or an alert — the database's unique keys are what guarantee that, not the scripts.
 
+### Placeholder filter: rollback
+
+The placeholder filter (D117) was switched on 2026-10-18, and the 15 existing talent-pool postings were marked `PLACEHOLDER`. Each one's `PLACEHOLDER` job event records its previous status and hold reason. To undo:
+
+1. **Turn the flag off.** Set `PLACEHOLDER_FILTER_ENABLED: 'false'` in `.github/workflows/worker.yml` (the worker's env block), commit and push to `main`. Do this first, or the next tick marks the jobs again. If the worker runs elsewhere (a VM or laptop), set the variable to `false` there too.
+2. **Preview.** `pnpm --filter @jobsentinel/api build && node apps/api/dist/scripts/placeholders.js --restore --dry-run` lists every `PLACEHOLDER` job and the status it will return to.
+3. **Restore.** Run the same command without `--dry-run`:
+   - A job marked by the backfill goes back to its recorded status and hold reason.
+   - A job the classifier marked while the flag was on has no earlier status. It goes back to `DISCOVERED` and is re-classified on the next tick, as if the filter had never existed.
+   - Each restore writes a `PLACEHOLDER_RESTORED` event.
+4. **Check.** `select status, count(*) from jobs group by status` should show no `PLACEHOLDER` rows. Restored jobs reappear on the report card under collected.
+
+The rollback deletes nothing. The `PLACEHOLDER` value stays in the `job_status` enum, because Postgres cannot drop an enum value, and that is harmless.
+
 ## Backups
 
 `scripts/backup.sh` runs `pg_dump` against the session pooler and keeps the last 8 weekly dumps. Restore is a plain `psql < dump.sql` into a fresh project; rehearse it before you need it. Supabase's own free-tier backups are not a substitute — they are not restorable to a point in time on the free plan.
