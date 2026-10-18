@@ -2,6 +2,10 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F9 Browser tests in CI — 2026-10-18
+
+- **Playwright (D122):** `e2e/` package; sign-up, onboarding with a resume fixture, job filters (India, domain, salary, recency) and tracker persistence, against the real web app and API on the local Supabase stack, with sources, AI and Telegram replaced by fixtures. Runs in CI's `e2e` job; traces on failure. 7 tests, 3/3 runs green locally.
+
 ## [Phase 13] F6 Weekly summary — 2026-10-18
 
 - **Weekly summary (D121):** opt-in, Sunday 09:00 in the user's timezone, once per week. New valid jobs by priority, applications and status changes, reminders due, top 3 skill gaps, paused/failing sources. Reuses the digest's notification rows and dispatcher; employer text escaped.

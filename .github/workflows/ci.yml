@@ -57,7 +57,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
 
   e2e:
-    name: API e2e (local Supabase)
+    name: API e2e + browser (local Supabase)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -78,5 +78,19 @@ jobs:
       - run: pnpm test:db:start
       - run: pnpm test:db:seed
       - run: pnpm test:e2e
+      # Browser tests (F9) on the same local stack: the real web app and API, with no AI key
+      # (deterministic fallbacks), no bot token and seeded jobs instead of sources. Chromium
+      # only and no retries, so a flaky test fails visibly; traces are uploaded on failure.
+      - run: pnpm --filter @jobsentinel/api build
+      - run: pnpm --filter @jobsentinel/e2e exec playwright install --with-deps chromium
+      - run: pnpm test:browser
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 7
       - if: always()
         run: pnpm test:db:stop

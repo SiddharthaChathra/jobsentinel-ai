@@ -33,7 +33,8 @@
     "check:files": "node scripts/check-local-files.mjs",
     "pretest": "node scripts/check-local-files.mjs",
     "fix:files": "node scripts/check-local-files.mjs --fix",
-    "links:check": "node scripts/check-learning-links.mjs"
+    "links:check": "node scripts/check-learning-links.mjs",
+    "test:browser": "pnpm --filter @jobsentinel/e2e test:browser"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
