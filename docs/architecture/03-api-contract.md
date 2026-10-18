@@ -146,6 +146,14 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
 
 Rules: FOLLOW_UP when APPLIED with no status change for `followUpDays` (3-14, default 7), once per stretch; INTERVIEW_DAY_BEFORE and INTERVIEW_MORNING (08:00 local, 07:00 for an interview before 09:00); DEADLINE_3D and DEADLINE_1D for saved, not-applied jobs. INTERVIEW cancels the follow-up and deadline reminders; REJECTED / SELECTED / NOT_INTERESTED cancel everything. Never sent 22:00-07:00 in the user's timezone or in their own quiet hours: deferred, not dropped. Delivered as `REMINDER` notifications (inbox + Telegram). Samples: `docs/contracts/reminders.mock.json` (checked by `packages/types/src/contracts.test.ts`).
 
+### Skill gaps (F7, D120)
+
+| Method | Path          | Response                                                                                            |
+| ------ | ------------- | --------------------------------------------------------------------------------------------------- |
+| GET    | `/skill-gaps` | `SkillGapReport`: `{ basedOn, generatedAt, gaps: [{ skill, missingIn, of, jobs[≤3], links[≤3] }] }` |
+
+Built from the user's top 15 matches in the `/jobs` list (sorted by score): India or remote, zero-experience, validated, inside 60 days, never held or a placeholder. Aliases merged (`canonicalSkill`); soft skills left out; ties alphabetical. `links` come only from `packages/config/src/taxonomy/learning-links.json` entries the owner approved; otherwise empty. Rules only, no AI. Samples: `docs/contracts/skill-gaps.mock.json`.
+
 ### Dashboard
 
 | Method | Path                 | Response                                                                                                                                                                                                                                        |

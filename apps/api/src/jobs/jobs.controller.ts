@@ -23,6 +23,7 @@ import {
   type JobCard,
   type JobDetail,
   type JobEventItem,
+  type SkillGapReport,
   type TrackerState,
   ReviewJobCard,
 } from '@jobsentinel/types';
@@ -33,6 +34,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { DashboardService } from './dashboard.service';
 import { JobsDetailService } from './jobs-detail.service';
 import { JobsQueryService } from './jobs-query.service';
+import { SkillGapsService } from './skill-gaps.service';
 import { TrackerService } from './tracker.service';
 
 /**
@@ -48,6 +50,7 @@ export class JobsController {
     private readonly detail: JobsDetailService,
     private readonly tracker: TrackerService,
     private readonly dashboard: DashboardService,
+    private readonly skillGaps: SkillGapsService,
   ) {}
 
   @Get('jobs')
@@ -174,6 +177,12 @@ export class JobsController {
     @Param('jobId', ParseUUIDPipe) jobId: string,
   ): Promise<void> {
     await this.tracker.remove(user.id, jobId);
+  }
+
+  /** Skills missing across the user's top 15 matches, ranked; rules only (F7, D120). */
+  @Get('skill-gaps')
+  skillGapReport(@CurrentUser() user: AuthenticatedUser): Promise<SkillGapReport> {
+    return this.skillGaps.report(user.id);
   }
 
   @Get('dashboard/summary')

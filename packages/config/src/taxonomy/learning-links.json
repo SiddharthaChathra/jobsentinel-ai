@@ -1,0 +1,321 @@
+{
+  "version": 1,
+  "about": "Curated free learning resources per skill (F7, D120). Official sources only (the project's own docs or the vendor's). Only entries with approved: true are shown; the owner approves each. Skills without an approved entry are shown unlinked. Check the URLs with `pnpm links:check` after editing.",
+  "skills": {
+    "Go": {
+      "approved": false,
+      "links": [
+        { "title": "A Tour of Go", "url": "https://go.dev/tour/", "publisher": "go.dev" },
+        { "title": "Go documentation", "url": "https://go.dev/doc/", "publisher": "go.dev" }
+      ]
+    },
+    "Kubernetes": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Learn Kubernetes Basics",
+          "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
+          "publisher": "kubernetes.io"
+        }
+      ]
+    },
+    "Google Cloud": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Get started with Google Cloud",
+          "url": "https://docs.cloud.google.com/docs/get-started",
+          "publisher": "cloud.google.com"
+        }
+      ]
+    },
+    "Terraform": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Terraform tutorials",
+          "url": "https://developer.hashicorp.com/terraform/tutorials",
+          "publisher": "HashiCorp"
+        }
+      ]
+    },
+    "Ruby": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Ruby in Twenty Minutes",
+          "url": "https://www.ruby-lang.org/en/documentation/quickstart/",
+          "publisher": "ruby-lang.org"
+        }
+      ]
+    },
+    "Rust": {
+      "approved": false,
+      "links": [
+        {
+          "title": "The Rust Programming Language (the book)",
+          "url": "https://doc.rust-lang.org/book/",
+          "publisher": "rust-lang.org"
+        }
+      ]
+    },
+    "C++": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Get Started!",
+          "url": "https://isocpp.org/get-started",
+          "publisher": "Standard C++ Foundation"
+        }
+      ]
+    },
+    "Kafka": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Apache Kafka quickstart",
+          "url": "https://kafka.apache.org/quickstart",
+          "publisher": "Apache Software Foundation"
+        }
+      ]
+    },
+    "C#": {
+      "approved": false,
+      "links": [
+        {
+          "title": "A tour of the C# language",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/",
+          "publisher": "Microsoft Learn"
+        }
+      ]
+    },
+    "GraphQL": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Learn GraphQL",
+          "url": "https://graphql.org/learn/",
+          "publisher": "graphql.org"
+        }
+      ]
+    },
+    "Elasticsearch": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Get started with Elasticsearch search",
+          "url": "https://www.elastic.co/docs/solutions/search/get-started",
+          "publisher": "Elastic"
+        }
+      ]
+    },
+    "Spring Boot": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Building an Application with Spring Boot",
+          "url": "https://spring.io/guides/gs/spring-boot/",
+          "publisher": "spring.io"
+        }
+      ]
+    },
+    "Ansible": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Getting started with Ansible",
+          "url": "https://docs.ansible.com/projects/ansible/latest/getting_started/index.html",
+          "publisher": "Ansible (Red Hat)"
+        }
+      ]
+    },
+    "Redis": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Get started with Redis",
+          "url": "https://redis.io/docs/latest/get-started/",
+          "publisher": "redis.io"
+        }
+      ]
+    },
+    "Vue": {
+      "approved": false,
+      "links": [
+        { "title": "Vue tutorial", "url": "https://vuejs.org/tutorial/", "publisher": "vuejs.org" }
+      ]
+    },
+    "Apache Spark": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Spark quick start",
+          "url": "https://spark.apache.org/docs/latest/quick-start.html",
+          "publisher": "Apache Software Foundation"
+        }
+      ]
+    },
+    "SQL": {
+      "approved": false,
+      "links": [
+        {
+          "title": "PostgreSQL tutorial: the SQL language",
+          "url": "https://www.postgresql.org/docs/current/tutorial-sql.html",
+          "publisher": "PostgreSQL Global Development Group"
+        }
+      ]
+    },
+    "PostgreSQL": {
+      "approved": false,
+      "links": [
+        {
+          "title": "PostgreSQL tutorial",
+          "url": "https://www.postgresql.org/docs/current/tutorial.html",
+          "publisher": "PostgreSQL Global Development Group"
+        }
+      ]
+    },
+    "Python": {
+      "approved": false,
+      "links": [
+        {
+          "title": "The Python Tutorial",
+          "url": "https://docs.python.org/3/tutorial/",
+          "publisher": "python.org"
+        }
+      ]
+    },
+    "Java": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Learn Java",
+          "url": "https://dev.java/learn/",
+          "publisher": "dev.java (Oracle)"
+        }
+      ]
+    },
+    "JavaScript": {
+      "approved": false,
+      "links": [
+        {
+          "title": "JavaScript Guide",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
+          "publisher": "MDN Web Docs"
+        }
+      ]
+    },
+    "TypeScript": {
+      "approved": false,
+      "links": [
+        {
+          "title": "The TypeScript Handbook",
+          "url": "https://www.typescriptlang.org/docs/handbook/intro.html",
+          "publisher": "typescriptlang.org"
+        }
+      ]
+    },
+    "React": {
+      "approved": false,
+      "links": [
+        { "title": "Learn React", "url": "https://react.dev/learn", "publisher": "react.dev" }
+      ]
+    },
+    "Node.js": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Introduction to Node.js",
+          "url": "https://nodejs.org/learn/getting-started/introduction-to-nodejs",
+          "publisher": "nodejs.org"
+        }
+      ]
+    },
+    "Next.js": {
+      "approved": false,
+      "links": [
+        { "title": "Learn Next.js", "url": "https://nextjs.org/learn", "publisher": "nextjs.org" }
+      ]
+    },
+    "Angular": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Angular tutorials",
+          "url": "https://angular.dev/tutorials",
+          "publisher": "angular.dev"
+        }
+      ]
+    },
+    "Django": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Writing your first Django app",
+          "url": "https://docs.djangoproject.com/en/stable/intro/tutorial01/",
+          "publisher": "djangoproject.com"
+        }
+      ]
+    },
+    "Flask": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Flask tutorial",
+          "url": "https://flask.palletsprojects.com/en/stable/tutorial/",
+          "publisher": "Pallets"
+        }
+      ]
+    },
+    "Docker": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Docker: get started",
+          "url": "https://docs.docker.com/get-started/",
+          "publisher": "Docker"
+        }
+      ]
+    },
+    "AWS": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Getting started with AWS",
+          "url": "https://aws.amazon.com/getting-started/",
+          "publisher": "Amazon Web Services"
+        }
+      ]
+    },
+    "Azure": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Azure training",
+          "url": "https://learn.microsoft.com/en-us/training/azure/",
+          "publisher": "Microsoft Learn"
+        }
+      ]
+    },
+    "Git": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Pro Git (book)",
+          "url": "https://git-scm.com/book/en/v2",
+          "publisher": "git-scm.com"
+        }
+      ]
+    },
+    "Linux": {
+      "approved": false,
+      "links": [
+        {
+          "title": "The Linux command line for beginners",
+          "url": "https://ubuntu.com/tutorials/command-line-for-beginners",
+          "publisher": "Canonical (Ubuntu)"
+        }
+      ]
+    }
+  }
+}

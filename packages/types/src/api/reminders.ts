@@ -55,3 +55,28 @@ export const ApplicationDatesInput = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'at least one date' });
 export type ApplicationDatesInput = z.infer<typeof ApplicationDatesInput>;
+
+// ── Skill gaps (F7, D120) ─────────────────────────────────────────────────────
+
+/**
+ * `GET /skill-gaps` — skills missing across the user's top 15 matches (the same eligible list as
+ * `/jobs`: India or remote, zero-experience, validated, inside 60 days), ranked. Rules only.
+ */
+export const SkillGapReport = z.object({
+  /** How many top matches the report is built from (up to 15). */
+  basedOn: z.number().int().min(0).max(15),
+  generatedAt: z.iso.datetime(),
+  gaps: z.array(
+    z.object({
+      /** Canonical name: "PostgreSQL", never "postgres". */
+      skill: z.string(),
+      missingIn: z.number().int().min(1),
+      of: z.number().int().min(1),
+      /** Up to 3 of those jobs, best match first. */
+      jobs: z.array(z.object({ id: z.uuid(), title: z.string(), company: z.string() })).max(3),
+      /** From the curated, owner-approved map only; empty when none is approved. */
+      links: z.array(z.object({ title: z.string(), url: z.url(), publisher: z.string() })).max(3),
+    }),
+  ),
+});
+export type SkillGapReport = z.infer<typeof SkillGapReport>;

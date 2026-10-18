@@ -13,6 +13,7 @@ export * from './validate/domain';
 export * from './validate/suspicion';
 export * from './validate/decide';
 export * from './match/score';
+export * from './match/skill-gaps';
 export * from './notify/decide';
 export * from './notify/reminders';
 export * from './sources/report';

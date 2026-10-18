@@ -32,7 +32,8 @@
     "env:sync": "node scripts/sync-env.mjs",
     "check:files": "node scripts/check-local-files.mjs",
     "pretest": "node scripts/check-local-files.mjs",
-    "fix:files": "node scripts/check-local-files.mjs --fix"
+    "fix:files": "node scripts/check-local-files.mjs --fix",
+    "links:check": "node scripts/check-learning-links.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

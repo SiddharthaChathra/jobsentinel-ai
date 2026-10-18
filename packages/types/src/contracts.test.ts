@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ApiErrorBody } from './api/envelope';
-import { ApplicationDatesInput, ReminderItem } from './api/reminders';
+import { ApplicationDatesInput, ReminderItem, SkillGapReport } from './api/reminders';
 import { SourceReport } from './domain/sources';
 import { SourceStatus } from './enums';
 import { z } from 'zod';
@@ -62,5 +62,17 @@ describe('docs/contracts/reminders.mock.json (F5)', () => {
   it('error samples parse as the error envelope', () => {
     const errors = m.errors as Record<string, { status: number; body: unknown }>;
     for (const e of Object.values(errors)) expect(() => ApiErrorBody.parse(e.body)).not.toThrow();
+  });
+});
+
+describe('docs/contracts/skill-gaps.mock.json (F7)', () => {
+  const m = mock('skill-gaps.mock.json');
+  const data = (key: string) => (m[key] as { status: number; body: { data: unknown } }).body.data;
+
+  it('both samples parse as SkillGapReport, one linked and one unlinked gap', () => {
+    const report = SkillGapReport.parse(data('GET /api/v1/skill-gaps'));
+    expect(report.gaps.some((g) => g.links.length > 0)).toBe(true);
+    expect(report.gaps.some((g) => g.links.length === 0)).toBe(true);
+    expect(SkillGapReport.parse(data('GET /api/v1/skill-gaps (no matches yet)')).gaps).toEqual([]);
   });
 });
