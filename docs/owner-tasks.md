@@ -16,17 +16,17 @@ These are things only you can do: secrets, keys, dashboard settings, approvals a
 
 ## Checklist
 
-| #   | Task                                                                           | Status                                                                                                                    |
-| --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Create the backup key and add the two backup secrets, then run the backup once | **Open**                                                                                                                  |
-| 2   | Add the Telegram chat id for uptime alerts                                     | **Open**                                                                                                                  |
-| 3   | Approve the learning links you want shown (33 proposed)                        | **Open**                                                                                                                  |
-| 4   | Decide the questions raised by the audit (docs/verification-report.md §4)      | **Open**                                                                                                                  |
-| 5   | Look at the new pages on the live site                                         | **Open**                                                                                                                  |
-| 6   | Re-check the F4 fresher-score thresholds around 2026-11-18                     | **Open** (not before 2026-11-18)                                                                                          |
-| 7   | The worker dispatch token on Render has Actions read **and write**             | Done: the API starts worker runs with it, which needs write. It also lets the workflow watch re-enable a workflow (D125). |
-| 8   | The production database has every migration (0000–0013)                        | Done (applied 2026-10-18; `/health/worker` answers)                                                                       |
-| 9   | The placeholder filter switched on, and the 15 talent-pool postings marked     | Done (2026-10-18)                                                                                                         |
+| #   | Task                                                                           | Status                                                                                                                                                                           |
+| --- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Create the backup key and add the two backup secrets, then run the backup once | Done: secrets added 2026-10-18; first run green (artifact `jobsentinel-backup-39154944775`, 16 MB, kept until 2027-01-16). Optional: decrypt it once to prove your key opens it. |
+| 2   | Add the Telegram chat id for uptime alerts                                     | **Open**                                                                                                                                                                         |
+| 3   | Approve the learning links you want shown (33 proposed)                        | **Open**                                                                                                                                                                         |
+| 4   | Decide the questions raised by the audit (docs/verification-report.md §4)      | **Open**                                                                                                                                                                         |
+| 5   | Look at the new pages on the live site                                         | **Open**                                                                                                                                                                         |
+| 6   | Re-check the F4 fresher-score thresholds around 2026-11-18                     | **Open** (not before 2026-11-18)                                                                                                                                                 |
+| 7   | The worker dispatch token on Render has Actions read **and write**             | Done: the API starts worker runs with it, which needs write. It also lets the workflow watch re-enable a workflow (D125).                                                        |
+| 8   | The production database has every migration (0000–0013)                        | Done (applied 2026-10-18; `/health/worker` answers)                                                                                                                              |
+| 9   | The placeholder filter switched on, and the 15 talent-pool postings marked     | Done (2026-10-18)                                                                                                                                                                |
 
 ---
 
