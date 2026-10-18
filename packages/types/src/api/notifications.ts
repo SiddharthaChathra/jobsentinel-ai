@@ -13,6 +13,12 @@ export const NotificationSettingsInput = z.object({
   telegramEnabled: z.boolean().optional(),
   /** ISO instant to mute until; null resumes immediately. */
   pausedUntil: z.iso.datetime().nullable().optional(),
+  /** Tracker reminders on/off (F5, D119). */
+  remindersEnabled: z.boolean().optional(),
+  /** Days with no status change after applying before a follow-up reminder (3-14, default 7). */
+  followUpDays: z.number().int().min(3).max(14).optional(),
+  /** Weekly Telegram summary, Sunday 09:00 in the user's timezone (F6); opt-in. */
+  weeklySummaryEnabled: z.boolean().optional(),
 });
 export type NotificationSettingsInput = z.infer<typeof NotificationSettingsInput>;
 
@@ -25,6 +31,10 @@ export interface NotificationSettings {
   includeNeedsReviewInDigest: boolean;
   telegramEnabled: boolean;
   pausedUntil: string | null;
+  /** F5/F6 additions; optional for older clients. */
+  remindersEnabled?: boolean;
+  followUpDays?: number;
+  weeklySummaryEnabled?: boolean;
   telegram: TelegramLinkState;
 }
 

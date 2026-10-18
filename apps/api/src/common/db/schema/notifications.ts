@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
+  check,
   date,
   index,
   integer,
@@ -18,6 +19,8 @@ import {
   notificationModeEnum,
   notificationStatusEnum,
   notificationTypeEnum,
+  reminderKindEnum,
+  reminderStatusEnum,
 } from './enums';
 import { users } from './identity';
 import { jobs } from './jobs';
@@ -38,9 +41,16 @@ export const notificationSettings = pgTable(
     includeNeedsReviewInDigest: boolean('include_needs_review_in_digest').notNull().default(true),
     telegramEnabled: boolean('telegram_enabled').notNull().default(true),
     pausedUntil: timestamp('paused_until', { withTimezone: true }),
+    // Tracker reminders (F5, D119) and the weekly summary (F6, opt-in).
+    remindersEnabled: boolean('reminders_enabled').notNull().default(true),
+    followUpDays: smallint('follow_up_days').notNull().default(7),
+    weeklySummaryEnabled: boolean('weekly_summary_enabled').notNull().default(false),
     ...timestamps,
   },
-  () => [ownerPolicy('notification_settings')],
+  (t) => [
+    check('notification_settings_follow_up_days', sql`${t.followUpDays} between 3 and 14`),
+    ownerPolicy('notification_settings'),
+  ],
 ).enableRLS();
 
 // ── telegram_links ────────────────────────────────────────────────────────────
@@ -90,10 +100,55 @@ export const notifications = pgTable(
     uniqueIndex('notifications_digest_once_idx')
       .on(t.userId, t.channel, t.digestDate)
       .where(sql`type = 'DIGEST'`),
+    // One weekly summary per user, channel and week (digest_date = the week's Sunday, F6). Keyed
+    // on the type column rather than a `type = 'WEEKLY'` predicate: a value added to an enum
+    // cannot be used in the transaction that adds it, and the migrator runs as one transaction.
+    uniqueIndex('notifications_dated_once_idx')
+      .on(t.userId, t.channel, t.type, t.digestDate)
+      .where(sql`digest_date is not null`),
+    // Each delivery of a reminder once per channel (F5, D119): a snoozed reminder is a new delivery.
+    uniqueIndex('notifications_reminder_once_idx')
+      .on(t.userId, t.channel, sql`(payload->>'reminderId')`, sql`(payload->>'delivery')`)
+      .where(sql`(payload->>'reminderId') is not null`),
     index('notifications_user_idx').on(t.userId, t.createdAt.desc()),
     index('notifications_pending_idx')
       .on(t.status)
       .where(sql`status = 'PENDING'`),
     ownerPolicy('notifications'),
+  ],
+).enableRLS();
+
+// ── reminders (F5, D119) ──────────────────────────────────────────────────────
+// Planned from the tracker each tick; `idempotency_key` (user, job, kind, anchor) makes planning
+// safe to repeat, and the status flip PENDING → SENT in the delivery transaction makes sending
+// safe to repeat. Delivery goes through `notifications`, so the existing dispatcher sends it.
+export const reminders = pgTable(
+  'reminders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    kind: reminderKindEnum('kind').notNull(),
+    anchor: text('anchor').notNull(),
+    idempotencyKey: text('idempotency_key').notNull().unique(),
+    dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
+    snoozedUntil: timestamp('snoozed_until', { withTimezone: true }),
+    status: reminderStatusEnum('status').notNull().default('PENDING'),
+    deliveries: integer('deliveries').notNull().default(0),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+    dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
+    cancelledReason: text('cancelled_reason'),
+    ...timestamps,
+  },
+  (t) => [
+    index('reminders_due_idx')
+      .on(t.dueAt)
+      .where(sql`status = 'PENDING'`),
+    index('reminders_user_idx').on(t.userId, t.status),
+    ownerPolicy('reminders'),
   ],
 ).enableRLS();

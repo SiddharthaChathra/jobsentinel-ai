@@ -130,8 +130,33 @@ export type ApplicationStatus = z.infer<typeof ApplicationStatus>;
 export const NotificationChannel = z.enum(['TELEGRAM', 'WEB']);
 export type NotificationChannel = z.infer<typeof NotificationChannel>;
 
-export const NotificationType = z.enum(['INSTANT', 'DIGEST', 'SYSTEM', 'TEST']);
+/** REMINDER: a tracker reminder (F5, D119); WEEKLY: the weekly summary (F6). */
+export const NotificationType = z.enum([
+  'INSTANT',
+  'DIGEST',
+  'SYSTEM',
+  'TEST',
+  'REMINDER',
+  'WEEKLY',
+]);
 export type NotificationType = z.infer<typeof NotificationType>;
+
+/**
+ * Tracker reminders (F5, D119): a follow-up after N days with no status change, an interview the
+ * day before and the morning of, a saved-but-not-applied deadline 3 days and 1 day before.
+ */
+export const ReminderKind = z.enum([
+  'FOLLOW_UP',
+  'INTERVIEW_DAY_BEFORE',
+  'INTERVIEW_MORNING',
+  'DEADLINE_3D',
+  'DEADLINE_1D',
+]);
+export type ReminderKind = z.infer<typeof ReminderKind>;
+
+/** PENDING until sent; CANCELLED when no longer relevant (status or date changed). */
+export const ReminderStatus = z.enum(['PENDING', 'SENT', 'DISMISSED', 'CANCELLED']);
+export type ReminderStatus = z.infer<typeof ReminderStatus>;
 
 export const NotificationStatus = z.enum(['PENDING', 'SENT', 'FAILED', 'SKIPPED']);
 export type NotificationStatus = z.infer<typeof NotificationStatus>;

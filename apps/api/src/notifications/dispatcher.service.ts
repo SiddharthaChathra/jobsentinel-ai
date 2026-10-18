@@ -7,6 +7,7 @@ import { jobs, notifications, telegramLinks } from '../common/db/schema';
 import {
   formatDigest,
   formatInstant,
+  formatReminder,
   formatSystemAlert,
   instantButtons,
   isPublicUrl,
@@ -183,6 +184,14 @@ export class DispatcherService {
       };
     }
     const p = row.payload as { title?: string; detail?: string };
+    if (row.type === 'REMINDER') {
+      return {
+        text: formatReminder(p.title ?? 'Reminder', p.detail ?? ''),
+        buttons: isPublicUrl(dashboard)
+          ? [[{ text: '📋 Open applications', url: `${dashboard}/applications` }]]
+          : undefined,
+      };
+    }
     return { text: formatSystemAlert(p.title ?? 'JobSentinel', p.detail ?? '') };
   }
 

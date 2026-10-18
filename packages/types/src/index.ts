@@ -3,6 +3,7 @@ export * from './api/auth';
 export * from './api/envelope';
 export * from './api/jobs';
 export * from './api/notifications';
+export * from './api/reminders';
 export * from './domain/profile';
 export * from './domain/resume';
 export * from './domain/sources';

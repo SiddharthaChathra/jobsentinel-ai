@@ -124,16 +124,27 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
 
 **Needs review (C step 2, D106).** `GET /jobs/needs-review` lists jobs with `status = NEEDS_REVIEW` — held by classification (category or experience unknown, D105, D110; such a job is validated too and keeps its hold) or by verification (company not verified, page unreachable, …) — with the same filters and gates as `/jobs`: the user's places, India-or-remote and batch (applied at classification), "0 to any" experience, the 60-day window and open jobs. Suspected scams (`SUSPICIOUS`) are excluded. `held.kind` ∈ `CATEGORY_UNKNOWN | EXPERIENCE_UNKNOWN | COMPANY_UNVERIFIED | URL_UNREACHABLE | OTHER` (a client must handle a kind it does not know as `OTHER`); `held.label` is the sentence to show. These jobs are never in `/jobs` and never sent to Telegram. Samples: `docs/contracts/needs-review.mock.json` (captured from the real API).
 
-**Card fields added in Phase 13 (all optional for older clients).** `postingType` (D114); `attribution: { provider: 'ADZUNA', label: 'Adzuna', url } | null` — when present, the card and the detail page must show `label` as a link to `url`, at least 116 × 23 px (Adzuna's terms, D115); `match.scoring: 'RULES_ONLY' | 'AI_REFINED'` (D112). `SystemStatus.ai.userCallLimit` is the per-user daily AI limit. `SourceReportRow.placeholdersSkipped` and `totals.placeholdersSkipped` count talent-pool / general-application postings, which are never in `collected` or `kept` (D117). `company.hiresFreshersOften: boolean` is true when the company's fresher score is HIGH (F4, D118) — a badge only, never a filter or a sort.
+**Card fields added in Phase 13 (all optional for older clients).** `postingType` (D114); `attribution: { provider: 'ADZUNA', label: 'Adzuna', url } | null` — when present, the card and the detail page must show `label` as a link to `url`, at least 116 × 23 px (Adzuna's terms, D115); `match.scoring: 'RULES_ONLY' | 'AI_REFINED'` (D112). `SystemStatus.ai.userCallLimit` is the per-user daily AI limit. `SourceReportRow.placeholdersSkipped` and `totals.placeholdersSkipped` count talent-pool / general-application postings, which are never in `collected` or `kept` (D117). `company.hiresFreshersOften: boolean` is true when the company's fresher score is HIGH (F4, D118) — a badge only, never a filter or a sort. `NotificationSettings` adds `remindersEnabled` (default true), `followUpDays` (3-14, default 7) and `weeklySummaryEnabled` (default false, F6); `InboxItem.type` can be `REMINDER` or `WEEKLY`.
 
 ### Saved & applications (tracker)
 
-| Method | Path                    | Body                                                | Response                                          |
-| ------ | ----------------------- | --------------------------------------------------- | ------------------------------------------------- |
-| GET    | `/saved-jobs`           | cursor                                              | `JobCard[]`                                       |
-| GET    | `/applications?status=` | —                                                   | `ApplicationItem[]` (job card + status + history) |
-| PUT    | `/applications/:jobId`  | `{ status: ApplicationStatus, notes?, appliedAt? }` | `ApplicationItem`                                 |
-| DELETE | `/applications/:jobId`  | —                                                   | 204 (removes from tracker)                        |
+| Method | Path                         | Body                                                                              | Response                                          |
+| ------ | ---------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------- |
+| GET    | `/saved-jobs`                | cursor                                                                            | `JobCard[]`                                       |
+| GET    | `/applications?status=`      | —                                                                                 | `ApplicationItem[]` (job card + status + history) |
+| PUT    | `/applications/:jobId`       | `{ status: ApplicationStatus, notes?, appliedAt? }`                               | `ApplicationItem`                                 |
+| DELETE | `/applications/:jobId`       | —                                                                                 | 204 (removes from tracker)                        |
+| PATCH  | `/applications/:jobId/dates` | `ApplicationDatesInput`: `{ deadline?, interviewAt?, followUpAt? }` (ISO or null) | `ApplicationItem` (creates a VIEWED row if none)  |
+
+**Tracker reminders (F5, D119).** `ApplicationItem` adds `deadline` (the user's, else the posting's), `interviewAt`, `followUpAt` (the override, else last status change + `followUpDays`) and `lastStatusChangeAt` — all optional for older clients.
+
+| Method | Path                      | Body                              | Response                                                            |
+| ------ | ------------------------- | --------------------------------- | ------------------------------------------------------------------- |
+| GET    | `/reminders?withinDays=7` | —                                 | `ReminderItem[]`: DUE (sent or overdue, not dismissed) and UPCOMING |
+| POST   | `/reminders/:id/snooze`   | `{ hours?: 1..168 }` (default 24) | `ReminderItem` (PENDING again; re-delivered then)                   |
+| POST   | `/reminders/:id/dismiss`  | —                                 | 204                                                                 |
+
+Rules: FOLLOW_UP when APPLIED with no status change for `followUpDays` (3-14, default 7), once per stretch; INTERVIEW_DAY_BEFORE and INTERVIEW_MORNING (08:00 local, 07:00 for an interview before 09:00); DEADLINE_3D and DEADLINE_1D for saved, not-applied jobs. INTERVIEW cancels the follow-up and deadline reminders; REJECTED / SELECTED / NOT_INTERESTED cancel everything. Never sent 22:00-07:00 in the user's timezone or in their own quiet hours: deferred, not dropped. Delivered as `REMINDER` notifications (inbox + Telegram). Samples: `docs/contracts/reminders.mock.json` (checked by `packages/types/src/contracts.test.ts`).
 
 ### Dashboard
 

@@ -10,6 +10,8 @@ import {
   LogLevel,
   MatchScoring,
   PostingType,
+  ReminderKind,
+  ReminderStatus,
   NotificationChannel,
   NotificationMode,
   NotificationStatus,
@@ -64,6 +66,8 @@ export const notificationChannelEnum = pgEnum(
   tuple(NotificationChannel.options),
 );
 export const notificationTypeEnum = pgEnum('notification_type', tuple(NotificationType.options));
+export const reminderKindEnum = pgEnum('reminder_kind', tuple(ReminderKind.options));
+export const reminderStatusEnum = pgEnum('reminder_status', tuple(ReminderStatus.options));
 export const notificationStatusEnum = pgEnum(
   'notification_status',
   tuple(NotificationStatus.options),

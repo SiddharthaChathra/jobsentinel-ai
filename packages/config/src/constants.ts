@@ -37,3 +37,16 @@ export const FRESHER_SCORE = {
   /** Scan-interval multiplier per band, applied to company boards only, never below the adapter's floor. */
   intervalFactor: { HIGH: 0.5, MEDIUM: 1, LOW: 2, UNKNOWN: 1 },
 } as const;
+
+/** Tracker reminders (F5, D119). */
+export const REMINDERS = {
+  /** Reminders never go out between these local hours (22:00-07:00), on top of the user's own quiet hours. */
+  quietStartHour: 22,
+  quietEndHour: 7,
+  followUpDays: { default: 7, min: 3, max: 14 },
+  /** The "morning of" reminder goes out at this local hour, or at quiet end for an early interview. */
+  morningHour: 8,
+  /** A time-bound reminder (interview, deadline) first planned this long after its time is not sent: it would arrive too late to help. */
+  staleAfterMs: 60 * 60_000,
+  defaultSnoozeHours: 24,
+} as const;

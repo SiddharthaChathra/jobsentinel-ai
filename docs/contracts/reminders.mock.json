@@ -1,0 +1,130 @@
+{
+  "GET /api/v1/reminders": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "id": "3f1c2a4e-8b7d-4c1a-9e2f-1a2b3c4d5e01",
+          "kind": "FOLLOW_UP",
+          "status": "SENT",
+          "state": "DUE",
+          "dueAt": "2026-10-18T06:00:00.000Z",
+          "snoozedUntil": null,
+          "sentAt": "2026-10-18T06:00:12.000Z",
+          "message": "Follow up on SDE I at Hevo Data: no update for 7 days since you applied.",
+          "job": {
+            "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c01",
+            "title": "SDE I",
+            "company": "Hevo Data",
+            "applicationStatus": "APPLIED"
+          }
+        },
+        {
+          "id": "3f1c2a4e-8b7d-4c1a-9e2f-1a2b3c4d5e02",
+          "kind": "INTERVIEW_DAY_BEFORE",
+          "status": "PENDING",
+          "state": "UPCOMING",
+          "dueAt": "2026-10-20T04:30:00.000Z",
+          "snoozedUntil": null,
+          "sentAt": null,
+          "message": "Interview tomorrow: Associate SDE at Hevo Data.",
+          "job": {
+            "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c02",
+            "title": "Associate SDE",
+            "company": "Hevo Data",
+            "applicationStatus": "INTERVIEW"
+          }
+        },
+        {
+          "id": "3f1c2a4e-8b7d-4c1a-9e2f-1a2b3c4d5e03",
+          "kind": "DEADLINE_3D",
+          "status": "PENDING",
+          "state": "UPCOMING",
+          "dueAt": "2026-10-22T18:29:00.000Z",
+          "snoozedUntil": "2026-10-23T06:00:00.000Z",
+          "sentAt": null,
+          "message": "3 days left to apply: Graduate Engineer Trainee at Zeta.",
+          "job": {
+            "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c03",
+            "title": "Graduate Engineer Trainee",
+            "company": "Zeta",
+            "applicationStatus": null
+          }
+        }
+      ],
+      "meta": { "count": 3 }
+    }
+  },
+  "GET /api/v1/reminders (empty)": {
+    "status": 200,
+    "body": { "data": [], "meta": { "count": 0 } }
+  },
+  "POST /api/v1/reminders/:id/snooze": {
+    "status": 200,
+    "body": {
+      "data": {
+        "id": "3f1c2a4e-8b7d-4c1a-9e2f-1a2b3c4d5e01",
+        "kind": "FOLLOW_UP",
+        "status": "PENDING",
+        "state": "UPCOMING",
+        "dueAt": "2026-10-19T06:00:00.000Z",
+        "snoozedUntil": "2026-10-19T06:00:00.000Z",
+        "sentAt": "2026-10-18T06:00:12.000Z",
+        "message": "Follow up on SDE I at Hevo Data: no update for 7 days since you applied.",
+        "job": {
+          "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c01",
+          "title": "SDE I",
+          "company": "Hevo Data",
+          "applicationStatus": "APPLIED"
+        }
+      },
+      "meta": {}
+    }
+  },
+  "POST /api/v1/reminders/:id/dismiss": { "status": 204, "body": null },
+  "PATCH /api/v1/applications/:jobId/dates": {
+    "request": { "interviewAt": "2026-10-21T04:30:00.000Z", "deadline": null },
+    "status": 200,
+    "body": {
+      "data": {
+        "status": "INTERVIEW",
+        "appliedAt": "2026-10-10T05:00:00.000Z",
+        "notes": null,
+        "history": [
+          { "status": "APPLIED", "at": "2026-10-10T05:00:00.000Z" },
+          { "status": "INTERVIEW", "at": "2026-10-16T09:00:00.000Z" }
+        ],
+        "updatedAt": "2026-10-18T06:00:00.000Z",
+        "deadline": null,
+        "interviewAt": "2026-10-21T04:30:00.000Z",
+        "followUpAt": null,
+        "lastStatusChangeAt": "2026-10-16T09:00:00.000Z",
+        "job": "… a JobCard, as in GET /applications …"
+      },
+      "meta": {}
+    }
+  },
+  "errors": {
+    "POST /api/v1/reminders/:id/snooze (not yours or gone)": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "REMINDER_NOT_FOUND",
+          "message": "Not found",
+          "requestId": "req_01"
+        }
+      }
+    },
+    "POST /api/v1/reminders/:id/snooze (hours out of range)": {
+      "status": 400,
+      "body": {
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Invalid request",
+          "details": [{ "path": "hours", "message": "Too big: expected number to be <=168" }],
+          "requestId": "req_02"
+        }
+      }
+    }
+  }
+}

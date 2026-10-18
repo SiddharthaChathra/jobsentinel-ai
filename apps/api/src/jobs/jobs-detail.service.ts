@@ -147,6 +147,7 @@ export class JobsDetailService {
         jobId,
         status: 'VIEWED',
         history: [{ status: 'VIEWED', at: new Date().toISOString() }],
+        lastStatusChangeAt: new Date(),
       })
       .onConflictDoNothing({ target: [applications.userId, applications.jobId] });
     return this.query.trackerState(userId, jobId);
@@ -177,11 +178,19 @@ export class JobsDetailService {
     const entry = { status, at: new Date().toISOString(), ...(reason ? { note: reason } : {}) };
     await this.db
       .insert(applications)
-      .values({ userId, jobId, status, notes: reason ?? null, history: [entry] })
+      .values({
+        userId,
+        jobId,
+        status,
+        notes: reason ?? null,
+        history: [entry],
+        lastStatusChangeAt: new Date(),
+      })
       .onConflictDoUpdate({
         target: [applications.userId, applications.jobId],
         set: {
           status,
+          lastStatusChangeAt: statusChangedAt(),
           notes: reason ?? null,
           history: sqlAppendHistory(entry),
           updatedAt: new Date(),
@@ -225,4 +234,12 @@ export function toEvidenceItems(stored: unknown): JobValidationDetail['evidence'
 /** Appends one entry to the jsonb history array without reading it back first. */
 function sqlAppendHistory(entry: Record<string, unknown>) {
   return sql`coalesce(${applications.history}, '[]'::jsonb) || ${JSON.stringify([entry])}::jsonb`;
+}
+
+/**
+ * In an upsert's SET, `applications.status` is still the old value: stamp the change time only
+ * when the status actually changes, so the follow-up clock is not reset by a repeat (F5, D119).
+ */
+export function statusChangedAt() {
+  return sql`case when ${applications.status} is distinct from excluded.status then now() else ${applications.lastStatusChangeAt} end`;
 }

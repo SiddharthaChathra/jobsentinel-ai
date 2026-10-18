@@ -6,11 +6,13 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
 } from '@nestjs/common';
 import {
+  ApplicationDatesInput,
   ApplicationUpsert,
   ApplicationsQuery,
   JobsQuery,
@@ -153,6 +155,16 @@ export class JobsController {
     @Body(new ZodValidationPipe(ApplicationUpsert)) body: ApplicationUpsert,
   ): Promise<ApplicationItem> {
     return this.tracker.upsert(user.id, jobId, body);
+  }
+
+  /** Tracker date pickers: deadline, interview, follow-up override (F5, D119). */
+  @Patch('applications/:jobId/dates')
+  setApplicationDates(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('jobId', ParseUUIDPipe) jobId: string,
+    @Body(new ZodValidationPipe(ApplicationDatesInput)) body: ApplicationDatesInput,
+  ): Promise<ApplicationItem> {
+    return this.tracker.setDates(user.id, jobId, body);
   }
 
   @Delete('applications/:jobId')
