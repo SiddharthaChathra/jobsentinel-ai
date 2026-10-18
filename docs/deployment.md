@@ -70,7 +70,51 @@ The rollback deletes nothing. The `PLACEHOLDER` value stays in the `job_status` 
 
 ## Backups
 
-`scripts/backup.sh` runs `pg_dump` against the session pooler and keeps the last 8 weekly dumps. Restore is a plain `psql < dump.sql` into a fresh project; rehearse it before you need it. Supabase's own free-tier backups are not a substitute — they are not restorable to a point in time on the free plan.
+**Weekly, encrypted (F10, D123).** `.github/workflows/backup.yml` runs every Sunday at 20:30 UTC (Monday 02:00 IST), and on demand (Actions → "Weekly encrypted backup" → Run workflow).
+
+What the workflow does:
+
+- Installs `pg_dump` 17 (it must match the server's major version) and runs `scripts/backup.sh` with `REQUIRE_ENCRYPTION=1`.
+- The script streams `pg_dump | gzip | age` straight into a `.sql.gz.age` file, so the plain dump never touches the disk. Without a key it refuses to run.
+- A check step proves the result is a single file with the age header and no SQL in clear text.
+- The file is kept only as a workflow artifact for 90 days, GitHub's maximum for this repository.
+
+**What is in it:**
+
+- the `public` and `drizzle` schemas: every table, its data, RLS policies, and the migration ledger;
+- the rows of `auth.users` and `auth.identities`, so restored users can still sign in;
+- a `CREATE EXTENSION pg_trgm` line, for the trigram indexes.
+
+**What is NOT in it: Supabase Storage files**, i.e. uploaded resumes. They live in the private `resumes` bucket, not in Postgres, so `pg_dump` cannot see them.
+
+- After a restore, `resumes` rows point at files that may no longer exist.
+- The parsed profile (skills, summary) is in Postgres and survives; the original PDF does not.
+- Users can re-upload. If keeping the files matters, download the bucket from the Supabase dashboard (Storage → resumes) when you need a copy. This is a documented limitation, not automated.
+
+**One-time setup (you; secrets never pass through chat):**
+
+1. On your own machine: `age-keygen -o jobsentinel-backup.key`. It prints the public key (`age1…`). Keep the `.key` file **offline** (a USB drive or password manager). Without it, no backup can be decrypted; with it, every backup can.
+2. GitHub → repository Settings → Secrets and variables → Actions → New repository secret:
+   - `BACKUP_AGE_RECIPIENT`: the `age1…` public key.
+   - `BACKUP_DATABASE_URL`: the Supabase **session pooler** connection string (port 5432; the same as `DATABASE_DIRECT_URL` in your `.env`). The transaction pooler (6543) cannot run `pg_dump`.
+3. Actions → "Weekly encrypted backup" → Run workflow. Check that the run is green and the artifact ends in `.sql.gz.age`.
+
+The repository is **public**: anyone signed in to GitHub can download the artifact. That is safe only because it is encrypted to a key that never leaves your hands. Never upload the private key anywhere, and never add a step that writes the dump unencrypted.
+
+**Restore** (rehearsed 2026-10-18 against the local test stack: 29 tables, identical row counts):
+
+1. Download the artifact (Actions → the run → Artifacts) and unzip it to get `jobsentinel-<stamp>.sql.gz.age`.
+2. Pick the target: a new Supabase project, or the test project to rehearse. Never restore over production without a fresh backup of it first.
+3. `age -d -i jobsentinel-backup.key jobsentinel-<stamp>.sql.gz.age | gunzip -c | psql "<target session URL>"`
+   - `ERROR: schema "public" already exists` is expected and harmless.
+   - Any other error means stop and look.
+4. Point `.env` at the target and run `pnpm db:migrate`. It should report nothing to apply, because the ledger was restored.
+5. Re-create the `resumes` Storage bucket (private) if the target is a new project. The files themselves are not in the backup (see above).
+6. Check row counts on a few tables (`jobs`, `users`, `applications`) against what you expect.
+
+The local rehearsal is `postgres:17-alpine` with `age`, running the real script against the test stack and restoring into a fresh database. A bare database needs the `auth` schema's two tables and an `auth.uid()` stub before loading; a real Supabase project already has them.
+
+Supabase's own free-tier backups are not a substitute: on the free plan they cannot be restored to a point in time.
 
 ## Health and alerting
 

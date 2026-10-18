@@ -1,0 +1,80 @@
+name: Weekly encrypted backup
+
+# F10, D123. Dumps the production database and encrypts it with the owner's age PUBLIC key; the
+# private key never leaves the owner's offline storage. The plain dump never touches the disk:
+# scripts/backup.sh streams pg_dump | gzip | age into the .age file, and refuses to run without a
+# key (REQUIRE_ENCRYPTION=1). The only thing kept is the encrypted workflow artifact.
+#
+# Secrets (added by the owner in GitHub → Settings → Secrets and variables → Actions):
+#   BACKUP_DATABASE_URL   Supabase SESSION pooler URL (port 5432); the transaction pooler cannot run pg_dump
+#   BACKUP_AGE_RECIPIENT  age public key, "age1…"
+
+on:
+  schedule:
+    # Sundays 20:30 UTC = Monday 02:00 IST, outside the worker's busy hours.
+    - cron: '30 20 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the secrets are set (values are never printed)
+        env:
+          URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+        run: |
+          [ -n "$URL" ] || { echo "::error::BACKUP_DATABASE_URL is not set"; exit 1; }
+          case "$RECIPIENT" in age1*) ;; *) echo "::error::BACKUP_AGE_RECIPIENT must be an age public key (age1…)"; exit 1;; esac
+
+      # pg_dump must match the server's major version (17); Ubuntu's default client is older.
+      - name: Install pg_dump 17 and age
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age >/dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y >/dev/null
+          sudo apt-get install -y -qq postgresql-client-17 >/dev/null
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: Dump and encrypt (streamed; nothing unencrypted is written)
+        env:
+          DATABASE_DIRECT_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+          REQUIRE_ENCRYPTION: '1'
+          BACKUP_DIR: ${{ runner.temp }}/backup
+        run: |
+          pg_dump --version
+          bash scripts/backup.sh
+
+      - name: Prove the artifact is encrypted and alone
+        env:
+          DIR: ${{ runner.temp }}/backup
+        run: |
+          files=$(ls -1 "$DIR")
+          echo "$files"
+          [ "$(echo "$files" | wc -l)" -eq 1 ] || { echo "::error::expected exactly one file"; exit 1; }
+          case "$files" in *.sql.gz.age) ;; *) echo "::error::not an .age file"; exit 1;; esac
+          head -c 21 "$DIR/$files" | grep -q '^age-encryption.org/v1' || { echo "::error::missing age header"; exit 1; }
+          # Plain SQL would contain these; an encrypted file must not.
+          if grep -aq -e 'CREATE TABLE' -e 'COPY public' "$DIR/$files"; then echo "::error::plaintext found"; exit 1; fi
+          echo "encrypted: $(du -h "$DIR/$files" | cut -f1)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jobsentinel-backup-${{ github.run_id }}
+          path: ${{ runner.temp }}/backup/*.sql.gz.age
+          if-no-files-found: error
+          # The longest GitHub keeps artifacts for this repository.
+          retention-days: 90
+          # Already compressed and encrypted; zipping again gains nothing.
+          compression-level: 0
