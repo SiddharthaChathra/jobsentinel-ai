@@ -86,7 +86,7 @@ export function ResumeUploadStep({ onAnalyzed }: { onAnalyzed: (a: ResumeAnalysi
             {phase === 'uploading' && 'Uploading and reading your resume…'}
             {phase === 'analyzing' && 'Analyzing with AI — this takes a few seconds…'}
           </p>
-          <Button onClick={submit} disabled={!file || busy}>
+          <Button data-testid="onboarding-upload" onClick={submit} disabled={!file || busy}>
             {busy ? 'Working…' : 'Upload & analyze'}
           </Button>
         </div>

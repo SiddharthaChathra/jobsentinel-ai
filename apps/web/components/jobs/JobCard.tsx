@@ -124,6 +124,7 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
 
   return (
     <article
+      data-testid={`job-card-${job.id}`}
       className={cn(
         'card-hover relative rounded-xl border bg-card p-4 sm:p-5',
         job.isNew ? 'border-primary/40' : 'border-border/60',
@@ -171,6 +172,7 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
         <div className="min-w-0 flex-1 basis-40">
           <Link
             href={`/jobs/${job.id}`}
+            data-testid={`job-card-title-${job.id}`}
             className="line-clamp-2 text-base font-semibold leading-snug tracking-tight hover:text-primary sm:text-[17px]"
           >
             {job.title}

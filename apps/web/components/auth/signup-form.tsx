@@ -136,6 +136,7 @@ export function SignupForm({ configured }: { configured: boolean }) {
             <Button
               type="submit"
               className="w-full"
+              data-testid="signup-submit"
               disabled={!configured || status.kind === 'busy'}
             >
               {status.kind === 'busy' ? 'Creating account…' : 'Create account'}

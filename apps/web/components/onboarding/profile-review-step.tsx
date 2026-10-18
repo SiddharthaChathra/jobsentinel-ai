@@ -210,7 +210,7 @@ export function ProfileReviewStep({ analysis, onBack, onSaved }: Props) {
             <Button type="button" variant="ghost" onClick={onBack}>
               Back
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" data-testid="onboarding-confirm-profile" disabled={saving}>
               {saving ? 'Saving…' : 'Confirm profile'}
             </Button>
           </div>

@@ -15,6 +15,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 ## [Phase 13] F9 Browser tests in CI — 2026-10-18
 
 - **Playwright (D122):** `e2e/` package; sign-up, onboarding with a resume fixture, job filters (India, domain, salary, recency) and tracker persistence, against the real web app and API on the local Supabase stack, with sources, AI and Telegram replaced by fixtures. Runs in CI's `e2e` job; traces on failure. 7 tests, 3/3 runs green locally.
+- **Stable selectors for browser tests (Gemini, F9, D122):** Added stable test IDs across auth, onboarding, job listings, and application tracking: `signup-submit` on create account button, `onboarding-upload` on resume upload button, `onboarding-confirm-profile` on confirm profile button, `onboarding-start` on start monitoring button, `job-card-<jobId>` and `job-card-title-<jobId>` on job cards and title links, `filter-posted` on Date Posted select trigger, and `tracker-status` on application status select trigger. All accessible locators and labels (e.g. "Email", "Password", "Confirm password", "Date Posted", "Status:", "Not disclosed") strictly preserved.
+- Tests: web 103 (+8).
 
 ## [Phase 13] F6 Weekly summary — 2026-10-18
 
