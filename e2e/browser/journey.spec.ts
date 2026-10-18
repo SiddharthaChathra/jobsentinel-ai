@@ -35,7 +35,7 @@ test('sign-up creates an account and opens onboarding', async () => {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByLabel('Confirm password').fill(password);
-  await page.getByRole('button', { name: 'Create account' }).click();
+  await page.getByTestId('signup-submit').click();
   await expect(page).toHaveURL(/\/onboarding/);
 });
 
@@ -43,12 +43,12 @@ test('onboarding with a resume fixture reaches the dashboard', async () => {
   await page
     .locator('input[type="file"]')
     .setInputFiles(resolve(__dirname, '../fixtures/.generated/resume.pdf'));
-  await page.getByRole('button', { name: 'Upload & analyze' }).click();
+  await page.getByTestId('onboarding-upload').click();
   // No AI key in tests: the profile comes from the deterministic parser.
   await expect(page.getByText('Check what we found')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('list', { name: 'Skills' })).toContainText('Java');
-  await page.getByRole('button', { name: 'Confirm profile' }).click();
-  await page.getByRole('button', { name: 'Start monitoring' }).click();
+  await page.getByTestId('onboarding-confirm-profile').click();
+  await page.getByTestId('onboarding-start').click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
 });
 
@@ -71,7 +71,7 @@ test('domain filter: category=NETWORK shows only the network role', async () => 
 test('recency filter: "Last 7 days" drops the 20-day-old job; nothing older than 60 days ever shows', async () => {
   await page.goto(`/jobs?q=${TAG}`);
   await expect(card(JOBS.network)).toBeVisible();
-  await page.getByRole('combobox', { name: 'Date Posted' }).click();
+  await page.getByTestId('filter-posted').click();
   await page.getByRole('option', { name: 'Last 7 days' }).click();
   await expect(page).toHaveURL(/postedAfter=/);
   await expect(card(JOBS.network)).toHaveCount(0);
@@ -105,7 +105,7 @@ test('tracker: mark Applied, reload, the status persists and there is exactly on
   await page.goto(`/jobs?q=${TAG}`);
   await card(JOBS.india).click();
   await expect(page).toHaveURL(/\/jobs\/[0-9a-f-]{36}/);
-  const status = page.getByRole('combobox', { name: 'Status:' });
+  const status = page.getByTestId('tracker-status');
   await status.click();
   // Listen before clicking, so a fast PUT cannot finish before we start waiting for it.
   const saved = page.waitForResponse(
@@ -116,7 +116,7 @@ test('tracker: mark Applied, reload, the status persists and there is exactly on
   await expect(status).toHaveText(/Applied/);
 
   await page.reload();
-  await expect(page.getByRole('combobox', { name: 'Status:' })).toHaveText(/Applied/);
+  await expect(page.getByTestId('tracker-status')).toHaveText(/Applied/);
 
   await page.goto('/applications');
   await expect(page.getByText(JOBS.india)).toBeVisible();
