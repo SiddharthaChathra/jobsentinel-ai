@@ -24,7 +24,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 ## [Phase 13] F7 Skill-gap report — 2026-10-18
 
 - **Skill gaps (D120):** `GET /skill-gaps` ranks the skills missing across the top 15 eligible matches ("SQL missing in 9 of 15"), aliases merged, soft skills left out, rules only. Learning links from a curated JSON map; 33 official links proposed and checked (`pnpm links:check`), none shown until the owner approves.
-- Tests: validation +8, types +1 (contract), API e2e +3.
+- **Web UI for /skill-gaps page (Gemini, F7, D120):** Added `/skill-gaps` page in app navigation after Applications. Renders header ("Based on your top N matches"), ranked rows ("`<skill>` — missing in `<missingIn>` of `<of>`") with proportional visual bars, up to 3 example jobs linking to `/jobs/<id>`, approved learning links (`target="_blank"`, `rel="noopener noreferrer"`), unlinked skills render without links, empty state for `basedOn: 0`; selectors `skill-gap-<skill>`, `skill-gap-links-<skill>`.
+- Tests: validation +8, types +1 (contract), API e2e +3, web 95 (+4).
 
 ## [Phase 13] F5 Tracker reminders — 2026-10-18
 
