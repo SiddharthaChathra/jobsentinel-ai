@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] Placeholder postings — 2026-10-18
+
+- **Placeholders (D117):** "Don't see what you're looking for?", "Join our Talent Community", "Future Opportunities", "General Application" and similar are set aside as `PLACEHOLDER`: never matched, listed, held for review or alerted, and counted on the source report card as "placeholders skipped" rather than collected. Rows are kept so they are not re-discovered. Off until confirmed (`PLACEHOLDER_FILTER_ENABLED`); `pnpm placeholders` lists the 15 existing matches.
+- Tests: validation 385 (+26), API e2e +3.
+
 ## [Phase 13] Experience misread fix; board recheck — 2026-10-18
 
 - **"Asks for 80+ years" fixed (D116):** company history ("over 80 years as an industrial leader", "For 30+ years, we've…") is no longer read as a requirement. A figure above 15 years is a parse error, a figure needs requirement wording next to it, and company-history phrasing disqualifies it. Accuracy gate unchanged (72/72, 72/72, 10/72); 40 recent jobs parse differently — none of them changes what you see in your list (the two that become fresher-eligible are in Romania).

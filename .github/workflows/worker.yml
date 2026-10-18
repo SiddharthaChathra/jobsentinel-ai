@@ -62,4 +62,7 @@ jobs:
           # with `pnpm --filter @jobsentinel/api source-report -- --at=<date>`.
           # Thresholds: AUTO_PAUSE_MIN_COLLECTED / _WINDOW_DAYS.
           AUTO_PAUSE_ENABLED: 'true'
+          # Placeholder postings (D117) are set aside only once the owner confirms the preview
+          # (`pnpm --filter @jobsentinel/api placeholders`). Set to 'true' then.
+          PLACEHOLDER_FILTER_ENABLED: 'false'
         run: node dist/worker.js --once ${{ inputs.sources && format('--sources={0}', inputs.sources) || '' }}

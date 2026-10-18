@@ -11,6 +11,7 @@ import {
   classifyCategory,
   classifyExperience,
   classifyPostingType,
+  placeholderMatch,
   isIndiaLocation,
   extractBatchYears,
   isBatchEligible,
@@ -18,7 +19,9 @@ import {
   MAX_FRESHER_MIN_YEARS,
   type ExperienceEvidence,
 } from '@jobsentinel/validation';
+import type { Env } from '@jobsentinel/config';
 import { AI_SERVICE } from '../common/ai/ai.module';
+import { ENV } from '../common/config/config.module';
 import { DB, type Db } from '../common/db/db.module';
 import { jobEvents, jobs, preferences } from '../common/db/schema';
 
@@ -30,6 +33,8 @@ export interface ClassifyResult {
   aiUnavailable: number;
   /** Unknown-experience jobs left DISCOVERED to wait for an AI verdict next run (D96). */
   deferred: number;
+  /** General-application / talent-pool postings, set aside before any other gate (D117). */
+  placeholders: number;
 }
 
 type JobRow = typeof jobs.$inferSelect;
@@ -41,7 +46,8 @@ interface JobDecision {
    * answer (D105, D110). Persisted as CLASSIFIED with `hold_reason`, so validation (scam, URL,
    * company) still runs; a VALID verdict then leaves the job NEEDS_REVIEW, never alertable.
    */
-  status: 'CLASSIFIED' | 'FILTERED_OUT' | 'DEFERRED' | 'NEEDS_REVIEW';
+  /** PLACEHOLDER: not a job — a general application or talent pool (D117). */
+  status: 'CLASSIFIED' | 'FILTERED_OUT' | 'DEFERRED' | 'NEEDS_REVIEW' | 'PLACEHOLDER';
   category: JobCategory;
   roleFamily: string;
   level: ExperienceLevel;
@@ -96,8 +102,9 @@ function notFresherReason(
 }
 
 /** A held job goes on to validation like any other; `hold_reason` carries the hold (D110). */
-function persistedStatus(d: JobDecision): 'CLASSIFIED' | 'FILTERED_OUT' {
-  return d.status === 'FILTERED_OUT' ? 'FILTERED_OUT' : 'CLASSIFIED';
+function persistedStatus(d: JobDecision): 'CLASSIFIED' | 'FILTERED_OUT' | 'PLACEHOLDER' {
+  if (d.status === 'FILTERED_OUT' || d.status === 'PLACEHOLDER') return d.status;
+  return 'CLASSIFIED';
 }
 
 /** Statuses a job reaches only after passing classification, and before it is closed. */
@@ -124,6 +131,7 @@ export class ClassificationService {
   constructor(
     @Inject(DB) private readonly db: Db,
     @Inject(AI_SERVICE) private readonly ai: AIService | null,
+    @Inject(ENV) private readonly env: Env,
   ) {}
 
   /**
@@ -149,6 +157,7 @@ export class ClassificationService {
       aiUsed: 0,
       aiUnavailable: 0,
       deferred: 0,
+      placeholders: 0,
     };
 
     const pending = await this.db
@@ -187,6 +196,7 @@ export class ClassificationService {
           continue;
         }
         if (decision.status === 'FILTERED_OUT') result.filteredOut++;
+        else if (decision.status === 'PLACEHOLDER') result.placeholders++;
         else result.classified++;
         decisions.push(decision);
       } catch (err) {
@@ -225,6 +235,30 @@ export class ClassificationService {
     aiAllowed: boolean,
   ): Promise<JobDecision> {
     const category = classifyCategory({ title: job.title, skills: job.skills });
+    // Not a job at all (D117): decided first, from the title alone, so no AI call, validation,
+    // match or alert is ever spent on it. The row is kept so a re-scan finds it known.
+    const placeholder = this.env.PLACEHOLDER_FILTER_ENABLED ? placeholderMatch(job.title) : null;
+    if (placeholder) {
+      return {
+        jobId: job.id,
+        status: 'PLACEHOLDER',
+        category: category.category,
+        roleFamily: category.roleFamily,
+        level: 'UNKNOWN',
+        fresherEligible: null,
+        confidence: 1,
+        evidence: [],
+        minYears: job.experienceMinYears,
+        maxYears: job.experienceMaxYears,
+        experienceText: job.experienceText,
+        usedAi: false,
+        aiCalls: 0,
+        aiUnavailable: false,
+        categoryAsked: false,
+        postingType: 'REGULAR',
+        reason: `placeholder posting ("${placeholder}")`,
+      };
+    }
     const rules = classifyExperience({
       title: job.title,
       experienceText: job.experienceText,
@@ -543,8 +577,8 @@ ${job.description}`);
         decisions.map((d) => ({
           jobId: d.jobId,
           type:
-            d.status === 'FILTERED_OUT'
-              ? 'FILTERED_OUT'
+            d.status === 'FILTERED_OUT' || d.status === 'PLACEHOLDER'
+              ? d.status
               : d.status === 'NEEDS_REVIEW'
                 ? 'HELD'
                 : 'CLASSIFIED',

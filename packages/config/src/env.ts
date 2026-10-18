@@ -158,6 +158,12 @@ export const envSchema = z
     // Off: decisions are logged (and India-scoped alerts still sent) but nothing is paused —
     // for reviewing the list before the first live run (D104).
     AUTO_PAUSE_ENABLED: bool(true),
+    /**
+     * Mark general-application / talent-pool postings PLACEHOLDER at classification (D117,
+     * patterns: `PLACEHOLDER_TITLE_PATTERNS`). Off until the owner confirms the preview
+     * (`pnpm placeholders`); the worker workflow sets it.
+     */
+    PLACEHOLDER_FILTER_ENABLED: bool(false),
     AUTO_PAUSE_MIN_COLLECTED: int(20, { min: 1, max: 10_000 }),
     AUTO_PAUSE_WINDOW_DAYS: int(30, { min: 7, max: 180 }),
     KEEP_AWAKE_HOURS: z.preprocess(

@@ -94,6 +94,7 @@ export class SourceReportService {
         collected: t.collected,
         kept: t.kept,
         rejected: t.rejected,
+        placeholdersSkipped: t.placeholders,
         lastKeptAt: lastKept.get(source.id) ?? null,
         lastSuccessfulScan: source.lastSuccessfulScan?.toISOString() ?? null,
         lastError: source.lastError,
@@ -111,6 +112,7 @@ export class SourceReportService {
       totals: {
         collected: rows.reduce((n, r) => n + r.collected, 0),
         kept: rows.reduce((n, r) => n + r.kept, 0),
+        placeholdersSkipped: rows.reduce((n, r) => n + (r.placeholdersSkipped ?? 0), 0),
       },
       sources: rows,
     };

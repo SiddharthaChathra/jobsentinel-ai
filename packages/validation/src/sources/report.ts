@@ -82,6 +82,8 @@ export interface SourceTally {
   collected: number;
   kept: number;
   rejected: Record<RejectReason, number>;
+  /** Not jobs (D117): counted on their own, never as collected, kept or rejected. */
+  placeholders: number;
 }
 
 export function tally(jobs: CollectedJob[], now: Date): SourceTally {
@@ -90,12 +92,17 @@ export function tally(jobs: CollectedJob[], now: Date): SourceTally {
     number
   >;
   let kept = 0;
+  let placeholders = 0;
   for (const job of jobs) {
+    if (job.status === 'PLACEHOLDER') {
+      placeholders++;
+      continue;
+    }
     const outcome = jobOutcome(job, now);
     if (outcome.kept) kept++;
     else rejected[outcome.reason]++;
   }
-  return { collected: jobs.length, kept, rejected };
+  return { collected: jobs.length - placeholders, kept, rejected, placeholders };
 }
 
 /**
@@ -131,7 +138,8 @@ export interface AutoPauseInput {
   createdAt: Date;
   resumedAt: Date | null;
   /** Tally of the jobs this source collected in the last `windowDays`. */
-  window: SourceTally;
+  /** Placeholders are already out of `collected` (D117); their count is not needed here. */
+  window: Omit<SourceTally, 'placeholders'>;
   now: Date;
   /** Fewer collected jobs than this is too small a sample to judge (D104). */
   minCollected: number;
