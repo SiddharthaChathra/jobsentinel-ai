@@ -28,6 +28,8 @@ Answers whether `ALLOWED_SIGNUP_EMAILS` admits an email, so the sign-up page can
 
 ### Health & system (no auth for `/health`)
 
+`GET /health/worker` (no auth, F11, D124): `WorkerHealthResponse` `{ status: 'ok' | 'unhealthy' | 'outside_active_hours', lastBeatAt, ageMin, thresholdMin, activeHours }`; HTTP 503 when `unhealthy`.
+
 | Method | Path                                    | Purpose                        | Response                            |
 | ------ | --------------------------------------- | ------------------------------ | ----------------------------------- |
 | GET    | `/health`                               | liveness                       | `{status:"ok", version, uptimeSec}` |

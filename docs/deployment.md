@@ -120,10 +120,33 @@ Supabase's own free-tier backups are not a substitute: on the free plan they can
 
 - `GET /health` — liveness, no dependencies.
 - `GET /health/ready` — readiness: database reachable, migrations present.
+- `GET /health/worker` — the worker is alive (F11, D124). The response is `{ status, lastBeatAt, ageMin, thresholdMin, activeHours }`.
+  - **503 `unhealthy`** when the last heartbeat is older than 2× `WORKER_DISPATCH_INTERVAL_MIN` (2 × 30 = 60 minutes).
+  - The check applies only inside `KEEP_AWAKE_HOURS` (production `7-24` IST), measured from when that window opened if that is later than the last beat.
+  - Outside the window it answers 200 `outside_active_hours`. The API sleeps then (D99) and dispatches no worker runs, so a gap is expected, not an outage.
 - `GET /api/v1/system/status` — worker heartbeat, source health, pipeline counts, today's AI usage against both budgets.
 - The worker raises Telegram system alerts (rate-limited to one per type per 6 h) for a disabled source, a long gap since the last successful scan, and an exhausted AI budget.
 
-Point UptimeRobot at `/health/ready` every 5 minutes. On Render's free tier this also keeps the API awake.
+**Uptime alerts (F11, D124): `.github/workflows/uptime.yml`.** Every 15 minutes from 07:30 to 00:15 IST, it runs `scripts/uptime-check.mjs` against `/health/ready` and `/health/worker`:
+
+- It allows up to 90 seconds, twice, for a cold start.
+- It sends you a Telegram message when either goes down and once when both recover, never once per run. The previous run's result is the last known state, so a red run means "down".
+- Rehearsed locally on 2026-10-18 against the real API and a stub Telegram: a stale worker sent one "down"; staying down sent nothing; a fresh heartbeat sent one "recovered"; healthy sent nothing; a stopped API sent "down". The token never appears in the output.
+
+Setup (you; secrets never pass through chat):
+
+1. Find your chat id: send any message to your bot, then open `https://api.telegram.org/bot<token>/getUpdates` in your own browser and read `message.chat.id`. Or use the id JobSentinel already stores for you in `telegram_links`.
+2. GitHub → Settings → Secrets and variables → Actions → New repository secret: `ALERT_TELEGRAM_CHAT_ID` = that id. `TELEGRAM_BOT_TOKEN` is already set for the worker.
+3. Actions → uptime → Run workflow, and check the run is green. To see an alert, stop the worker or wait for a real outage. Don't fake one in production.
+
+**Why not UptimeRobot.** Checked 2026-10-18 on uptimerobot.com/pricing and the help center:
+
+- **The free plan:** 50 monitors, checks every 5 minutes, keyword monitors. Its alert integrations are Google Chat, Discord, Pushover, Pushbullet and Splunk. **Telegram needs the paid Solo plan, and webhooks the Team plan.**
+- **The bigger problem:** a check every 5 minutes, 24 hours a day, keeps the free Render API awake all night. That uses about 744 of the workspace's 750 free hours and suspends your other free service (D99). No free-plan maintenance window could be confirmed to prevent it.
+
+If you still want it (for example, e-mail alerts as a second channel), add an HTTP(S) keyword monitor on `/health/worker` with keyword `"ok"`, and pause it overnight by hand. Re-check the plan's terms first: they change.
+
+GitHub runs scheduled jobs best-effort, so a check can run late or be skipped. This is a safety net, not a pager.
 
 ## Free-tier limits worth respecting
 

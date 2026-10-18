@@ -34,3 +34,18 @@ export const ReadinessResponse = z.object({
   checks: z.record(z.string(), z.enum(['ok', 'fail', 'skipped'])),
 });
 export type ReadinessResponse = z.infer<typeof ReadinessResponse>;
+
+/**
+ * `GET /health/worker` (F11, D124): 200 when the worker's last heartbeat is recent enough, 503
+ * when not. "Recent" is 2× the dispatch interval, measured inside the active hours only — the
+ * API (and so the worker's dispatch) sleeps outside them to save Render's free hours (D99).
+ */
+export const WorkerHealthResponse = z.object({
+  status: z.enum(['ok', 'unhealthy', 'outside_active_hours']),
+  lastBeatAt: z.iso.datetime().nullable(),
+  /** Minutes since the last heartbeat, or since the active window opened if that is later. */
+  ageMin: z.number().nullable(),
+  thresholdMin: z.number(),
+  activeHours: z.string(),
+});
+export type WorkerHealthResponse = z.infer<typeof WorkerHealthResponse>;
