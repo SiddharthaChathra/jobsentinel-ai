@@ -7,6 +7,7 @@ import { JobEventsService } from './job-events.service';
 import { JobsController } from './jobs.controller';
 import { JobsDetailService } from './jobs-detail.service';
 import { JobsQueryService } from './jobs-query.service';
+import { SkillGapsService } from './skill-gaps.service';
 import { TrackerService } from './tracker.service';
 
 /**
@@ -25,6 +26,7 @@ import { TrackerService } from './tracker.service';
     JobsDetailService,
     TrackerService,
     DashboardService,
+    SkillGapsService,
   ],
   exports: [
     CompaniesService,
@@ -34,6 +36,7 @@ import { TrackerService } from './tracker.service';
     JobsQueryService,
     JobsDetailService,
     TrackerService,
+    SkillGapsService,
   ],
 })
 export class JobsModule {}

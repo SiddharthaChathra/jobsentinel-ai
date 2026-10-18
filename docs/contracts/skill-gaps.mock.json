@@ -1,0 +1,63 @@
+{
+  "GET /api/v1/skill-gaps": {
+    "status": 200,
+    "body": {
+      "data": {
+        "basedOn": 15,
+        "generatedAt": "2026-10-18T06:00:00.000Z",
+        "gaps": [
+          {
+            "skill": "SQL",
+            "missingIn": 9,
+            "of": 15,
+            "jobs": [
+              {
+                "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c01",
+                "title": "SDE I",
+                "company": "Hevo Data"
+              },
+              {
+                "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c02",
+                "title": "Associate SDE",
+                "company": "Hevo Data"
+              },
+              {
+                "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c03",
+                "title": "Graduate Engineer Trainee",
+                "company": "Zeta"
+              }
+            ],
+            "links": [
+              {
+                "title": "PostgreSQL tutorial: the SQL language",
+                "url": "https://www.postgresql.org/docs/current/tutorial-sql.html",
+                "publisher": "PostgreSQL Global Development Group"
+              }
+            ]
+          },
+          {
+            "skill": "Kubernetes",
+            "missingIn": 4,
+            "of": 15,
+            "jobs": [
+              {
+                "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c04",
+                "title": "Cloud Engineer Trainee",
+                "company": "Groww"
+              }
+            ],
+            "links": []
+          }
+        ]
+      },
+      "meta": {}
+    }
+  },
+  "GET /api/v1/skill-gaps (no matches yet)": {
+    "status": 200,
+    "body": {
+      "data": { "basedOn": 0, "generatedAt": "2026-10-18T06:00:00.000Z", "gaps": [] },
+      "meta": {}
+    }
+  }
+}

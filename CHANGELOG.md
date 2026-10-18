@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F7 Skill-gap report — 2026-10-18
+
+- **Skill gaps (D120):** `GET /skill-gaps` ranks the skills missing across the top 15 eligible matches ("SQL missing in 9 of 15"), aliases merged, soft skills left out, rules only. Learning links from a curated JSON map; 33 official links proposed and checked (`pnpm links:check`), none shown until the owner approves.
+- Tests: validation +8, types +1 (contract), API e2e +3.
+
 ## [Phase 13] F5 Tracker reminders — 2026-10-18
 
 - **Reminders (D119):** follow-up after N days with no status change (3-14, default 7), interview the day before and the morning of, deadline 3 days and 1 day before for saved, not-applied jobs. Idempotent planning and delivery, quiet hours 22:00-07:00 in the user's timezone defer rather than drop, status changes cancel what no longer applies, snooze and dismiss. `GET /reminders`, `POST /reminders/:id/snooze|dismiss`, `PATCH /applications/:jobId/dates`; settings gain `remindersEnabled`, `followUpDays`, `weeklySummaryEnabled`.

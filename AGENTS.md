@@ -115,6 +115,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - A score never rejects a job: low matches are stored and ranked, never deleted or hidden.
 - Location: a job is listed if it is in India **or remote, whatever country it names** (D73, D102); on-site jobs abroad are filtered at classification, and the list applies the same rule.
 - Only roles that accept zero experience are listed (`isFresherRole`, D96): a stated minimum of 0 years with any upper end ("0-5 years"), or no stated years and a fresher/entry-level classification. Classification filters the rest before matching, and the read path applies the same rule (`fresherRoleSql`). Unknown experience with no stated years is listed only when the AI places it; otherwise it is **held for review** (`hold_reason`, D110), never filtered unseen. A held job still goes through validation, and stays NEEDS_REVIEW whatever validation finds.
+- The skill-gap report (F7, D120) is built from the `/jobs` list itself (top 15 by score), so it obeys every listing rule; rules only. Learning links come only from `learning-links.json` entries the owner approved — never add a URL without `pnpm links:check` and the owner's approval.
 - Every match row carries its `profile_version`. Editing a profile bumps the version and re-scores; old rows stay for history.
 - Scores are per user — `(job_id, user_id, profile_version)` is the idempotency key, so re-running a match run is always safe.
 
