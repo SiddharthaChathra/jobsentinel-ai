@@ -82,6 +82,11 @@ export interface JobCompanyRef {
   name: string;
   domain: string | null;
   verificationStatus: CompanyVerification;
+  /**
+   * "Hires freshers often": the company's fresher score is HIGH (F4, D118). A badge only — it
+   * never hides, filters or ranks a job. Optional for older clients.
+   */
+  hiresFreshersOften?: boolean;
 }
 
 export interface JobLocation {

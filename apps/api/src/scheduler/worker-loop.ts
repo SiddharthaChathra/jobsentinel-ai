@@ -13,6 +13,7 @@ import { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import { HousekeepingService } from './housekeeping.service';
 import { RecoveryService } from './recovery.service';
 import { SchedulerService } from './scheduler.service';
+import { CompanyFresherService } from '../sources/company-fresher.service';
 import { SourceReportService } from '../sources/source-report.service';
 
 export interface WorkerOptions {
@@ -49,6 +50,7 @@ export class WorkerLoop {
     private readonly housekeeping: HousekeepingService,
     private readonly audit: AuditLogger,
     private readonly sourceReport: SourceReportService,
+    private readonly fresherScores: CompanyFresherService,
   ) {}
 
   /**
@@ -163,6 +165,8 @@ export class WorkerLoop {
       // stop scanning, and the web inbox is written even when delivery fails (docs 10 §5).
       // Before notify/dispatch, so a pause notice goes out in the same tick (F2, D103).
       { name: 'source-health', run: () => this.pauseIdleSources() },
+      // Hourly: spaces company boards' next scans and feeds the badge; never a gate (F4, D118).
+      { name: 'fresher-scores', run: () => this.fresherScores.recomputeIfStale() },
       {
         name: 'notify',
         run: () => this.notifications.enqueuePending(opts.once ? { batch: 200 } : {}),

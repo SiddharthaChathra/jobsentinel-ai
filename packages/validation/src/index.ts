@@ -20,4 +20,5 @@ export * from './classify/batch-years';
 export * from './classify/posting-type';
 export * from './sources/quota';
 export * from './sources/attribution';
+export * from './sources/fresher-score';
 export * from './classify/placeholder';

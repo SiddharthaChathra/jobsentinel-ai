@@ -17,3 +17,23 @@ export const PRIORITY_BANDS = [
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
 
 export const APP_NAME = 'JobSentinel AI';
+
+/**
+ * Company "accepts freshers" score (F4, D118; formula in docs/sources.md). Used only to space a
+ * company board's scans and to show a badge — never to reject a job.
+ */
+export const FRESHER_SCORE = {
+  /** Fewer classified postings than this in the window: UNKNOWN (neutral). */
+  minPostings: 5,
+  /** Postings older than this are not counted. */
+  windowDays: 365,
+  /** A posting's weight halves every 30 days, so the share reflects recent hiring. */
+  shareHalfLifeDays: 30,
+  /** The score halves for every 90 days since the company's last fresher posting. */
+  recencyHalfLifeDays: 90,
+  /** Band thresholds on the 0-100 score. HIGH shows the "Hires freshers often" badge. */
+  highMin: 30,
+  mediumMin: 10,
+  /** Scan-interval multiplier per band, applied to company boards only, never below the adapter's floor. */
+  intervalFactor: { HIGH: 0.5, MEDIUM: 1, LOW: 2, UNKNOWN: 1 },
+} as const;
