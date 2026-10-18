@@ -49,6 +49,47 @@ Dashboard (Phase 8) or `POST /sources` with e.g. `{ "name": "Greenhouse: Acme", 
 
 **Proposed, not enabled (2026-10-18, networking / cloud / DevOps).** Boards that exist and passed the company check, with India postings at that date; none had a fresher-titled India posting: Zscaler (Greenhouse `zscaler`, 68 India), Netskope (Greenhouse `netskope`, 19), Kong (Ashby `kong`, 13; konghq.com links it), Harness (Greenhouse `harnessinc`, 9), New Relic (Greenhouse `newrelic`, 8), JFrog (Greenhouse `jfrog`, 6), Sumo Logic (Greenhouse `sumologic`, 5), Aviatrix (Greenhouse `aviatrix`, 5). Fastly (3 India) is below the five-posting policy. **Re-checked 2026-10-18 against the owner's rule (India postings + an entry-level, trainee or graduate role + the company check): none qualifies** — no entry-level title in India, and every India posting's description states a minimum of 2+ years. All stay off; re-check later. Not found on a public Greenhouse/Lever/Ashby board under the obvious slug: DigitalOcean, HashiCorp, Couchbase, Infoblox, Cohesity, Postman, BrowserStack, Gigamon, A10, Extreme, Aryaka, Versa, HighRadius (many use Workday or their own sites, which are not supported).
 
+## Company "accepts freshers" score (F4, D118)
+
+The score measures how often a company posts roles a fresher in India can take. It is used for two things only:
+
+- **Scan spacing:** it sets how often that company's own board is scanned.
+- **Badge:** it shows "Hires freshers often" on that company's job cards.
+
+It **never** rejects, hides, filters or ranks a job. Nothing in classification, validation, matching or notifications reads it.
+
+**Inputs** (per company, recomputed by the worker at most hourly, table `company_fresher_stats`). A posting is every job of the company that classification has seen, excluding `DISCOVERED` and `PLACEHOLDER` rows, dated `coalesce(posted_at, first_seen_at)` within the last **365 days**.
+
+- A posting is **fresher-eligible** when it passes the experience rule the list uses (`fresherRoleSql`: a stated minimum of 0 years, or no stated years and a FRESHER / ENTRY_LEVEL level) **and** was not filtered for its location or batch.
+- A company that hires new graduates only abroad therefore scores 0.
+- Retention deletes filtered jobs after 90 days, so in practice the window for non-listed postings is about 90 days.
+
+**Formula** (`fresherScore` in `packages/validation/src/sources/fresher-score.ts`; constants `FRESHER_SCORE`):
+
+```
+w(posting) = 0.5 ^ (age_days / 30)                     a posting's weight halves every 30 days
+S          = Σ w(fresher postings) / Σ w(all postings) recency-weighted fresher share, 0..1
+R          = 0.5 ^ (days since last fresher posting / 90)
+score      = round(100 × S × R)                        0..100
+```
+
+- Fewer than **5** postings in the window: **UNKNOWN**, with a null score (neutral).
+- Enough postings but no fresher-eligible one: **0**.
+- Bands: **HIGH ≥ 30** (shows the badge), **MEDIUM 10–29**, **LOW < 10**.
+
+Worked example (a unit test): 2 fresher postings (today and 30 days ago) and 4 others (today, 30, 60 and 90 days ago).
+
+- Σall = 1 + 0.5 + 1 + 0.5 + 0.25 + 0.125 = 3.375
+- Σfresher = 1.5, so S = 0.444; R = 1
+- Score **44**: HIGH.
+
+**Scan spacing.** This applies to company boards only (Greenhouse, Lever and Ashby sources with a `company_id`); keyword and aggregator sources span many companies and keep their interval.
+
+- After a successful scan, the next scan is the board's usual interval × **0.5 (HIGH)**, × **1 (MEDIUM / UNKNOWN / not yet scored)** or × **2 (LOW)**.
+- It is never below the adapter's `minIntervalSec`, so the score cannot breach a source's limits. Failure backoff is unchanged.
+- When more sources are due than one tick can scan, a HIGH board of the same priority is leased before a LOW one.
+- Scanning a LOW board less often delays when a new posting is seen. It loses none: boards list every open posting on each scan.
+
 ## Known gaps (backlog)
 
 Adzuna adapter (key-gated), `career_page` HTML adapter (robots.txt-gated), SmartRecruiters/Workable. `since`/cursor support is unused by current adapters (they return the full board), so "missed jobs" cannot happen unless a posting appears and disappears between two scans.

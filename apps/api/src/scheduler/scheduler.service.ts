@@ -22,7 +22,7 @@ export class SchedulerService {
     private readonly manager: SourceManager,
   ) {}
 
-  /** Lease up to `max` due sources: manual requests first, then priority, then oldest due. */
+  /** Lease up to `max` due sources: manual requests first, then priority, then fresher band, then oldest due. */
   async leaseDueSources(max: number, onlyIds?: string[]): Promise<SourceRow[]> {
     // An explicit id list (worker --sources=) bypasses the schedule: those sources are scanned now.
     // Each id is bound as its own parameter — interpolating the JS array gives Postgres a bare
@@ -43,6 +43,11 @@ export class SchedulerService {
         order by
           (manual_requested_at is not null) desc,
           case priority when 'HIGH' then 0 when 'NORMAL' then 1 else 2 end,
+          -- Within a priority, company boards that hire freshers often go first (F4, D118).
+          case when adapter in ('greenhouse', 'lever', 'ashby') then (
+            select case c.band when 'HIGH' then 0 when 'LOW' then 2 else 1 end
+            from company_fresher_stats c where c.company_id = job_sources.company_id
+          ) end nulls last,
           next_scan_at nulls first
         limit ${max}
         for update skip locked

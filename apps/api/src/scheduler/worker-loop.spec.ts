@@ -1,4 +1,5 @@
 import type { SourceReportService } from '../sources/source-report.service';
+import type { CompanyFresherService } from '../sources/company-fresher.service';
 import pino from 'pino';
 import type { Env } from '@jobsentinel/config';
 import { loadEnv } from '@jobsentinel/config';
@@ -74,6 +75,9 @@ describe('WorkerLoop', () => {
         {
           autoPause: jest.fn().mockResolvedValue({ paused: [], alerted: [] }),
         } as unknown as SourceReportService,
+        {
+          recomputeIfStale: jest.fn().mockResolvedValue({ skipped: true }),
+        } as unknown as CompanyFresherService,
       ),
       scheduler,
       classification,

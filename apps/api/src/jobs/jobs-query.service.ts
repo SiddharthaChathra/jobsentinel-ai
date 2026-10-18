@@ -96,6 +96,8 @@ export class JobsQueryService {
           name: companies.name,
           domain: companies.websiteDomain,
           verificationStatus: companies.verificationStatus,
+          // Badge only, never a filter (F4, D118).
+          hiresFreshersOften: sql<boolean>`exists (select 1 from company_fresher_stats c where c.company_id = ${companies.id} and c.band = 'HIGH')`,
         },
         match: {
           overallScore: jobMatches.overallScore,
@@ -402,6 +404,7 @@ function toCard(row: Row): JobCard {
       name: row.company.name,
       domain: row.company.domain,
       verificationStatus: row.company.verificationStatus,
+      hiresFreshersOften: row.company.hiresFreshersOften,
     },
     location: {
       text: j.locationText,

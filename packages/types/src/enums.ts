@@ -113,6 +113,10 @@ export const PostingType = z.enum(['CAMPUS_DRIVE', 'OFF_CAMPUS_PROGRAM', 'REGULA
 export type PostingType = z.infer<typeof PostingType>;
 export type MatchScoring = z.infer<typeof MatchScoring>;
 
+/** How often a company posts zero-experience roles (F4, D118). UNKNOWN: fewer than 5 postings seen. */
+export const FresherBand = z.enum(['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN']);
+export type FresherBand = z.infer<typeof FresherBand>;
+
 export const ApplicationStatus = z.enum([
   'VIEWED',
   'APPLIED',

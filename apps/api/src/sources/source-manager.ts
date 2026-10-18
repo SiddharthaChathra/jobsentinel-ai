@@ -2,12 +2,14 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import type { ScanTrigger } from '@jobsentinel/types';
 import {
+  boardIntervalSec,
   checkQuota,
   windowStart,
   type QuotaDecision,
   type QuotaWindow,
 } from '@jobsentinel/validation';
-import { SCAN_INTERVAL_SEC, type Env } from '@jobsentinel/config';
+import type { Env } from '@jobsentinel/config';
+import type { FresherBand } from '@jobsentinel/types';
 import { ENV } from '../common/config/config.module';
 import { DB, type Db } from '../common/db/db.module';
 import { jobSources, scanRuns } from '../common/db/schema';
@@ -18,7 +20,11 @@ import { DedupeService, type DedupeItem, type DedupeOutcome } from '../jobs/dedu
 import { normalizeRawJob } from '../jobs/normalizer';
 import { AuditLogger } from '../system/audit-logger';
 import { SourceBlockedError, type FetchContext } from './job-source';
+import { CompanyFresherService } from './company-fresher.service';
 import { SourceRegistry } from './source-registry';
+
+/** Adapters that read one company's own board; only these are spaced by its fresher score (F4). */
+const COMPANY_BOARD_ADAPTERS = new Set(['greenhouse', 'lever', 'ashby']);
 
 export type SourceRow = typeof jobSources.$inferSelect;
 
@@ -65,6 +71,7 @@ export class SourceManager {
     private readonly companies: CompaniesService,
     private readonly dedupe: DedupeService,
     private readonly audit: AuditLogger,
+    private readonly fresher: CompanyFresherService,
   ) {}
 
   async runScan(source: SourceRow, trigger: ScanTrigger): Promise<ScanSummary> {
@@ -238,10 +245,22 @@ export class SourceManager {
    * was enforced only when a source was created or edited through the API, so seeded Adzuna sources
    * fell back to the hourly LOW default and ran ~34 scans a day against a 250/day quota (D108).
    */
-  private intervalSec(source: SourceRow): number {
-    const configured = source.scanIntervalSec ?? SCAN_INTERVAL_SEC[source.priority];
-    const floor = this.registry.get(source.adapter)?.metadata.minIntervalSec ?? 0;
-    return Math.max(configured, floor);
+  private intervalSec(source: SourceRow, band: FresherBand | null = null): number {
+    return boardIntervalSec({
+      configuredSec: source.scanIntervalSec,
+      priority: source.priority,
+      floorSec: this.registry.get(source.adapter)?.metadata.minIntervalSec ?? 0,
+      band,
+    });
+  }
+
+  /**
+   * A company board's fresher band (F4, D118): HIGH is scanned twice as often, LOW half as often,
+   * within the adapter's floor. Keyword and aggregator sources span many companies: no band.
+   */
+  private async boardBand(source: SourceRow): Promise<FresherBand | null> {
+    if (!source.companyId || !COMPANY_BOARD_ADAPTERS.has(source.adapter)) return null;
+    return this.fresher.bandFor(source.companyId);
   }
 
   /** Rolling-window usage for providers with a published quota; null for those without. */
@@ -280,7 +299,7 @@ export class SourceManager {
     startedAt: Date,
     cursor: string | null,
   ): Promise<void> {
-    const interval = this.intervalSec(source);
+    const interval = this.intervalSec(source, await this.boardBand(source));
     await this.db
       .update(jobSources)
       .set({

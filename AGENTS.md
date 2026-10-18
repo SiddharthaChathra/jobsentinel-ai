@@ -149,6 +149,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - A board's preview (≤ 600 chars, e.g. Adzuna) and the full posting of one job are one job, and the full posting becomes canonical (`isPreviewDuplicate`, D113).
 - Adzuna's terms require the word "Adzuna", linked, on every displayed Adzuna advert: the card's `attribution` field and the alert line carry it (D115). Keep it.
 - Placeholder postings (general applications, talent pools) have status `PLACEHOLDER` (D117): never validated, matched, listed, held, alerted or counted as collected/kept. Any new count or summary must leave them out. Patterns: `PLACEHOLDER_TITLE_PATTERNS`; switch: `PLACEHOLDER_FILTER_ENABLED`.
+- The company fresher score (F4, D118; formula in docs/sources.md) only spaces a company board's scans (×0.5 HIGH, ×2 LOW, never below the adapter floor) and drives the "Hires freshers often" badge. No gate may read it: a score never rejects, hides or ranks a job.
 - Add sources to a live database with `pnpm db:seed -- --only="Name A;Name B"`: a full re-seed resets every source's `enabled` and `priority`.
 - A source with 20+ jobs collected and none kept over 30 days (`AUTO_PAUSE_MIN_COLLECTED`, `AUTO_PAUSE_WINDOW_DAYS`) is auto-paused (`PAUSED_AUTO`, D103, D104) and announced to admins once; errors and small samples never trigger it. India-scoped sources (Adzuna `in`, or `config.indiaScoped`) are never paused — they are alerted on once per window. Sources are never deleted; resume is `POST /sources/:id/resume`. The report card is `GET /sources/report`.
 

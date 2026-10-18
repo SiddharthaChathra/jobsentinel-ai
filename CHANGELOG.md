@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F4 Company fresher score — 2026-10-18
+
+- **Fresher score (D118):** `company_fresher_stats` per company — postings seen, fresher-eligible count, last fresher posting, a 0-100 score with recency decay (UNKNOWN under 5 postings). A company board's next scan is ×0.5 when HIGH and ×2 when LOW (never below the adapter floor); HIGH boards lease first. Cards carry `company.hiresFreshersOften`. Never used to reject a job. Formula in docs/sources.md.
+- Tests: validation +12 (formula), API e2e +4 (SQL equals the formula, UNKNOWN, scan spacing, lease order, badge).
+
 ## [Phase 13] Placeholder postings — 2026-10-18
 
 - **Placeholders (D117):** "Don't see what you're looking for?", "Join our Talent Community", "Future Opportunities", "General Application" and similar are set aside as `PLACEHOLDER`: never matched, listed, held for review or alerted, and counted on the source report card as "placeholders skipped" rather than collected. Rows are kept so they are not re-discovered. Behind `PLACEHOLDER_FILTER_ENABLED`, switched on after the owner confirmed the 15 existing matches listed by `pnpm placeholders`; `--restore` is the rollback (docs/deployment.md).
