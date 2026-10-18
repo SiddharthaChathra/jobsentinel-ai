@@ -149,17 +149,30 @@ export function utcForLocalHour(
 ): Date {
   const base = new Date(from.getTime() + addDays * 86_400_000);
   const { year, month, day } = localParts(base, timezone);
-  // Start from the UTC guess for that local midnight, then correct by the observed offset.
-  let guess = new Date(Date.UTC(year, month - 1, day, localHour, 0, 0));
-  for (let i = 0; i < 3; i++) {
-    const actual = localParts(guess, timezone);
-    const drift = actual.hour - localHour;
-    if (drift === 0 && actual.day === day) break;
-    // Correct by the observed difference, wrapping across midnight.
-    const shift = drift > 12 ? drift - 24 : drift < -12 ? drift + 24 : drift;
-    guess = new Date(guess.getTime() - shift * 3_600_000);
-  }
-  return guess;
+  const wanted = Date.UTC(year, month - 1, day, localHour, 0, 0);
+  // Start from the UTC guess, then subtract the zone's offset at that instant. The offset is
+  // measured to the minute: correcting in whole hours left India (UTC+5:30) 30 minutes late,
+  // so quiet hours ending at 07:00 released alerts at 07:30. A second pass settles DST edges.
+  let guess = wanted;
+  for (let i = 0; i < 2; i++) guess = wanted - offsetMs(new Date(guess), timezone);
+  return new Date(guess);
+}
+
+/** The zone's offset from UTC at an instant, in milliseconds (IST: +5:30). */
+function offsetMs(at: Date, timezone: string): number {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const p = Object.fromEntries(fmt.formatToParts(at).map((x) => [x.type, Number(x.value)]));
+  const asUtc = Date.UTC(p.year!, p.month! - 1, p.day, p.hour! % 24, p.minute, p.second);
+  return asUtc - Math.floor(at.getTime() / 1000) * 1000;
 }
 
 /** Digest ordering: worst-to-best is never useful, so bands sort high first, then score. */

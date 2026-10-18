@@ -150,6 +150,11 @@ export class NotificationsController {
     if (body.pausedUntil !== undefined) {
       patch.pausedUntil = body.pausedUntil === null ? null : new Date(body.pausedUntil);
     }
+    if (body.remindersEnabled !== undefined) patch.remindersEnabled = body.remindersEnabled;
+    if (body.followUpDays !== undefined) patch.followUpDays = body.followUpDays;
+    if (body.weeklySummaryEnabled !== undefined) {
+      patch.weeklySummaryEnabled = body.weeklySummaryEnabled;
+    }
     await this.db
       .update(notificationSettings)
       .set(patch)
@@ -217,6 +222,9 @@ export class NotificationsController {
       includeNeedsReviewInDigest: row.includeNeedsReviewInDigest,
       telegramEnabled: row.telegramEnabled,
       pausedUntil: row.pausedUntil?.toISOString() ?? null,
+      remindersEnabled: row.remindersEnabled,
+      followUpDays: row.followUpDays,
+      weeklySummaryEnabled: row.weeklySummaryEnabled,
       telegram: await this.linkState(userId),
     };
   }
@@ -258,7 +266,13 @@ function toInboxItem(row: typeof notifications.$inferSelect): InboxItem {
 }
 
 function titleFor(type: string): string {
-  return type === 'DIGEST' ? 'Daily digest' : type === 'SYSTEM' ? 'System alert' : 'JobSentinel';
+  const titles: Record<string, string> = {
+    DIGEST: 'Daily digest',
+    SYSTEM: 'System alert',
+    REMINDER: 'Reminder',
+    WEEKLY: 'Weekly summary',
+  };
+  return titles[type] ?? 'JobSentinel';
 }
 
 function reviveAlert(job: JobAlertData): JobAlertData {

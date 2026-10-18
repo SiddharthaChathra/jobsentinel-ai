@@ -4,6 +4,8 @@ import { DigestService } from './digest.service';
 import { DispatcherService } from './dispatcher.service';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
+import { RemindersController } from './reminders.controller';
+import { RemindersService } from './reminders.service';
 import { TelegramClient } from './telegram.client';
 import { TelegramPollerService } from './telegram-poller.service';
 import { TelegramWebhookController, TelegramWebhookRegistrar } from './telegram-webhook';
@@ -15,12 +17,13 @@ import { TelegramWebhookController, TelegramWebhookRegistrar } from './telegram-
  */
 @Module({
   imports: [JobsModule],
-  controllers: [NotificationsController, TelegramWebhookController],
+  controllers: [NotificationsController, RemindersController, TelegramWebhookController],
   providers: [
     TelegramClient,
     NotificationsService,
     DispatcherService,
     DigestService,
+    RemindersService,
     TelegramPollerService,
     TelegramWebhookRegistrar,
   ],
@@ -28,6 +31,7 @@ import { TelegramWebhookController, TelegramWebhookRegistrar } from './telegram-
     NotificationsService,
     DispatcherService,
     DigestService,
+    RemindersService,
     TelegramPollerService,
     TelegramClient,
   ],

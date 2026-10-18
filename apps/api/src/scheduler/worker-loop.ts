@@ -8,6 +8,7 @@ import { MatchingService } from '../matching/matching.service';
 import { DigestService } from '../notifications/digest.service';
 import { DispatcherService } from '../notifications/dispatcher.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RemindersService } from '../notifications/reminders.service';
 import { TelegramPollerService } from '../notifications/telegram-poller.service';
 import { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import { HousekeepingService } from './housekeeping.service';
@@ -51,6 +52,7 @@ export class WorkerLoop {
     private readonly audit: AuditLogger,
     private readonly sourceReport: SourceReportService,
     private readonly fresherScores: CompanyFresherService,
+    private readonly reminders: RemindersService,
   ) {}
 
   /**
@@ -171,6 +173,10 @@ export class WorkerLoop {
         name: 'notify',
         run: () => this.notifications.enqueuePending(opts.once ? { batch: 200 } : {}),
       },
+      // Tracker reminders (F5, D119): plan from the tracker and queue the due ones; dispatch
+      // then delivers them. Quiet hours leave them pending for a later tick.
+      { name: 'reminders-plan', run: () => this.reminders.plan() },
+      { name: 'reminders-send', run: () => this.reminders.deliver() },
       {
         name: 'dispatch',
         run: () => this.dispatcher.dispatchPending(opts.once ? { batch: 50 } : {}),

@@ -198,6 +198,11 @@ export function formatDigest(digest: DigestData): string {
   return truncate(lines.join('\n'));
 }
 
+/** A tracker reminder (F5, D119). Job titles in `detail` are escaped like everything else. */
+export function formatReminder(title: string, detail: string): string {
+  return truncate(`⏰ <b>${esc(title)}</b>\n${esc(detail)}`);
+}
+
 export function formatSystemAlert(title: string, detail: string): string {
   return truncate(`⚠️ <b>${esc(title)}</b>\n${esc(detail)}`);
 }

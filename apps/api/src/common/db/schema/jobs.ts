@@ -247,6 +247,12 @@ export const applications = pgTable(
     appliedAt: timestamp('applied_at', { withTimezone: true }),
     notes: text('notes'),
     history: jsonb('history').notNull().default([]),
+    // Tracker dates (F5, D119). deadline: the user's, else the posting's (jobs.deadline) applies.
+    deadline: timestamp('deadline', { withTimezone: true }),
+    interviewAt: timestamp('interview_at', { withTimezone: true }),
+    // The user's override of the automatic follow-up time (last status change + follow-up days).
+    followUpAt: timestamp('follow_up_at', { withTimezone: true }),
+    lastStatusChangeAt: timestamp('last_status_change_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => [

@@ -272,6 +272,12 @@ export interface ApplicationItem {
   notes: string | null;
   history: ApplicationHistoryEntry[];
   updatedAt: string;
+  /** Tracker dates (F5, D119); optional for older clients. `deadline` falls back to the posting's. */
+  deadline?: string | null;
+  interviewAt?: string | null;
+  /** When the follow-up reminder fires: the user's override, or last status change + follow-up days. */
+  followUpAt?: string | null;
+  lastStatusChangeAt?: string | null;
 }
 
 export const SavedJobsQuery = z.object({

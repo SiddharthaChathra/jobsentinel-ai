@@ -126,6 +126,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Every alert carries its evidence (verification line, matched/missing skills), never a bare score.
 - All employer-supplied text is HTML-escaped before it reaches Telegram, and button URLs must be public (D56).
 - Quiet hours and the digest hour are evaluated in the user's timezone, not the server's.
+- Tracker reminders (F5, D119) are planned from the tracker each tick and delivered as `REMINDER` notifications: idempotent per (user, job, kind, anchor date), never sent 22:00-07:00 local or in the user's quiet hours (deferred, never dropped), cancelled when the application moves on. A reminder notification carries its job in the payload, not `job_id`.
 - Each user links their own chat and alerts go only to it. In production the bot's messages reach the API by webhook (`/api/v1/telegram/webhook`, secret header), never by polling: the worker runs in short bursts (D98).
 
 ## 11. Security rules (docs/architecture/11-security.md)

@@ -2,6 +2,12 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F5 Tracker reminders — 2026-10-18
+
+- **Reminders (D119):** follow-up after N days with no status change (3-14, default 7), interview the day before and the morning of, deadline 3 days and 1 day before for saved, not-applied jobs. Idempotent planning and delivery, quiet hours 22:00-07:00 in the user's timezone defer rather than drop, status changes cancel what no longer applies, snooze and dismiss. `GET /reminders`, `POST /reminders/:id/snooze|dismiss`, `PATCH /applications/:jobId/dates`; settings gain `remindersEnabled`, `followUpDays`, `weeklySummaryEnabled`.
+- **Fix:** `utcForLocalHour` was 30 minutes late in India (whole-hour correction), so quiet hours ended at 07:30 IST.
+- Tests: validation +22 (planner, quiet window, time-zone fix), types +3 (contract), API e2e +9.
+
 ## [Phase 13] F4 Company fresher score — 2026-10-18
 
 - **Fresher score (D118):** `company_fresher_stats` per company — postings seen, fresher-eligible count, last fresher posting, a 0-100 score with recency decay (UNKNOWN under 5 postings). A company board's next scan is ×0.5 when HIGH and ×2 when LOW (never below the adapter floor); HIGH boards lease first. Cards carry `company.hiresFreshersOften`. Never used to reject a job. Formula in docs/sources.md.

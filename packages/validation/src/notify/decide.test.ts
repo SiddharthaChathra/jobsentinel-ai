@@ -160,3 +160,28 @@ describe('an unresolved fresher verdict never becomes an instant alert', () => {
     expect(decision.action).toBe('INSTANT');
   });
 });
+
+describe('utcForLocalHour: exact to the minute (regression, F5)', () => {
+  it('India (UTC+5:30): 07:00 IST is 01:30 UTC, not 02:00', () => {
+    expect(utcForLocalHour(new Date('2026-10-19T20:00:00Z'), 'Asia/Kolkata', 7)).toEqual(
+      new Date('2026-10-20T01:30:00Z'),
+    );
+  });
+
+  it('quiet hours 22-7 in India end at 07:00 IST exactly', () => {
+    const end = quietWindowEnd(
+      { quietHoursStart: 22, quietHoursEnd: 7, timezone: 'Asia/Kolkata' },
+      new Date('2026-10-19T17:00:00Z'), // 22:30 IST
+    );
+    expect(end).toEqual(new Date('2026-10-20T01:30:00Z'));
+  });
+
+  it('across a DST change (London, 25 Oct 2026): 08:00 local is 08:00 UTC after it, 07:00 UTC before', () => {
+    expect(utcForLocalHour(new Date('2026-10-24T12:00:00Z'), 'Europe/London', 8)).toEqual(
+      new Date('2026-10-24T07:00:00Z'),
+    );
+    expect(utcForLocalHour(new Date('2026-10-25T12:00:00Z'), 'Europe/London', 8)).toEqual(
+      new Date('2026-10-25T08:00:00Z'),
+    );
+  });
+});
