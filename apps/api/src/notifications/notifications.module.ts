@@ -6,6 +6,7 @@ import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { RemindersController } from './reminders.controller';
 import { RemindersService } from './reminders.service';
+import { WeeklySummaryService } from './weekly-summary.service';
 import { TelegramClient } from './telegram.client';
 import { TelegramPollerService } from './telegram-poller.service';
 import { TelegramWebhookController, TelegramWebhookRegistrar } from './telegram-webhook';
@@ -24,6 +25,7 @@ import { TelegramWebhookController, TelegramWebhookRegistrar } from './telegram-
     DispatcherService,
     DigestService,
     RemindersService,
+    WeeklySummaryService,
     TelegramPollerService,
     TelegramWebhookRegistrar,
   ],
@@ -32,6 +34,7 @@ import { TelegramWebhookController, TelegramWebhookRegistrar } from './telegram-
     DispatcherService,
     DigestService,
     RemindersService,
+    WeeklySummaryService,
     TelegramPollerService,
     TelegramClient,
   ],

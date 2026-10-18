@@ -1,6 +1,7 @@
 import type { SourceReportService } from '../sources/source-report.service';
 import type { CompanyFresherService } from '../sources/company-fresher.service';
 import type { RemindersService } from '../notifications/reminders.service';
+import type { WeeklySummaryService } from '../notifications/weekly-summary.service';
 import pino from 'pino';
 import type { Env } from '@jobsentinel/config';
 import { loadEnv } from '@jobsentinel/config';
@@ -83,6 +84,9 @@ describe('WorkerLoop', () => {
           plan: jest.fn().mockResolvedValue({ created: 0, cancelled: 0, revived: 0 }),
           deliver: jest.fn().mockResolvedValue({ sent: 0, deferred: 0, cancelled: 0 }),
         } as unknown as RemindersService,
+        {
+          sendDue: jest.fn().mockResolvedValue({ considered: 0, queued: 0, notDue: 0 }),
+        } as unknown as WeeklySummaryService,
       ),
       scheduler,
       classification,

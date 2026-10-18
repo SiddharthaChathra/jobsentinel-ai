@@ -8,11 +8,13 @@ import {
   formatDigest,
   formatInstant,
   formatReminder,
+  formatWeekly,
   formatSystemAlert,
   instantButtons,
   isPublicUrl,
   type DigestData,
   type JobAlertData,
+  type WeeklyData,
 } from './format';
 import { TelegramClient, TelegramError, type InlineButton } from './telegram.client';
 
@@ -178,6 +180,14 @@ export class DispatcherService {
       return {
         text: formatDigest({ ...digest, jobs: (digest.jobs ?? []).map(reviveAlert) }),
         // Same rule as the instant alert: a local dashboard URL would void the whole message.
+        buttons: isPublicUrl(dashboard)
+          ? [[{ text: '📊 Open dashboard', url: `${dashboard}/dashboard` }]]
+          : undefined,
+      };
+    }
+    if (row.type === 'WEEKLY') {
+      return {
+        text: formatWeekly(row.payload as WeeklyData),
         buttons: isPublicUrl(dashboard)
           ? [[{ text: '📊 Open dashboard', url: `${dashboard}/dashboard` }]]
           : undefined,

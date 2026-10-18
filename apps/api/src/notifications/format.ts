@@ -198,6 +198,74 @@ export function formatDigest(digest: DigestData): string {
   return truncate(lines.join('\n'));
 }
 
+/** The weekly summary's content (F6, D121). */
+export interface WeeklyData {
+  rangeLabel: string;
+  newJobs: { total: number; byPriority: Record<'VERY_HIGH' | 'HIGH' | 'MEDIUM' | 'OTHER', number> };
+  topJobs: { title: string; company: string; score: number }[];
+  applications: { applied: number; statusChanges: Record<string, number> };
+  upcoming: { total: number; items: string[] };
+  skillGaps: { skill: string; missingIn: number; of: number }[];
+  sources: { paused: string[]; failing: string[] };
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  APPLIED: 'applied',
+  INTERVIEW: 'interview',
+  SELECTED: 'selected',
+  REJECTED: 'rejected',
+  NOT_INTERESTED: 'not interested',
+};
+
+/** Weekly summary for Telegram (F6, D121). Every employer-supplied string is escaped (D56). */
+export function formatWeekly(w: WeeklyData): string {
+  const p = w.newJobs.byPriority;
+  const lines: string[] = [`🗓️ <b>JobSentinel Weekly</b> — ${esc(w.rangeLabel)}`, ''];
+  lines.push(
+    `<b>New valid jobs: ${w.newJobs.total}</b> — 🔥 ${p.VERY_HIGH} · 🟢 ${p.HIGH} · 🟡 ${p.MEDIUM} · ⚪ ${p.OTHER}`,
+  );
+  for (const j of w.topJobs) lines.push(`• ${esc(j.title)} — ${esc(j.company)} (${j.score}%)`);
+
+  const changes = Object.entries(w.applications.statusChanges)
+    .filter(([s]) => s !== 'APPLIED')
+    .map(([s, n]) => `${n} ${STATUS_LABEL[s] ?? s.toLowerCase()}`);
+  lines.push('');
+  lines.push(
+    `<b>Applications:</b> ${w.applications.applied} sent${changes.length ? ` · ${changes.join(' · ')}` : ''}`,
+  );
+
+  lines.push('');
+  if (w.upcoming.total === 0) lines.push('<b>Coming up:</b> nothing scheduled');
+  else {
+    lines.push(`<b>Coming up (${w.upcoming.total}):</b>`);
+    for (const item of w.upcoming.items) lines.push(`• ${esc(item)}`);
+  }
+
+  if (w.skillGaps.length) {
+    lines.push('');
+    lines.push(
+      `<b>Top skill gaps:</b> ${w.skillGaps
+        .map((g) => `${esc(g.skill)} (${g.missingIn}/${g.of})`)
+        .join(' · ')}`,
+    );
+  }
+
+  const health: string[] = [];
+  if (w.sources.paused.length)
+    health.push(
+      `paused: ${w.sources.paused.slice(0, 3).map(esc).join(', ')}${w.sources.paused.length > 3 ? '…' : ''}`,
+    );
+  if (w.sources.failing.length)
+    health.push(
+      `failing: ${w.sources.failing.slice(0, 3).map(esc).join(', ')}${w.sources.failing.length > 3 ? '…' : ''}`,
+    );
+  if (health.length) {
+    lines.push('');
+    lines.push(`<b>Sources</b> — ${health.join(' · ')}`);
+  }
+  return truncate(lines.join('\n'));
+}
+
 /** A tracker reminder (F5, D119). Job titles in `detail` are escaped like everything else. */
 export function formatReminder(title: string, detail: string): string {
   return truncate(`⏰ <b>${esc(title)}</b>\n${esc(detail)}`);

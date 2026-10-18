@@ -9,6 +9,7 @@ import { DigestService } from '../notifications/digest.service';
 import { DispatcherService } from '../notifications/dispatcher.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RemindersService } from '../notifications/reminders.service';
+import { WeeklySummaryService } from '../notifications/weekly-summary.service';
 import { TelegramPollerService } from '../notifications/telegram-poller.service';
 import { ValidationOrchestrator } from '../validation/validation.orchestrator';
 import { HousekeepingService } from './housekeeping.service';
@@ -53,6 +54,7 @@ export class WorkerLoop {
     private readonly sourceReport: SourceReportService,
     private readonly fresherScores: CompanyFresherService,
     private readonly reminders: RemindersService,
+    private readonly weekly: WeeklySummaryService,
   ) {}
 
   /**
@@ -182,6 +184,8 @@ export class WorkerLoop {
         run: () => this.dispatcher.dispatchPending(opts.once ? { batch: 50 } : {}),
       },
       { name: 'digest', run: () => this.digest.sendDue() },
+      // Sunday 09:00 in each opted-in user's timezone; once per week (F6, D121).
+      { name: 'weekly', run: () => this.weekly.sendDue() },
       { name: 'telegram', run: () => this.poller.poll({ timeoutSec: opts.once ? 1 : 25 }) },
       { name: 'retention', run: () => this.housekeeping.runRetention(opts.once) },
     ];
