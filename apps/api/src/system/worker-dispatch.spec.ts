@@ -1,6 +1,7 @@
 import { loadEnv } from '@jobsentinel/config';
 import type { HttpClientPort, HttpRequestOptions } from '../common/http/http-client';
-import { WorkerDispatchService } from './worker-dispatch.service';
+import type { Db } from '../common/db/db.module';
+import { isOverdue, WorkerDispatchService } from './worker-dispatch.service';
 
 function fakeHttp(status: number | Error) {
   const calls: { url: string; opts: HttpRequestOptions }[] = [];
@@ -63,5 +64,54 @@ describe('WorkerDispatchService (D95)', () => {
     expect(() => loadEnv({ WORKER_DISPATCH_INTERVAL_MIN: '1' })).toThrow(
       /WORKER_DISPATCH_INTERVAL_MIN/,
     );
+  });
+
+  describe('catch-up after a restart (D124)', () => {
+    const env = loadEnv({
+      WORKER_DISPATCH_TOKEN: 'github_pat_test',
+      WORKER_DISPATCH_INTERVAL_MIN: '30',
+    });
+    const dbWithBeat = (at: Date | null) =>
+      ({ execute: () => Promise.resolve([{ at }]) }) as unknown as Db;
+
+    it('overdue only past one interval, or with no heartbeat at all', () => {
+      const now = new Date('2026-10-18T06:00:00Z');
+      expect(isOverdue(new Date('2026-10-18T05:31:00Z'), now, 30)).toBe(false);
+      expect(isOverdue(new Date('2026-10-18T05:29:00Z'), now, 30)).toBe(true);
+      expect(isOverdue(null, now, 30)).toBe(true);
+    });
+
+    it('a minute after boot, dispatches at once when the worker has been quiet past the interval', async () => {
+      const { http, calls } = fakeHttp(204);
+      const svc = new WorkerDispatchService(
+        env,
+        http,
+        dbWithBeat(new Date(Date.now() - 75 * 60_000)),
+      );
+      svc.onApplicationBootstrap();
+      await jest.advanceTimersByTimeAsync(60_000);
+      expect(calls).toHaveLength(1);
+      svc.onModuleDestroy();
+    });
+
+    it('does not dispatch early when the worker ran recently', async () => {
+      const { http, calls } = fakeHttp(204);
+      const svc = new WorkerDispatchService(
+        env,
+        http,
+        dbWithBeat(new Date(Date.now() - 10 * 60_000)),
+      );
+      svc.onApplicationBootstrap();
+      await jest.advanceTimersByTimeAsync(60_000);
+      expect(calls).toHaveLength(0);
+      svc.onModuleDestroy();
+    });
+
+    it('a failing database check never throws and never dispatches', async () => {
+      const { http, calls } = fakeHttp(204);
+      const broken = { execute: () => Promise.reject(new Error('db down')) } as unknown as Db;
+      await expect(new WorkerDispatchService(env, http, broken).catchUp()).resolves.toBe(false);
+      expect(calls).toHaveLength(0);
+    });
   });
 });
