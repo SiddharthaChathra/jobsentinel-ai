@@ -33,11 +33,16 @@ function isSoft(skill: string): boolean {
  * job counts a skill once. Ordered by how many jobs miss it, then alphabetically, so the same
  * input always gives the same report. `jobs` must already be the eligible, ranked top matches.
  */
-export function rankSkillGaps(jobs: GapInputJob[], limit = 10): SkillGap[] {
+export function rankSkillGaps(
+  jobs: GapInputJob[],
+  limit = 10,
+  opts: { soft?: 'exclude' | 'only' } = {},
+): SkillGap[] {
+  const wantSoft = opts.soft === 'only';
   const bySkill = new Map<string, SkillGap>();
   for (const job of jobs) {
     const skills = new Set(
-      job.missingSkills.map((s) => canonicalSkill(s)).filter((s) => s && !isSoft(s)),
+      job.missingSkills.map((s) => canonicalSkill(s)).filter((s) => s && isSoft(s) === wantSoft),
     );
     for (const skill of skills) {
       const gap = bySkill.get(skill) ?? { skill, missingIn: 0, of: jobs.length, jobs: [] };

@@ -101,6 +101,17 @@ What the workflow does:
 
 The repository is **public**: anyone signed in to GitHub can download the artifact. That is safe only because it is encrypted to a key that never leaves your hands. Never upload the private key anywhere, and never add a step that writes the dump unencrypted.
 
+**Decrypt a backup (to read it, or before any restore).** `age` is a small free tool: Windows `winget install FiloSottile.age`; macOS `brew install age`; Debian/Ubuntu `sudo apt install age`; or a release from https://github.com/FiloSottile/age/releases.
+
+1. Download the artifact: open the backup run in the repository's Actions tab (https://github.com/SiddharthaChathra/jobsentinel-ai/actions/workflows/backup.yml) → the run → **Artifacts** → `jobsentinel-backup-<id>`. GitHub delivers it as a .zip; unzip it to get `jobsentinel-<stamp>.sql.gz.age`.
+2. Decrypt with your offline private key:
+   `age -d -i jobsentinel-backup.key -o jobsentinel.sql.gz jobsentinel-<stamp>.sql.gz.age`
+   A wrong key fails with "no identity matched any of the recipients"; nothing is written.
+3. Unpack: `gunzip jobsentinel.sql.gz`. This gives `jobsentinel.sql`, plain SQL you can open in any editor.
+4. **The decrypted file holds all your data, including password hashes.** Keep it only as long as you need it, then delete it. Never commit it or upload it anywhere.
+
+To restore without ever writing the plain file, stream it instead: `age -d -i jobsentinel-backup.key <file>.sql.gz.age | gunzip -c | psql "<target>"` (steps below).
+
 **Restore** (rehearsed 2026-10-18 against the local test stack: 29 tables, identical row counts):
 
 1. Download the artifact (Actions → the run → Artifacts) and unzip it to get `jobsentinel-<stamp>.sql.gz.age`.
@@ -115,6 +126,16 @@ The repository is **public**: anyone signed in to GitHub can download the artifa
 The local rehearsal is `postgres:17-alpine` with `age`, running the real script against the test stack and restoring into a fresh database. A bare database needs the `auth` schema's two tables and an `auth.uid()` stub before loading; a real Supabase project already has them.
 
 Supabase's own free-tier backups are not a substitute: on the free plan they cannot be restored to a point in time.
+
+**Warning: GitHub switches off scheduled workflows after 60 days without repository activity.** In a public repository, if nothing is pushed for 60 days, GitHub disables every scheduled workflow, including this backup and the uptime check. It e-mails the repository owner shortly before, then stops them silently. The worker is unaffected, because the API starts it by `workflow_dispatch`.
+
+**What guards against it (D125).** The API runs `WorkflowWatchService` twice a day, five minutes after start-up and then every 12 hours, while it is awake. It asks GitHub for the state and latest run of `backup.yml` and `uptime.yml`:
+
+- If either is disabled, or has not run for **10 days**, every admin gets a system alert on Telegram and in the inbox, at most once a day per workflow.
+- A workflow disabled for inactivity is **re-enabled automatically** with the dispatch token the API already holds (`WORKER_DISPATCH_TOKEN`: Actions read and write), and the alert says so.
+- If the token is missing or lacks the permission, the alert asks you to re-enable it by hand: Actions → the workflow → **Enable workflow**.
+
+A pushed commit also resets the 60-day clock.
 
 ## Health and alerting
 

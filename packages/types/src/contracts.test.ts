@@ -73,6 +73,7 @@ describe('docs/contracts/skill-gaps.mock.json (F7)', () => {
     const report = SkillGapReport.parse(data('GET /api/v1/skill-gaps'));
     expect(report.gaps.some((g) => g.links.length > 0)).toBe(true);
     expect(report.gaps.some((g) => g.links.length === 0)).toBe(true);
+    expect(report.softSkills?.length).toBeGreaterThan(0);
     expect(SkillGapReport.parse(data('GET /api/v1/skill-gaps (no matches yet)')).gaps).toEqual([]);
   });
 });

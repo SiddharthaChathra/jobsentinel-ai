@@ -44,6 +44,19 @@ describe('rankSkillGaps (F7, D120)', () => {
     expect(gaps.map((g) => g.skill)).toEqual(['Go']);
   });
 
+  it('ranks soft skills separately on request (the short soft-skills note)', () => {
+    const jobs = [
+      job('1', ['Communication', 'Teamwork', 'Go']),
+      job('2', ['communication', 'Leadership']),
+    ];
+    expect(rankSkillGaps(jobs, 3, { soft: 'only' }).map((g) => [g.skill, g.missingIn])).toEqual([
+      ['Communication', 2],
+      ['Leadership', 1],
+      ['Teamwork', 1],
+    ]);
+    expect(rankSkillGaps(jobs, 3).map((g) => g.skill)).toEqual(['Go']);
+  });
+
   it('is deterministic on ties (alphabetical) and honours the limit', () => {
     const gaps = rankSkillGaps([job('1', ['Rust', 'Go', 'C++'])], 2);
     expect(gaps.map((g) => g.skill)).toEqual(['C++', 'Go']);

@@ -190,7 +190,7 @@ describeIf('company fresher score (F4, D118)', () => {
     );
   });
 
-  it('spaces company boards by band: HIGH every 15 min, LOW every 60 (NORMAL is 30)', async () => {
+  it('only speeds boards up: HIGH every 15 min, LOW keeps the default 30 (NORMAL)', async () => {
     await svc.recompute(Object.values(companyIds));
     const scheduler = moduleRef.get(SchedulerService);
     const manager = moduleRef.get(SourceManager) as unknown as {
@@ -206,7 +206,7 @@ describeIf('company fresher score (F4, D118)', () => {
       return Math.round((row!.next!.getTime() - Date.now()) / 60_000);
     };
     expect(await minutesUntilNext(sourceIds[0]!)).toBe(15); // hires → HIGH
-    expect(await minutesUntilNext(sourceIds[1]!)).toBe(60); // never → LOW
+    expect(await minutesUntilNext(sourceIds[1]!)).toBe(30); // never → LOW: not slowed
   });
 
   it('leases a HIGH board before a LOW one of the same priority when both are due', async () => {

@@ -78,5 +78,20 @@ export const SkillGapReport = z.object({
       links: z.array(z.object({ title: z.string(), url: z.url(), publisher: z.string() })).max(3),
     }),
   ),
+  /**
+   * Soft skills (Communication, Teamwork…) missing across the same matches, kept apart from
+   * `gaps` so they never take a top-3 place: a short note, no links (owner, 2026-10-18).
+   * Optional for older clients.
+   */
+  softSkills: z
+    .array(
+      z.object({
+        skill: z.string(),
+        missingIn: z.number().int().min(1),
+        of: z.number().int().min(1),
+      }),
+    )
+    .max(3)
+    .optional(),
 });
 export type SkillGapReport = z.infer<typeof SkillGapReport>;

@@ -43,11 +43,12 @@ export class SchedulerService {
         order by
           (manual_requested_at is not null) desc,
           case priority when 'HIGH' then 0 when 'NORMAL' then 1 else 2 end,
-          -- Within a priority, company boards that hire freshers often go first (F4, D118).
-          case when adapter in ('greenhouse', 'lever', 'ashby') then (
-            select case c.band when 'HIGH' then 0 when 'LOW' then 2 else 1 end
-            from company_fresher_stats c where c.company_id = job_sources.company_id
-          ) end nulls last,
+          -- Within a priority, company boards that hire freshers often go first (F4, D118); every
+          -- other band is equal, so a low or unknown score never pushes a board back.
+          case when adapter in ('greenhouse', 'lever', 'ashby') and exists (
+            select 1 from company_fresher_stats c
+            where c.company_id = job_sources.company_id and c.band = 'HIGH'
+          ) then 0 else 1 end,
           next_scan_at nulls first
         limit ${max}
         for update skip locked

@@ -75,7 +75,7 @@ score      = round(100 × S × R)                        0..100
 
 - Fewer than **5** postings in the window: **UNKNOWN**, with a null score (neutral).
 - Enough postings but no fresher-eligible one: **0**.
-- Bands: **HIGH ≥ 30** (shows the badge), **MEDIUM 10–29**, **LOW < 10**.
+- Bands: **HIGH ≥ 10** (shows the badge), **MEDIUM 5–9**, **LOW < 5**. Lowered from 30/10 by the owner on 2026-10-18 while data is thin (the best scores were 10); revisit around 2026-11-18.
 
 Worked example (a unit test): 2 fresher postings (today and 30 days ago) and 4 others (today, 30, 60 and 90 days ago).
 
@@ -85,10 +85,9 @@ Worked example (a unit test): 2 fresher postings (today and 30 days ago) and 4 o
 
 **Scan spacing.** This applies to company boards only (Greenhouse, Lever and Ashby sources with a `company_id`); keyword and aggregator sources span many companies and keep their interval.
 
-- After a successful scan, the next scan is the board's usual interval × **0.5 (HIGH)**, × **1 (MEDIUM / UNKNOWN / not yet scored)** or × **2 (LOW)**.
+- After a successful scan, the next scan is the board's usual interval × **0.5 (HIGH)**. Every other band (MEDIUM, LOW, UNKNOWN, not yet scored) keeps the usual interval: **the score only ever speeds a board up**, never slows it (owner, 2026-10-18).
 - It is never below the adapter's `minIntervalSec`, so the score cannot breach a source's limits. Failure backoff is unchanged.
-- When more sources are due than one tick can scan, a HIGH board of the same priority is leased before a LOW one.
-- Scanning a LOW board less often delays when a new posting is seen. It loses none: boards list every open posting on each scan.
+- When more sources are due than one tick can scan, a HIGH board of the same priority is leased first; all other bands are treated alike, so a low or unknown score never pushes a board back.
 
 ## Known gaps (backlog)
 

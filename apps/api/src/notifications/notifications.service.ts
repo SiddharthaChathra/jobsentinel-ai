@@ -177,8 +177,9 @@ export class NotificationsService {
     key: string,
     title: string,
     detail: string,
+    windowHours = 6,
   ): Promise<boolean> {
-    const since = new Date(Date.now() - 6 * 3_600_000);
+    const since = new Date(Date.now() - windowHours * 3_600_000);
     const [recent] = await this.db
       .select({ id: notifications.id })
       .from(notifications)
