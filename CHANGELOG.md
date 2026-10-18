@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F6 Weekly summary — 2026-10-18
+
+- **Weekly summary (D121):** opt-in, Sunday 09:00 in the user's timezone, once per week. New valid jobs by priority, applications and status changes, reminders due, top 3 skill gaps, paused/failing sources. Reuses the digest's notification rows and dispatcher; employer text escaped.
+- Tests: validation +5 (timing, IST/UTC boundary, other time zones), API e2e +5.
+
 ## [Phase 13] F7 Skill-gap report — 2026-10-18
 
 - **Skill gaps (D120):** `GET /skill-gaps` ranks the skills missing across the top 15 eligible matches ("SQL missing in 9 of 15"), aliases merged, soft skills left out, rules only. Learning links from a curated JSON map; 33 official links proposed and checked (`pnpm links:check`), none shown until the owner approves.

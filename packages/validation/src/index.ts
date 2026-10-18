@@ -16,6 +16,7 @@ export * from './match/score';
 export * from './match/skill-gaps';
 export * from './notify/decide';
 export * from './notify/reminders';
+export * from './notify/weekly';
 export * from './sources/report';
 export * from './review/held';
 export * from './classify/batch-years';

@@ -50,3 +50,12 @@ export const REMINDERS = {
   staleAfterMs: 60 * 60_000,
   defaultSnoozeHours: 24,
 } as const;
+
+/** Weekly Telegram summary (F6, D121): Sunday 09:00 in the user's timezone, opt-in. */
+export const WEEKLY_SUMMARY = {
+  /** 0 = Sunday. */
+  weekday: 0,
+  hour: 9,
+  /** Sent only within this long after Sunday 09:00: a summary that missed its day waits for next week. */
+  graceMs: 24 * 3_600_000,
+} as const;
