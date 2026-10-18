@@ -122,7 +122,7 @@ export function JobFilters() {
               }
             }}
           >
-            <SelectTrigger id="filter-posted" className="w-full">
+            <SelectTrigger id="filter-posted" data-testid="filter-posted" className="w-full">
               <SelectValue placeholder="Date Posted" />
             </SelectTrigger>
             <Options items={POSTED_ITEMS} />

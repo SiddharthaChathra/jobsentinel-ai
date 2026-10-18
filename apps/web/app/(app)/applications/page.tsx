@@ -8,6 +8,9 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { buttonVariants } from '@/components/ui/button';
 import { useApplications } from '@/hooks/useJobs';
 
+import { RemindersSection } from '@/components/reminders/RemindersSection';
+import { ApplicationDatePickers } from '@/components/reminders/ApplicationDatePickers';
+
 const STATUS_COLUMNS: { id: ApplicationStatus; label: string; hint: string }[] = [
   { id: 'VIEWED', label: 'Viewed', hint: 'Opened, not applied yet' },
   { id: 'APPLIED', label: 'Applied', hint: 'Application sent' },
@@ -40,6 +43,8 @@ export default function ApplicationsPage() {
             : 'Track every job you open, apply to and hear back from.'
         }
       />
+
+      <RemindersSection />
 
       {isLoading && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -80,7 +85,17 @@ export default function ApplicationsPage() {
               </header>
               <div className="space-y-3 rounded-xl bg-muted/40 p-2 lg:min-h-32">
                 {col.items.map((app) => (
-                  <JobCard key={app.job.id} job={app.job} />
+                  <div key={app.job.id} className="space-y-2">
+                    <JobCard job={app.job} />
+                    <div className="rounded-lg border border-border/60 bg-card/60 p-2.5">
+                      <ApplicationDatePickers
+                        jobId={app.job.id}
+                        interviewAt={app.interviewAt}
+                        deadline={app.deadline}
+                        followUpAt={app.followUpAt}
+                      />
+                    </div>
+                  </div>
                 ))}
                 {col.items.length === 0 && (
                   <p className="px-2 py-6 text-center text-xs text-muted-foreground">{col.hint}</p>

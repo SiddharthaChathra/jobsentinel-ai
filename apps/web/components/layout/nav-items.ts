@@ -8,6 +8,7 @@ import {
   Settings,
   SlidersHorizontal,
   Activity,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/jobs', label: 'Jobs', icon: Briefcase, primary: true },
   { href: '/saved', label: 'Saved', icon: Bookmark, primary: true },
   { href: '/applications', label: 'Applications', icon: Send, primary: true },
+  { href: '/skill-gaps', label: 'Skill gaps', icon: GraduationCap },
   { href: '/notifications', label: 'Inbox', icon: Bell, primary: true },
   { href: '/resume', label: 'Resume', icon: FileText },
   { href: '/preferences', label: 'Preferences', icon: SlidersHorizontal },

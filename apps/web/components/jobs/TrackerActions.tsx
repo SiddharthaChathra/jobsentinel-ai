@@ -118,7 +118,11 @@ export function TrackerActions({ job }: { job: JobDetail }) {
               trackerMutation.mutate({ jobId: job.id, status: val as ApplicationStatus }, refresh);
             }}
           >
-            <SelectTrigger className="w-[160px]" aria-labelledby="tracker-status-label">
+            <SelectTrigger
+              className="w-[160px]"
+              aria-labelledby="tracker-status-label"
+              data-testid="tracker-status"
+            >
               <SelectValue placeholder="Update Status" />
             </SelectTrigger>
             <SelectContent>

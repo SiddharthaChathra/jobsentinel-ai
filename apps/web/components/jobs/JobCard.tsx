@@ -124,6 +124,7 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
 
   return (
     <article
+      data-testid={`job-card-${job.id}`}
       className={cn(
         'card-hover relative rounded-xl border bg-card p-4 sm:p-5',
         job.isNew ? 'border-primary/40' : 'border-border/60',
@@ -171,6 +172,7 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
         <div className="min-w-0 flex-1 basis-40">
           <Link
             href={`/jobs/${job.id}`}
+            data-testid={`job-card-title-${job.id}`}
             className="line-clamp-2 text-base font-semibold leading-snug tracking-tight hover:text-primary sm:text-[17px]"
           >
             {job.title}
@@ -255,6 +257,16 @@ export function JobCard({ job, held: propHeld }: JobCardProps) {
             className="border-purple-200 bg-purple-100 text-purple-800 dark:border-purple-800 dark:bg-purple-950/60 dark:text-purple-300"
           >
             Off-campus programme
+          </Badge>
+        )}
+        {job.company.hiresFreshersOften && (
+          <Badge
+            variant="secondary"
+            data-testid={`fresher-badge-${job.id}`}
+            title="This company often posts roles open to freshers. Shown for information only; it never hides or ranks jobs."
+            className="border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+          >
+            Hires freshers often
           </Badge>
         )}
         {job.employmentType !== 'UNKNOWN' && (

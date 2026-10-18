@@ -327,7 +327,7 @@ export function PreferencesStep({
             <Button type="button" variant="ghost" onClick={onBack}>
               Back
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" data-testid="onboarding-start" disabled={saving}>
               {saving ? 'Saving…' : 'Start monitoring'}
             </Button>
           </div>

@@ -15,6 +15,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 ## [Phase 13] F9 Browser tests in CI — 2026-10-18
 
 - **Playwright (D122):** `e2e/` package; sign-up, onboarding with a resume fixture, job filters (India, domain, salary, recency) and tracker persistence, against the real web app and API on the local Supabase stack, with sources, AI and Telegram replaced by fixtures. Runs in CI's `e2e` job; traces on failure. 7 tests, 3/3 runs green locally.
+- **Stable selectors for browser tests (Gemini, F9, D122):** Added stable test IDs across auth, onboarding, job listings, and application tracking: `signup-submit` on create account button, `onboarding-upload` on resume upload button, `onboarding-confirm-profile` on confirm profile button, `onboarding-start` on start monitoring button, `job-card-<jobId>` and `job-card-title-<jobId>` on job cards and title links, `filter-posted` on Date Posted select trigger, and `tracker-status` on application status select trigger. All accessible locators and labels (e.g. "Email", "Password", "Confirm password", "Date Posted", "Status:", "Not disclosed") strictly preserved.
+- Tests: web 103 (+8).
 
 ## [Phase 13] F6 Weekly summary — 2026-10-18
 
@@ -24,18 +26,21 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 ## [Phase 13] F7 Skill-gap report — 2026-10-18
 
 - **Skill gaps (D120):** `GET /skill-gaps` ranks the skills missing across the top 15 eligible matches ("SQL missing in 9 of 15"), aliases merged, soft skills left out, rules only. Learning links from a curated JSON map; 33 official links proposed and checked (`pnpm links:check`), none shown until the owner approves.
-- Tests: validation +8, types +1 (contract), API e2e +3.
+- **Web UI for /skill-gaps page (Gemini, F7, D120):** Added `/skill-gaps` page in app navigation after Applications. Renders header ("Based on your top N matches"), ranked rows ("`<skill>` — missing in `<missingIn>` of `<of>`") with proportional visual bars, up to 3 example jobs linking to `/jobs/<id>`, approved learning links (`target="_blank"`, `rel="noopener noreferrer"`), unlinked skills render without links, empty state for `basedOn: 0`; selectors `skill-gap-<skill>`, `skill-gap-links-<skill>`.
+- Tests: validation +8, types +1 (contract), API e2e +3, web 95 (+4).
 
 ## [Phase 13] F5 Tracker reminders — 2026-10-18
 
 - **Reminders (D119):** follow-up after N days with no status change (3-14, default 7), interview the day before and the morning of, deadline 3 days and 1 day before for saved, not-applied jobs. Idempotent planning and delivery, quiet hours 22:00-07:00 in the user's timezone defer rather than drop, status changes cancel what no longer applies, snooze and dismiss. `GET /reminders`, `POST /reminders/:id/snooze|dismiss`, `PATCH /applications/:jobId/dates`; settings gain `remindersEnabled`, `followUpDays`, `weeklySummaryEnabled`.
 - **Fix:** `utcForLocalHour` was 30 minutes late in India (whole-hour correction), so quiet hours ended at 07:30 IST.
-- Tests: validation +22 (planner, quiet window, time-zone fix), types +3 (contract), API e2e +9.
+- **Web UI for tracker reminders (Gemini, F5, D119):** Applications page renders Reminders section at top (DUE highlighted, UPCOMING with local date, snooze default 1d + 1h/3d, dismiss, hidden when empty; selectors `reminder-<id>`, `reminder-snooze-<id>`, `reminder-dismiss-<id>`); date pickers per application (interview datetime and deadline date at 23:59 local ISO, clear sends null, read-only followUpAt; selectors `interview-date-<jobId>`, `deadline-date-<jobId>`) and deadline picker on saved jobs; NotificationCard gains `remindersEnabled` toggle, `followUpDays` (3-14), `weeklySummaryEnabled` toggle; web inbox renders `REMINDER` and `WEEKLY` items like system items.
+- Tests: validation +22 (planner, quiet window, time-zone fix), types +3 (contract), API e2e +9, web 91 (+10).
 
 ## [Phase 13] F4 Company fresher score — 2026-10-18
 
 - **Fresher score (D118):** `company_fresher_stats` per company — postings seen, fresher-eligible count, last fresher posting, a 0-100 score with recency decay (UNKNOWN under 5 postings). A company board's next scan is ×0.5 when HIGH and ×2 when LOW (never below the adapter floor); HIGH boards lease first. Cards carry `company.hiresFreshersOften`. Never used to reject a job. Formula in docs/sources.md.
-- Tests: validation +12 (formula), API e2e +4 (SQL equals the formula, UNKNOWN, scan spacing, lease order, badge).
+- **Web UI for "Hires freshers often" badge (Gemini, F4, D118):** Small badge "Hires freshers often" with tooltip shown on JobCard (next to posting-type badge) and on JobDetail header when `job.company.hiresFreshersOften` is true; hidden when false or absent (`fresher-badge-<jobId>`). Never filters, sorts, or hides jobs.
+- Tests: validation +12 (formula), API e2e +4 (SQL equals the formula, UNKNOWN, scan spacing, lease order, badge), web 81 (+6).
 
 ## [Phase 13] Placeholder postings — 2026-10-18
 
