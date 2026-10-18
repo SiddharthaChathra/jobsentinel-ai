@@ -2,6 +2,10 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F10 Weekly encrypted backup — 2026-10-18
+
+- **Backup (D123):** weekly GitHub Action; `pg_dump | gzip | age` streamed (no plaintext on disk), refuses to run without a key, proves the artifact is encrypted, keeps it 90 days. The dump now includes the migration ledger, auth users and `pg_trgm`. Restore rehearsed on the test stack (29 tables, identical counts). Storage files are not covered (documented).
+
 ## [Phase 13] F9 Browser tests in CI — 2026-10-18
 
 - **Playwright (D122):** `e2e/` package; sign-up, onboarding with a resume fixture, job filters (India, domain, salary, recency) and tracker persistence, against the real web app and API on the local Supabase stack, with sources, AI and Telegram replaced by fixtures. Runs in CI's `e2e` job; traces on failure. 7 tests, 3/3 runs green locally.
