@@ -47,6 +47,8 @@ export const JobStatus = z.enum([
   'AI_PENDING',
   'NOTIFY_PENDING',
   'NOTIFIED',
+  /** Not a job: a general application or talent pool (D117). Kept so it is not re-discovered. */
+  'PLACEHOLDER',
 ]);
 export type JobStatus = z.infer<typeof JobStatus>;
 

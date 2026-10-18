@@ -159,6 +159,11 @@ describeIf('source report card and auto-pause (F2)', () => {
     for (let i = 0; i < 5; i++) await collect(src.tooFew, `tooFew role ${i}`, REASONS[0]!);
     await collect(src.keeps, 'keeps sales role', 'category not monitored');
     await collect(src.keeps, 'keeps graduate engineer', null);
+    // Two talent pools: neither collected nor kept, counted on their own (D117).
+    for (const title of ['keeps Join our Talent Community', "keeps Don't see what you want?"]) {
+      await collect(src.keeps, title, null);
+      await db.update(jobs).set({ status: 'PLACEHOLDER' }).where(eq(jobs.title, title));
+    }
   }, 180_000);
 
   afterAll(async () => {
@@ -198,7 +203,14 @@ describeIf('source report card and auto-pause (F2)', () => {
     expect(row(src.india)).toMatchObject({ collected: 21, health: 'KEPT_ZERO', pauseExempt: true });
     expect(row(src.tooFew)).toMatchObject({ collected: 5, kept: 0, health: 'KEPT_ZERO' });
     expect(row(src.nothing)).toMatchObject({ collected: 0, kept: 0, health: 'COLLECTED_NOTHING' });
-    expect(row(src.keeps)).toMatchObject({ collected: 2, kept: 1, health: 'OK' });
+    expect(row(src.keeps)).toMatchObject({
+      collected: 2,
+      kept: 1,
+      health: 'OK',
+      placeholdersSkipped: 2,
+    });
+    expect(row(src.keptZero).placeholdersSkipped).toBe(0);
+    expect(report.totals.placeholdersSkipped).toBeGreaterThanOrEqual(2);
     expect(row(src.keeps).lastKeptAt).not.toBeNull();
     // Manual recount of what was seeded for these seven sources.
     const mine = report.sources.filter((s) => Object.values(src).includes(s.id));

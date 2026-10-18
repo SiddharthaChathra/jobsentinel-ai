@@ -37,6 +37,22 @@ describe('filterReasonBucket', () => {
   });
 });
 
+describe('placeholders on the report card (D117)', () => {
+  const placeholder = listed({ status: 'PLACEHOLDER', experienceLevel: 'UNKNOWN' });
+
+  it('never counts a placeholder as collected, kept or rejected — only as skipped', () => {
+    const t = tally([listed(), placeholder, placeholder, filtered('category not monitored')], now);
+    expect(t).toMatchObject({ collected: 2, kept: 1, placeholders: 2 });
+    expect(Object.values(t.rejected).reduce((a, b) => a + b, 0)).toBe(1);
+  });
+
+  it('a source that found only placeholders collected nothing, so it is not "kept zero"', () => {
+    expect(sourceHealth('ACTIVE', tally([placeholder, placeholder], now))).toBe(
+      'COLLECTED_NOTHING',
+    );
+  });
+});
+
 describe('jobOutcome (kept = passes every gate)', () => {
   it('keeps a listed, valid, recent fresher job (0 to any years)', () => {
     expect(jobOutcome(listed(), now)).toEqual({ kept: true });

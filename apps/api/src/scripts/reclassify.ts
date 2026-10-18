@@ -36,6 +36,7 @@ async function main(): Promise<void> {
       aiUsed: 0,
       aiUnavailable: 0,
       deferred: 0,
+      placeholders: 0,
     };
     const startedAt = Date.now();
     for (;;) {

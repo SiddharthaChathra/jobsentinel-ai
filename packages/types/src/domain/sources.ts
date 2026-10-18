@@ -174,6 +174,8 @@ export const SourceReportRow = z.object({
   /** Of those, how many passed every gate (location, fresher, validation, recency). */
   kept: z.number().int(),
   rejected: z.record(RejectReason, z.number().int()),
+  /** Talent-pool / general-application postings, not in `collected` or `kept` (D117). Optional. */
+  placeholdersSkipped: z.number().int().optional(),
   /** When this source last found a job that was kept, at any time. */
   lastKeptAt: z.string().nullable(),
   lastSuccessfulScan: z.string().nullable(),
@@ -190,7 +192,11 @@ export type SourceReportRow = z.infer<typeof SourceReportRow>;
 export const SourceReport = z.object({
   days: z.union([z.literal(7), z.literal(30)]),
   generatedAt: z.string(),
-  totals: z.object({ collected: z.number().int(), kept: z.number().int() }),
+  totals: z.object({
+    collected: z.number().int(),
+    kept: z.number().int(),
+    placeholdersSkipped: z.number().int().optional(),
+  }),
   sources: z.array(SourceReportRow),
 });
 export type SourceReport = z.infer<typeof SourceReport>;

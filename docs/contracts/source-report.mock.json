@@ -8,7 +8,8 @@
         "generatedAt": "2026-10-17T14:30:00.000Z",
         "totals": {
           "collected": 1210,
-          "kept": 23
+          "kept": 23,
+          "placeholdersSkipped": 1
         },
         "sources": [
           {
@@ -40,7 +41,8 @@
             "pausedAt": null,
             "pausedReason": null,
             "resumedAt": null,
-            "pauseExempt": true
+            "pauseExempt": true,
+            "placeholdersSkipped": 1
           },
           {
             "id": "7a2b3c4d-2e3f-4a51-9b0c-1d2e3f4a5b6c",
@@ -74,7 +76,8 @@
             "pausedAt": "2026-10-17T14:00:00.000Z",
             "pausedReason": "collected 503 jobs in 30 days and kept none (location 318, experience 160, category 25)",
             "resumedAt": null,
-            "pauseExempt": false
+            "pauseExempt": false,
+            "placeholdersSkipped": 0
           },
           {
             "id": "9c4d5e6f-4a5b-4c73-9d2e-3f4a5b6c7d8e",
@@ -108,7 +111,8 @@
             "pausedAt": null,
             "pausedReason": null,
             "resumedAt": null,
-            "pauseExempt": false
+            "pauseExempt": false,
+            "placeholdersSkipped": 0
           },
           {
             "id": "be6f7a8b-6c7d-4e95-9f4a-5b6c7d8e9fa0",
@@ -139,7 +143,8 @@
             "pausedAt": null,
             "pausedReason": null,
             "resumedAt": null,
-            "pauseExempt": false
+            "pauseExempt": false,
+            "placeholdersSkipped": 0
           },
           {
             "id": "cf7a8b9c-7d8e-4fa6-8a5b-6c7d8e9fa0b1",
@@ -173,7 +178,8 @@
             "pausedAt": null,
             "pausedReason": null,
             "resumedAt": null,
-            "pauseExempt": false
+            "pauseExempt": false,
+            "placeholdersSkipped": 0
           }
         ]
       }
@@ -187,7 +193,8 @@
         "generatedAt": "2026-10-17T14:30:00.000Z",
         "totals": {
           "collected": 0,
-          "kept": 0
+          "kept": 0,
+          "placeholdersSkipped": 0
         },
         "sources": []
       }

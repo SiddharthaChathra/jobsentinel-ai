@@ -68,6 +68,8 @@ NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=JobSentinelBot
 PORT=4000
 RENDER_EXTERNAL_URL=                          # set by Render automatically; enables the API's keep-awake ping (D94)
 AUTO_PAUSE_ENABLED=true                       # false: log would-pause decisions, pause nothing (D104)
+# Mark talent-pool / general-application postings PLACEHOLDER (D117); off until confirmed
+PLACEHOLDER_FILTER_ENABLED=false
 AUTO_PAUSE_MIN_COLLECTED=20                   # source auto-pause: min jobs collected with none kept (D104)
 AUTO_PAUSE_WINDOW_DAYS=30                     # ...over this many days; India-scoped sources alert instead
 KEEP_AWAKE_HOURS=0-24                         # local hours the API keeps itself awake on Render, e.g. 7-24 (D99)
