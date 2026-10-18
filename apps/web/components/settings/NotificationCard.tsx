@@ -175,6 +175,49 @@ export function NotificationCard({ settings }: { settings: NotificationSettings 
             onCheckedChange={(on) => setForm({ ...form, telegramEnabled: on })}
           />
         </div>
+
+        <div className="space-y-4 rounded-lg border border-border/60 p-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">Reminders</p>
+              <p className="text-xs text-muted-foreground">
+                Follow-up, interview and deadline alerts for your applications.
+              </p>
+            </div>
+            <Switch
+              checked={form.remindersEnabled ?? true}
+              onCheckedChange={(on) => setForm({ ...form, remindersEnabled: on })}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="followUpDays">Follow up after N days</Label>
+            <Input
+              id="followUpDays"
+              type="number"
+              min={3}
+              max={14}
+              value={form.followUpDays ?? 7}
+              onChange={(e) => setForm({ ...form, followUpDays: Number(e.target.value) })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Days with no status change after applying before a follow-up reminder (3–14).
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Weekly summary on Sunday 09:00</p>
+            <p className="text-xs text-muted-foreground">
+              A weekly summary of jobs, applications and reminders in your timezone.
+            </p>
+          </div>
+          <Switch
+            checked={form.weeklySummaryEnabled ?? false}
+            onCheckedChange={(on) => setForm({ ...form, weeklySummaryEnabled: on })}
+          />
+        </div>
       </CardContent>
 
       <CardFooter className="flex items-center gap-3 border-t border-border/60 pt-4">
@@ -188,6 +231,9 @@ export function NotificationCard({ settings }: { settings: NotificationSettings 
               quietHoursEnd: form.quietHoursEnd,
               includeNeedsReviewInDigest: form.includeNeedsReviewInDigest,
               telegramEnabled: form.telegramEnabled,
+              remindersEnabled: form.remindersEnabled ?? true,
+              followUpDays: form.followUpDays ?? 7,
+              weeklySummaryEnabled: form.weeklySummaryEnabled ?? false,
             })
           }
           disabled={update.isPending}

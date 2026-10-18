@@ -17,6 +17,8 @@ interface JobListProps {
   isFetchingNextPage?: boolean;
   /** Each page supplies its own empty state — "no results" and "nothing saved" are different. */
   empty?: ReactNode;
+  /** Optional custom card renderer (e.g. to wrap with date pickers on saved jobs). */
+  renderItem?: (job: JobCardType) => ReactNode;
 }
 
 /** Roughly one card; the virtualizer measures the real height as rows render. */
@@ -36,6 +38,7 @@ export function JobList({
   fetchNextPage,
   isFetchingNextPage,
   empty,
+  renderItem,
 }: JobListProps) {
   // A callback ref, not `useRef`: the virtualizer needs the list's offset from the top of the
   // page, and reading `ref.current` during render is not allowed. This measures once on mount.
@@ -127,7 +130,7 @@ export function JobList({
                 <Loader2 className="size-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              job && <JobCard job={job} />
+              job && (renderItem ? renderItem(job) : <JobCard job={job} />)
             )}
           </div>
         );

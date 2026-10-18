@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, BellOff, CheckCheck } from 'lucide-react';
+import { Bell, BellOff, Calendar, CheckCheck, Clock, Info } from 'lucide-react';
 import type { InboxItem } from '@jobsentinel/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { RelativeTime } from '@/components/common/RelativeTime';
@@ -100,7 +100,15 @@ export default function NotificationsPage() {
                     isUnread ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground',
                   )}
                 >
-                  <Bell className="size-4" />
+                  {item.type === 'REMINDER' ? (
+                    <Clock className="size-4" />
+                  ) : item.type === 'WEEKLY' ? (
+                    <Calendar className="size-4" />
+                  ) : item.type === 'SYSTEM' ? (
+                    <Info className="size-4" />
+                  ) : (
+                    <Bell className="size-4" />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -108,6 +116,27 @@ export default function NotificationsPage() {
                     {item.score !== null && (
                       <Badge variant="secondary" className="shrink-0">
                         {item.score}%
+                      </Badge>
+                    )}
+                    {item.type === 'REMINDER' && (
+                      <Badge
+                        variant="outline"
+                        className="border-amber-300 dark:border-amber-700 text-[10px]"
+                      >
+                        Reminder
+                      </Badge>
+                    )}
+                    {item.type === 'WEEKLY' && (
+                      <Badge
+                        variant="outline"
+                        className="border-indigo-300 dark:border-indigo-700 text-[10px]"
+                      >
+                        Weekly
+                      </Badge>
+                    )}
+                    {item.type === 'SYSTEM' && (
+                      <Badge variant="outline" className="text-[10px]">
+                        System
                       </Badge>
                     )}
                     {isUnread && <span className="size-1.5 rounded-full bg-primary" />}

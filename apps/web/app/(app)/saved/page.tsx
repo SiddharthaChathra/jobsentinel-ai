@@ -7,6 +7,9 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { buttonVariants } from '@/components/ui/button';
 import { useSavedJobs } from '@/hooks/useJobs';
 
+import { JobCard } from '@/components/jobs/JobCard';
+import { ApplicationDatePickers } from '@/components/reminders/ApplicationDatePickers';
+
 export default function SavedJobsPage() {
   const { data, isLoading, isError, error } = useSavedJobs();
   const jobs = data?.data ?? [];
@@ -27,6 +30,14 @@ export default function SavedJobsPage() {
         isError={isError}
         error={error as Error}
         hasNextPage={Boolean(data?.meta?.nextCursor)}
+        renderItem={(job) => (
+          <div className="space-y-2">
+            <JobCard job={job} />
+            <div className="rounded-lg border border-border/60 bg-card/60 p-2.5">
+              <ApplicationDatePickers jobId={job.id} deadline={job.deadline} deadlineOnly />
+            </div>
+          </div>
+        )}
         empty={
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
             <BookmarkX className="size-8 text-muted-foreground" />

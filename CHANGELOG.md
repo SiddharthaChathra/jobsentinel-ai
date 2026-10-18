@@ -30,7 +30,8 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
 - **Reminders (D119):** follow-up after N days with no status change (3-14, default 7), interview the day before and the morning of, deadline 3 days and 1 day before for saved, not-applied jobs. Idempotent planning and delivery, quiet hours 22:00-07:00 in the user's timezone defer rather than drop, status changes cancel what no longer applies, snooze and dismiss. `GET /reminders`, `POST /reminders/:id/snooze|dismiss`, `PATCH /applications/:jobId/dates`; settings gain `remindersEnabled`, `followUpDays`, `weeklySummaryEnabled`.
 - **Fix:** `utcForLocalHour` was 30 minutes late in India (whole-hour correction), so quiet hours ended at 07:30 IST.
-- Tests: validation +22 (planner, quiet window, time-zone fix), types +3 (contract), API e2e +9.
+- **Web UI for tracker reminders (Gemini, F5, D119):** Applications page renders Reminders section at top (DUE highlighted, UPCOMING with local date, snooze default 1d + 1h/3d, dismiss, hidden when empty; selectors `reminder-<id>`, `reminder-snooze-<id>`, `reminder-dismiss-<id>`); date pickers per application (interview datetime and deadline date at 23:59 local ISO, clear sends null, read-only followUpAt; selectors `interview-date-<jobId>`, `deadline-date-<jobId>`) and deadline picker on saved jobs; NotificationCard gains `remindersEnabled` toggle, `followUpDays` (3-14), `weeklySummaryEnabled` toggle; web inbox renders `REMINDER` and `WEEKLY` items like system items.
+- Tests: validation +22 (planner, quiet window, time-zone fix), types +3 (contract), API e2e +9, web 91 (+10).
 
 ## [Phase 13] F4 Company fresher score — 2026-10-18
 
