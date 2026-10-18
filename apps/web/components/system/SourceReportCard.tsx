@@ -352,6 +352,22 @@ function SourceRow({ source }: { source: SourceReportRow }) {
       {/* Rejected breakdown */}
       <RejectedBreakdown rejected={source.rejected} />
 
+      {/* Placeholders skipped (D117) */}
+      {source.placeholdersSkipped !== undefined && source.placeholdersSkipped > 0 && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          <span
+            data-testid={`placeholders-skipped-${source.id}`}
+            title="Talent-pool and general-application postings. Not jobs, so not counted as collected or kept."
+            className="inline-flex cursor-help items-center gap-1"
+          >
+            Placeholders skipped:{' '}
+            <span className="font-medium tabular-nums text-foreground">
+              {source.placeholdersSkipped}
+            </span>
+          </span>
+        </div>
+      )}
+
       {/* Last error */}
       {source.lastError && (
         <div className="mt-2">
@@ -509,6 +525,19 @@ export function SourceReportCard({ isAdmin }: { isAdmin: boolean }) {
             <div className="text-2xl font-bold tabular-nums">{keptPercent}%</div>
             <div className="text-xs text-muted-foreground">Kept %</div>
           </div>
+          {report.totals.placeholdersSkipped !== undefined &&
+            report.totals.placeholdersSkipped > 0 && (
+              <div
+                data-testid="placeholders-skipped-total"
+                className="cursor-help text-center"
+                title="Talent-pool and general-application postings. Not jobs, so not counted as collected or kept."
+              >
+                <div className="text-2xl font-bold tabular-nums">
+                  {report.totals.placeholdersSkipped}
+                </div>
+                <div className="text-xs text-muted-foreground">Placeholders skipped</div>
+              </div>
+            )}
         </div>
 
         {/* Health filter */}
