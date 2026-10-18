@@ -523,4 +523,109 @@ describe('SourceReportCard', () => {
       expect(within(row).getByText('Exempt from auto-pause')).toBeInTheDocument();
     });
   });
+
+  // ── 9. Placeholders skipped (D117) ────────────────────────────────────────
+
+  it('shows "Placeholders skipped: N" with tooltip for a source when placeholdersSkipped > 0', async () => {
+    const reportWithPlaceholders = {
+      ...MOCK_REPORT,
+      sources: [
+        {
+          ...MOCK_REPORT.sources[0],
+          placeholdersSkipped: 3,
+        },
+        ...MOCK_REPORT.sources.slice(1),
+      ],
+    };
+    mockGet.mockImplementation(async (path: string) => {
+      if (path.startsWith('/sources/report')) return { data: reportWithPlaceholders };
+      return { data: null };
+    });
+
+    await renderReportCard();
+    await waitFor(() => {
+      const el = screen.getByTestId(`placeholders-skipped-${MOCK_REPORT.sources[0]!.id}`);
+      expect(el).toBeInTheDocument();
+      expect(el).toHaveTextContent('Placeholders skipped: 3');
+      expect(el).toHaveAttribute(
+        'title',
+        'Talent-pool and general-application postings. Not jobs, so not counted as collected or kept.',
+      );
+    });
+  });
+
+  it('hides placeholders skipped for a source when placeholdersSkipped is 0 or absent', async () => {
+    const reportWithoutPlaceholders = {
+      ...MOCK_REPORT,
+      sources: [
+        {
+          ...MOCK_REPORT.sources[0],
+          placeholdersSkipped: 0,
+        },
+        {
+          ...MOCK_REPORT.sources[1],
+          placeholdersSkipped: undefined,
+        },
+      ],
+    };
+    mockGet.mockImplementation(async (path: string) => {
+      if (path.startsWith('/sources/report')) return { data: reportWithoutPlaceholders };
+      return { data: null };
+    });
+
+    await renderReportCard();
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId(`placeholders-skipped-${MOCK_REPORT.sources[0]!.id}`),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(`placeholders-skipped-${MOCK_REPORT.sources[1]!.id}`),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows total in summary strip with tooltip when totals.placeholdersSkipped > 0', async () => {
+    const reportWithTotal = {
+      ...MOCK_REPORT,
+      totals: {
+        ...MOCK_REPORT.totals,
+        placeholdersSkipped: 5,
+      },
+    };
+    mockGet.mockImplementation(async (path: string) => {
+      if (path.startsWith('/sources/report')) return { data: reportWithTotal };
+      return { data: null };
+    });
+
+    await renderReportCard();
+    await waitFor(() => {
+      const el = screen.getByTestId('placeholders-skipped-total');
+      expect(el).toBeInTheDocument();
+      expect(el).toHaveTextContent('5');
+      expect(el).toHaveTextContent('Placeholders skipped');
+      expect(el).toHaveAttribute(
+        'title',
+        'Talent-pool and general-application postings. Not jobs, so not counted as collected or kept.',
+      );
+    });
+  });
+
+  it('hides total in summary strip when totals.placeholdersSkipped is 0 or absent', async () => {
+    const reportWithoutTotal = {
+      ...MOCK_REPORT,
+      totals: {
+        ...MOCK_REPORT.totals,
+        placeholdersSkipped: 0,
+      },
+    };
+    mockGet.mockImplementation(async (path: string) => {
+      if (path.startsWith('/sources/report')) return { data: reportWithoutTotal };
+      return { data: null };
+    });
+
+    await renderReportCard();
+    await waitFor(() => {
+      expect(screen.queryByTestId('placeholders-skipped-total')).not.toBeInTheDocument();
+    });
+  });
 });

@@ -4,8 +4,9 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
 ## [Phase 13] Placeholder postings — 2026-10-18
 
-- **Placeholders (D117):** "Don't see what you're looking for?", "Join our Talent Community", "Future Opportunities", "General Application" and similar are set aside as `PLACEHOLDER`: never matched, listed, held for review or alerted, and counted on the source report card as "placeholders skipped" rather than collected. Rows are kept so they are not re-discovered. Off until confirmed (`PLACEHOLDER_FILTER_ENABLED`); `pnpm placeholders` lists the 15 existing matches.
-- Tests: validation 385 (+26), API e2e +3.
+- **Placeholders (D117):** "Don't see what you're looking for?", "Join our Talent Community", "Future Opportunities", "General Application" and similar are set aside as `PLACEHOLDER`: never matched, listed, held for review or alerted, and counted on the source report card as "placeholders skipped" rather than collected. Rows are kept so they are not re-discovered. Behind `PLACEHOLDER_FILTER_ENABLED`, switched on after the owner confirmed the 15 existing matches listed by `pnpm placeholders`; `--restore` is the rollback (docs/deployment.md).
+- **Web UI for Placeholders skipped (Gemini, D117):** System Status source report card (`SourceReportCard.tsx`) displays "Placeholders skipped: N" per source when > 0 (`data-testid="placeholders-skipped-<sourceId>"`) with tooltip "Talent-pool and general-application postings. Not jobs, so not counted as collected or kept." and in the totals summary strip (`data-testid="placeholders-skipped-total"`). Hidden when 0 or absent.
+- Tests: validation 385 (+26), API e2e +3, web 75 (+4).
 
 ## [Phase 13] Experience misread fix; board recheck — 2026-10-18
 
