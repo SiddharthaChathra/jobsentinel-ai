@@ -1,0 +1,55 @@
+name: uptime
+
+# F11, D124. Checks the API (/health/ready) and the worker (/health/worker) every 15 minutes
+# during the API's active hours, and tells the owner on Telegram when either goes down and when it
+# recovers — one message per change. UptimeRobot's free plan has no Telegram alerts, and a 24/7
+# five-minute ping would keep the free Render API awake all night, spending the hours D99 saves for
+# the owner's other service; this check follows the same 07:00-24:00 IST window.
+#
+# GitHub runs scheduled jobs best-effort (sometimes late or skipped), so this is a safety net, not
+# a pager. Secrets: TELEGRAM_BOT_TOKEN (already set for the worker) and ALERT_TELEGRAM_CHAT_ID (the
+# owner's chat id; added by the owner). Without the chat id the check still runs and shows red.
+
+on:
+  schedule:
+    # 02:00-18:45 UTC = 07:30-00:15 IST, inside the API's awake window (KEEP_AWAKE_HOURS=7-24).
+    - cron: '*/15 2-18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # The previous completed run's conclusion is the last known state: alert only on a change.
+      - name: Previous state
+        id: prev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          c=$(gh run list --repo "${{ github.repository }}" --workflow uptime.yml --status completed --limit 1 --json conclusion -q '.[0].conclusion' || true)
+          if [ "$c" = "failure" ]; then echo "state=unhealthy" >> "$GITHUB_OUTPUT"; else echo "state=healthy" >> "$GITHUB_OUTPUT"; fi
+          echo "previous run: ${c:-none}"
+
+      - name: Check API and worker
+        env:
+          API_BASE: https://jobsentinel-api-sg.onrender.com
+          PREV_STATE: ${{ steps.prev.outputs.state }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ALERT_TELEGRAM_CHAT_ID: ${{ secrets.ALERT_TELEGRAM_CHAT_ID }}
+        run: node scripts/uptime-check.mjs

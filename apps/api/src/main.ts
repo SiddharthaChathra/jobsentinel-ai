@@ -16,7 +16,7 @@ async function bootstrap(): Promise<void> {
   installProcessGuards(logger);
 
   const app = await NestFactory.create(AppModule, { logger: new PinoNestLogger(logger) });
-  app.setGlobalPrefix('api/v1', { exclude: ['health', 'health/ready'] });
+  app.setGlobalPrefix('api/v1', { exclude: ['health', 'health/ready', 'health/worker'] });
   app.use(helmet());
   app.enableCors({ origin: env.WEB_ORIGIN, credentials: true });
   app.enableShutdownHooks();

@@ -183,6 +183,7 @@ Declared in `packages/config/src/env.ts` (Zod, defaults, per-process requirement
 
 - Web → Vercel (root `apps/web`). API → Render free (Docker, `node dist/main.js`, health `/health/ready`). Worker → Oracle Always Free VM / laptop / GitHub Actions cron (`node dist/worker.js --once`). DB/Auth/Storage → Supabase free.
 - Migrations run manually before deploying API/worker. Backups: `.github/workflows/backup.yml` weekly, encrypted with the owner's age public key and streamed (never a plaintext dump on disk); restore steps and the Storage limitation in docs/deployment.md "Backups" (F10, D123).
+- Uptime (F11, D124): `/health/worker` is 503 past 2× the dispatch interval inside the active hours only; `.github/workflows/uptime.yml` alerts on Telegram on a change of state. Never add a monitor that pings the Render API around the clock — it spends the free hours D99 keeps for the owner's other service.
 - Free tiers change: the worker is portable by design; re-verify tier terms at deploy time and update the README cost table.
 
 ## 17. Local commands

@@ -2,6 +2,11 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] F11 Uptime monitoring — 2026-10-18
+
+- **Health (D124):** `GET /health/worker` — 503 past 2× the dispatch interval, inside the active hours only. `uptime.yml` checks the API and worker every 15 minutes in the active window and alerts on Telegram on a change only; rehearsed against the real API and a stub Telegram. UptimeRobot not used: no Telegram on the free plan, and a 24/7 ping would spend the Render hours D99 saves.
+- Tests: API unit +6, e2e +1.
+
 ## [Phase 13] F10 Weekly encrypted backup — 2026-10-18
 
 - **Backup (D123):** weekly GitHub Action; `pg_dump | gzip | age` streamed (no plaintext on disk), refuses to run without a key, proves the artifact is encrypted, keeps it 90 days. The dump now includes the migration ledger, auth users and `pg_trgm`. Restore rehearsed on the test stack (29 tables, identical counts). Storage files are not covered (documented).
