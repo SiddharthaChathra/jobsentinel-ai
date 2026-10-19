@@ -2,6 +2,10 @@
 
 All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
+## [Phase 13] Audit fixes (Part 6) — 2026-10-19
+
+- **D126 (HIGH):** "Freshers welcome, 3+ years preferred" is EXPERIENCED again: N+ years / ranges / minimums are experience unless implausible or plainly about something else. Accuracy 72/72 before and after; 2 production jobs change eligibility, both already filtered.
+
 ## [Phase 13] Owner decisions: F4 thresholds, F7 soft skills, workflow watch — 2026-10-18
 
 - **F4 (D118 amended):** HIGH ≥ 10 (was 30), MEDIUM ≥ 5. Only HIGH changes scanning (×0.5, leased first); LOW and UNKNOWN keep the default interval and order.
