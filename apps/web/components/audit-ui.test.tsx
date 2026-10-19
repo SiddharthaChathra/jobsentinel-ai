@@ -6,6 +6,7 @@ import { PreferencesStep } from '@/components/onboarding/preferences-step';
 import { BottomTabs } from '@/components/layout/BottomTabs';
 import { ApplicationDatePickers } from '@/components/reminders/ApplicationDatePickers';
 import SkillGapsPage from '@/app/(app)/skill-gaps/page';
+import ApplicationsPage from '@/app/(app)/applications/page';
 import type { SkillGapReport } from '@jobsentinel/types';
 
 // Mock Next.js navigation
@@ -192,7 +193,7 @@ describe('Audit UI Fixes (D127, Defects 11-13, Soft skills note)', () => {
 
   // ── 3. Date Pickers Container Classes & Dark Mode (Defects 12 & 13) ─────────
   describe('Date pickers container classes and dark-mode styling', () => {
-    it('renders ApplicationDatePickers: stacks pickers vertically and allows inputs to shrink with min-w-0 w-full flex-1', () => {
+    it('renders ApplicationDatePickers: interview input and clear button are not in the same flex row, and input takes full width (defect 12)', () => {
       render(
         <ApplicationDatePickers
           jobId="job-kanban-test"
@@ -202,30 +203,25 @@ describe('Audit UI Fixes (D127, Defects 11-13, Soft skills note)', () => {
         { wrapper: createWrapper() },
       );
 
-      // Container stacks vertically so inputs fit narrow kanban columns (defect 12)
+      // Container stacks vertically so inputs fit narrow kanban columns
       const container = screen.getByTestId('date-pickers-job-kanban-test');
       expect(container.className).toContain('flex flex-col');
       expect(container.className).toContain('w-full');
 
-      // Interview input shrinks within column
+      // Interview input has full width so full date and time are readable at 1280px (defect 12)
       const interviewInput = screen.getByTestId('interview-date-job-kanban-test');
       expect(interviewInput.className).toContain('w-full');
-      expect(interviewInput.className).toContain('min-w-0');
-      expect(interviewInput.className).toContain('flex-1');
 
-      // Interview clear button has shrink-0 to stay inside column
+      // Clear button is inside the label row, NOT in the same flex row as the input
       const clearInterviewBtn = screen.getByLabelText('Clear interview date');
-      expect(clearInterviewBtn.className).toContain('shrink-0');
+      expect(interviewInput.parentElement).not.toBe(clearInterviewBtn.parentElement);
+      expect(clearInterviewBtn.parentElement).not.toContainElement(interviewInput);
 
-      // Deadline input shrinks within column
+      // Deadline input has full width and its clear button is also in the label row
       const deadlineInput = screen.getByTestId('deadline-date-job-kanban-test');
       expect(deadlineInput.className).toContain('w-full');
-      expect(deadlineInput.className).toContain('min-w-0');
-      expect(deadlineInput.className).toContain('flex-1');
-
-      // Deadline clear button has shrink-0 to stay inside column
       const clearDeadlineBtn = screen.getByLabelText('Clear deadline');
-      expect(clearDeadlineBtn.className).toContain('shrink-0');
+      expect(deadlineInput.parentElement).not.toBe(clearDeadlineBtn.parentElement);
 
       // Dark-mode date styling (defect 13): color-scheme: dark
       expect(interviewInput.className).toContain('dark:[color-scheme:dark]');
@@ -271,6 +267,64 @@ describe('Audit UI Fixes (D127, Defects 11-13, Soft skills note)', () => {
       // When softSkills is empty or absent, soft-skills-note is completely hidden
       expect(screen.queryByTestId('soft-skills-note')).not.toBeInTheDocument();
       expect(screen.queryByRole('heading', { name: 'Soft skills' })).not.toBeInTheDocument();
+    });
+  });
+
+  // ── 5. Applications Page Error State vs Empty State (Defect 14) ─────────────
+  describe('Applications page error state vs empty state (defect 14)', () => {
+    it('renders ApplicationsPage: renders error state with retry button when hook reports an error, NOT the empty state', async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url === '/applications') {
+          return Promise.reject(new Error('Internal Server Error'));
+        }
+        if (url === '/reminders') {
+          return Promise.resolve({ data: [] });
+        }
+        return Promise.resolve({ data: [] });
+      });
+
+      render(<ApplicationsPage />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('applications-error')).toBeInTheDocument();
+      });
+
+      // Shows error message and Retry button
+      expect(
+        screen.getByText('Could not load applications. Please try again.'),
+      ).toBeInTheDocument();
+      const retryBtn = screen.getByRole('button', { name: 'Retry' });
+      expect(retryBtn).toBeInTheDocument();
+
+      // Must NEVER show the empty state when the API call fails
+      expect(screen.queryByText('No applications tracked yet')).not.toBeInTheDocument();
+
+      // Clicking Retry calls refetch
+      fireEvent.click(retryBtn);
+      await waitFor(() => {
+        expect(mockGet).toHaveBeenCalledWith('/applications', {});
+      });
+    });
+
+    it('renders ApplicationsPage: renders empty state only when API call succeeds with 0 applications', async () => {
+      mockGet.mockImplementation((url: string) => {
+        if (url === '/applications') {
+          return Promise.resolve({ data: [], meta: { count: 0 } });
+        }
+        if (url === '/reminders') {
+          return Promise.resolve({ data: [] });
+        }
+        return Promise.resolve({ data: [] });
+      });
+
+      render(<ApplicationsPage />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByText('No applications tracked yet')).toBeInTheDocument();
+      });
+
+      // Does NOT show the error state
+      expect(screen.queryByTestId('applications-error')).not.toBeInTheDocument();
     });
   });
 });

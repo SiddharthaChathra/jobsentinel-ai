@@ -5,7 +5,7 @@ import { ClipboardList } from 'lucide-react';
 import type { ApplicationStatus } from '@jobsentinel/types';
 import { JobCard } from '@/components/jobs/JobCard';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { useApplications } from '@/hooks/useJobs';
 
 import { RemindersSection } from '@/components/reminders/RemindersSection';
@@ -24,7 +24,7 @@ const STATUS_COLUMNS: { id: ApplicationStatus; label: string; hint: string }[] =
  * readable at 360 px, and a horizontally scrolling board is worse than a vertical list.
  */
 export default function ApplicationsPage() {
-  const { data, isLoading } = useApplications();
+  const { data, isLoading, isError, refetch } = useApplications();
   const items = data?.data ?? [];
 
   const byStatus = STATUS_COLUMNS.map((col) => ({
@@ -57,7 +57,25 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      {!isLoading && total === 0 && (
+      {isError && (
+        <div
+          data-testid="applications-error"
+          className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+        >
+          <p>Could not load applications. Please try again.</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="border-destructive/30 hover:bg-destructive/10"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {!isLoading && !isError && total === 0 && (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
           <ClipboardList className="size-8 text-muted-foreground" />
           <div>
@@ -73,7 +91,7 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      {!isLoading && total > 0 && (
+      {!isLoading && !isError && total > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {byStatus.map((col) => (
             <section key={col.id} className="min-w-0">

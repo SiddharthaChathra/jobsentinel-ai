@@ -125,28 +125,20 @@ export function ApplicationDatePickers({
         {/* Interview Date & Time (not shown in deadline-only mode) */}
         {!deadlineOnly && (
           <div className="flex flex-col gap-1 w-full">
-            <Label
-              htmlFor={`interview-date-${jobId}`}
-              className="text-[11px] font-medium text-muted-foreground"
-            >
-              Interview:
-            </Label>
-            <div className="flex items-center gap-1 w-full min-w-0">
-              <input
-                id={`interview-date-${jobId}`}
-                data-testid={`interview-date-${jobId}`}
-                type="datetime-local"
-                value={interviewVal}
-                onChange={(e) => handleInterviewChange(e.target.value)}
-                className="h-7 w-full min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]"
-              />
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor={`interview-date-${jobId}`}
+                className="text-[11px] font-medium text-muted-foreground"
+              >
+                Interview:
+              </Label>
               {interviewVal && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={handleClearInterview}
-                  className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                  className="h-5 w-5 text-muted-foreground hover:text-foreground"
                   aria-label="Clear interview date"
                   title="Clear interview date"
                 >
@@ -154,34 +146,34 @@ export function ApplicationDatePickers({
                 </Button>
               )}
             </div>
+            <input
+              id={`interview-date-${jobId}`}
+              data-testid={`interview-date-${jobId}`}
+              type="datetime-local"
+              value={interviewVal}
+              onChange={(e) => handleInterviewChange(e.target.value)}
+              className="h-7 w-full rounded-md border border-input bg-background px-2 py-0.5 text-[11px] sm:text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]"
+            />
           </div>
         )}
 
         {/* Deadline Picker */}
         <div className="flex flex-col gap-1 w-full">
-          <Label
-            htmlFor={`deadline-date-${jobId}`}
-            className="text-[11px] font-medium text-muted-foreground flex items-center gap-1"
-          >
-            <Calendar className="size-3" />
-            Deadline:
-          </Label>
-          <div className="flex items-center gap-1 w-full min-w-0">
-            <input
-              id={`deadline-date-${jobId}`}
-              data-testid={`deadline-date-${jobId}`}
-              type="date"
-              value={deadlineVal}
-              onChange={(e) => handleDeadlineChange(e.target.value)}
-              className="h-7 w-full min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]"
-            />
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor={`deadline-date-${jobId}`}
+              className="text-[11px] font-medium text-muted-foreground flex items-center gap-1"
+            >
+              <Calendar className="size-3" />
+              Deadline:
+            </Label>
             {deadlineVal && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={handleClearDeadline}
-                className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                className="h-5 w-5 text-muted-foreground hover:text-foreground"
                 aria-label="Clear deadline"
                 title="Clear deadline"
               >
@@ -189,6 +181,14 @@ export function ApplicationDatePickers({
               </Button>
             )}
           </div>
+          <input
+            id={`deadline-date-${jobId}`}
+            data-testid={`deadline-date-${jobId}`}
+            type="date"
+            value={deadlineVal}
+            onChange={(e) => handleDeadlineChange(e.target.value)}
+            className="h-7 w-full rounded-md border border-input bg-background px-2 py-0.5 text-[11px] sm:text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]"
+          />
         </div>
 
         {updateDates.isPending && (
