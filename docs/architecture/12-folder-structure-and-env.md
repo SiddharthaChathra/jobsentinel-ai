@@ -124,7 +124,11 @@ ADZUNA_LIMIT_PER_MONTH=2500
 SOURCE_QUOTA_SAFETY=0.9                       # use at most this share of any quota window
 
 # ───────── Tests ─────────
-TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:44322/postgres
+# Local test stack ports (scripts/test-env.mjs only, not read by the app): default 44320-44329 from
+# supabase/config.toml, below Windows' dynamic range; set a base to move them, e.g. 45320 →
+# API 45321, database 45322.
+# TEST_STACK_PORT_BASE=44320
 AI_LIVE_TESTS=0
 # Tests only (read by the test guard, never by the app; D101). apps/api/.env.test is generated
 # by `pnpm test:db:start`. Tests abort on PRODUCTION_SUPABASE_REF and accept a hosted

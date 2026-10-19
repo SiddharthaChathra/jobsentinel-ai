@@ -23,6 +23,23 @@ const supabase = (...args) => {
   return execSync(['npx', '--yes', 'supabase', ...args].join(' '), options);
 };
 
+// Local ports: supabase/config.toml sets 44320-44329, below Windows' dynamic range (49152+), where
+// Hyper-V reserves blocks that move between reboots — it took both 543xx and 553xx. TEST_STACK_PORT_BASE moves the whole stack, e.g. 56320 → API 56321, DB 56322, via the
+// CLI's own SUPABASE_*_PORT overrides; .env.test is then written from what the stack reports.
+const portBase = Number(process.env.TEST_STACK_PORT_BASE ?? '');
+if (Number.isInteger(portBase) && portBase > 1024 && portBase < 65_000) {
+  Object.assign(process.env, {
+    SUPABASE_DB_SHADOW_PORT: String(portBase),
+    SUPABASE_API_PORT: String(portBase + 1),
+    SUPABASE_DB_PORT: String(portBase + 2),
+    SUPABASE_STUDIO_PORT: String(portBase + 3),
+    SUPABASE_LOCAL_SMTP_PORT: String(portBase + 4),
+    SUPABASE_DB_POOLER_PORT: String(portBase + 9),
+  });
+} else if (process.env.TEST_STACK_PORT_BASE) {
+  throw new Error('TEST_STACK_PORT_BASE must be a whole number between 1025 and 64999');
+}
+
 if (!process.argv.includes('--no-start')) {
   // The API verifies tokens against the JWKS with ES256, as in production, so the stack must
   // sign with an asymmetric key. Generated once per checkout; git-ignored.

@@ -50,6 +50,10 @@ pnpm --filter @jobsentinel/api worker -- --once   # one worker tick
 
 Quality gates: `pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build`.
 
+**A fresh clone's web build** needs the public Supabase values, or Next.js fails while prerendering: put `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env` and run `pnpm env:sync`. For a build that only has to compile, any well-formed placeholders work, as in CI.
+
+**Tests against a local database** (Docker required): `pnpm test:db:start && pnpm test:db:seed && pnpm test:e2e`, then `pnpm --filter @jobsentinel/api build && pnpm test:browser`. The local Supabase stack listens on ports **44320-44329** (`supabase/config.toml`): below Windows' dynamic port range (49152+), where Hyper-V reserves blocks that change between reboots (check with `netsh interface ipv4 show excludedportrange protocol=tcp`). To move the stack, set `TEST_STACK_PORT_BASE` (e.g. `56320` → API 56321, database 56322) before `pnpm test:db:start`. `apps/api/.env.test` is written from the running stack, so nothing else changes.
+
 ## Documentation
 
 - [docs/README.md](docs/README.md) — index of the architecture package (decisions, database, API contract, sources, scheduler, validation, AI, notifications, security, testing, deployment, roadmap, risks).

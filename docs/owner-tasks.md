@@ -203,4 +203,4 @@ Ask Claude to "re-check the F4 thresholds". It will show the badged companies an
 
 ### Local machine note (not a task)
 
-Windows on this machine reserves TCP ports 54240–54339, so the local Supabase test stack now uses 55320–55329 (`supabase/config.toml`). If tests ever fail with "ports are not available", run `netsh interface ipv4 show excludedportrange protocol=tcp` in PowerShell and tell Claude the ranges.
+Windows reserves blocks of TCP ports above 49152 that move between reboots, so the local Supabase test stack uses 44320–44329 (`supabase/config.toml`); `TEST_STACK_PORT_BASE` moves it. If tests ever fail with "ports are not available", run `netsh interface ipv4 show excludedportrange protocol=tcp` in PowerShell and tell Claude the ranges.
