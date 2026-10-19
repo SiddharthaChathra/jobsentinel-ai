@@ -75,13 +75,13 @@ score      = round(100 × S × R)                        0..100
 
 - Fewer than **5** postings in the window: **UNKNOWN**, with a null score (neutral).
 - Enough postings but no fresher-eligible one: **0**.
-- Bands: **HIGH ≥ 10** (shows the badge), **MEDIUM 5–9**, **LOW < 5**. Lowered from 30/10 by the owner on 2026-10-18 while data is thin (the best scores were 10); revisit around 2026-11-18.
+- Bands: **HIGH ≥ 10 and at least 3 fresher-eligible postings** (shows the badge), **MEDIUM 5–9** (or ≥ 10 with fewer than 3 fresher postings), **LOW < 5**. The 3-posting rule was added by the owner on 2026-10-19. Lowered from 30/10 by the owner on 2026-10-18 while data is thin (the best scores were 10); revisit around 2026-11-18.
 
 Worked example (a unit test): 2 fresher postings (today and 30 days ago) and 4 others (today, 30, 60 and 90 days ago).
 
 - Σall = 1 + 0.5 + 1 + 0.5 + 0.25 + 0.125 = 3.375
 - Σfresher = 1.5, so S = 0.444; R = 1
-- Score **44**: HIGH.
+- Score **44**: MEDIUM — only 2 fresher postings, under the 3 that HIGH needs.
 
 **Scan spacing.** This applies to company boards only (Greenhouse, Lever and Ashby sources with a `company_id`); keyword and aggregator sources span many companies and keep their interval.
 

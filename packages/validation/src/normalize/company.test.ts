@@ -1,4 +1,4 @@
-import { isSameCompany } from './company';
+import { isSameCompany, normalizeCompanyName } from './company';
 
 describe('isSameCompany', () => {
   it.each([
@@ -26,5 +26,26 @@ describe('isSameCompany', () => {
 
   it('does not treat a short fragment as a prefix match', () => {
     expect(isSameCompany('AB', 'AB Testing Co')).toBe(false);
+  });
+});
+
+describe('normalizeCompanyName: a board names itself, not the company (D128)', () => {
+  it.each([
+    ['HackerRank Careers', 'hackerrank'],
+    ['Rubrik Job Board', 'rubrik'],
+    ['Acme Jobs', 'acme'],
+    ['Acme Hiring', 'acme'],
+    ['Acme Careers Page', 'acme'],
+    ['HackerRank', 'hackerrank'],
+  ])('%s → %s', (name, key) => {
+    expect(normalizeCompanyName(name)).toBe(key);
+  });
+
+  it.each([
+    ['Careers360', 'careers360'],
+    ['Jobs for Her', 'jobs for her'],
+    ['Careers', 'careers'], // a bare suffix stays itself rather than becoming empty
+  ])('only a trailing board word is dropped: %s → %s', (name, key) => {
+    expect(normalizeCompanyName(name)).toBe(key);
   });
 });

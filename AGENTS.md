@@ -82,6 +82,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - Keep concurrent queries per request at or below the pool `max` (4 in dev): prefer one statement with scalar subqueries over a fan-out of counters (D54).
 - A JS `Date` inside a raw `sql` template has no encoder — pass `date.toISOString()` with an explicit `::timestamptz` cast. Typed helpers (`gte(col, date)`) take a `Date` as normal (D55).
 - Never delete saved/applied jobs; retention rules in docs 02 §8.
+- A data backfill on a table with the `updated_at` trigger (`<table>_set_updated_at`) disables that trigger for the statement, unless moving `updated_at` is the point: migration 0013's backfill reset every application's `updated_at` and lost the list's order (D129).
 
 ## 8. API conventions (docs/architecture/03-api-contract.md)
 
@@ -148,6 +149,7 @@ Rules: contract-first (DTOs in `packages/types` + `docs/architecture/03-api-cont
 - One scan = one `scan_runs` row = one unit of failure isolation; a failed scan never advances the cursor.
 - Respect per-source politeness (`min_request_gap_ms`) and documented rate guidelines. A provider's published quota is enforced in code before every scan (`checkQuota`, D108: Adzuna 25/min, 250/day, 1,000/week, 2,500/month, at 90%), and a source is never scanned more often than its adapter's `minIntervalSec`.
 - Before seeding/adding an ATS board, confirm the company behind the slug from its postings (slugs are global; see docs/sources.md).
+- Company keys drop a board's own trailing word ("HackerRank Careers" → `hackerrank`, D128); after changing `normalizeCompanyName`, run `pnpm merge-companies` (dry run first) so stored keys match.
 - A source's company and domain apply only to postings that name that company (`isSameCompany`). Keyword searches (the Adzuna employer sources) return other employers too; lending them the domain verifies the wrong company (D83).
 - All outbound HTTP goes through `HttpClient` (`HTTP_CLIENT` token); adapters never call `fetch` directly.
 - A board's preview (≤ 600 chars, e.g. Adzuna) and the full posting of one job are one job, and the full posting becomes canonical (`isPreviewDuplicate`, D113).

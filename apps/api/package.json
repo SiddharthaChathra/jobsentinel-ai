@@ -32,7 +32,9 @@
     "refilter": "node dist/scripts/refilter-listed.js",
     "source-report": "node dist/scripts/source-report.js",
     "backfill:holds": "node dist/scripts/backfill-holds.js",
-    "placeholders": "node dist/scripts/placeholders.js"
+    "placeholders": "node dist/scripts/placeholders.js",
+    "merge-companies": "node dist/scripts/merge-companies.js",
+    "restore-application-order": "node dist/scripts/restore-application-order.js"
   },
   "dependencies": {
     "@jobsentinel/ai": "workspace:*",

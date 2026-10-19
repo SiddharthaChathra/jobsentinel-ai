@@ -4,6 +4,12 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 
 ## [Phase 13] Audit fixes (Part 6) — 2026-10-19
 
+- **D128 (MEDIUM):** "HackerRank Careers" and "Rubrik Job Board" postings belong to the HackerRank and Rubrik boards' companies; `merge-companies` merges stored rows (dry run first).
+- **D129 (LOW):** `restore-application-order` puts back the Applications order that migration 0013's backfill reset.
+- **F4 (owner):** the badge also needs 3 fresher-eligible postings.
+- **Docs/config (LOW):** `AI_MIN_REQUEST_GAP_MS` and `AI_REQUEST_TIMEOUT_MS` documented, with a test that every env variable is in `.env.example` and docs 12; README covers the fresh-clone build and local test ports (`TEST_STACK_PORT_BASE`, 44320-44329).
+- **Learning links (owner):** 17 approved; TCP/IP, subnetting, DNS and routing links proposed, unapproved.
+- Tests: validation 469, config 36, API e2e + alert-parity and audit-regressions (5 tests).
 - **D127 (MEDIUM):** Telegram (instant, digest) and the weekly summary use the dashboard's eligibility rule; a parity test enforces it. New users default to FULL_TIME + TRAINEE (migration 0014).
 - **D126 (HIGH):** "Freshers welcome, 3+ years preferred" is EXPERIENCED again: N+ years / ranges / minimums are experience unless implausible or plainly about something else. Accuracy 72/72 before and after; 2 production jobs change eligibility, both already filtered.
 

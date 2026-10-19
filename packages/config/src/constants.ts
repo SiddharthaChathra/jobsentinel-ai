@@ -37,6 +37,8 @@ export const FRESHER_SCORE = {
    */
   highMin: 10,
   mediumMin: 5,
+  /** HIGH (the badge, faster scans) also needs this many fresher-eligible postings (owner, 2026-10-19). */
+  minFresherForHigh: 3,
   /**
    * Scan-interval multiplier per band, company boards only, never below the adapter's floor. The
    * score only ever speeds a board up: LOW and UNKNOWN keep the default interval (owner, D118).
