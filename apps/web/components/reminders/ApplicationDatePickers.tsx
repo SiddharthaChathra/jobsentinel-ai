@@ -121,24 +121,24 @@ export function ApplicationDatePickers({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div data-testid={`date-pickers-${jobId}`} className="flex flex-col gap-2 w-full">
         {/* Interview Date & Time (not shown in deadline-only mode) */}
         {!deadlineOnly && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-col gap-1 w-full">
             <Label
               htmlFor={`interview-date-${jobId}`}
               className="text-[11px] font-medium text-muted-foreground"
             >
               Interview:
             </Label>
-            <div className="relative flex items-center">
+            <div className="flex items-center gap-1 w-full min-w-0">
               <input
                 id={`interview-date-${jobId}`}
                 data-testid={`interview-date-${jobId}`}
                 type="datetime-local"
                 value={interviewVal}
                 onChange={(e) => handleInterviewChange(e.target.value)}
-                className="h-7 rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-7 w-full min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]"
               />
               {interviewVal && (
                 <Button
@@ -146,7 +146,7 @@ export function ApplicationDatePickers({
                   variant="ghost"
                   size="icon"
                   onClick={handleClearInterview}
-                  className="h-6 w-6 ml-1 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
                   aria-label="Clear interview date"
                   title="Clear interview date"
                 >
@@ -158,7 +158,7 @@ export function ApplicationDatePickers({
         )}
 
         {/* Deadline Picker */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-col gap-1 w-full">
           <Label
             htmlFor={`deadline-date-${jobId}`}
             className="text-[11px] font-medium text-muted-foreground flex items-center gap-1"
@@ -166,14 +166,14 @@ export function ApplicationDatePickers({
             <Calendar className="size-3" />
             Deadline:
           </Label>
-          <div className="relative flex items-center">
+          <div className="flex items-center gap-1 w-full min-w-0">
             <input
               id={`deadline-date-${jobId}`}
               data-testid={`deadline-date-${jobId}`}
               type="date"
               value={deadlineVal}
               onChange={(e) => handleDeadlineChange(e.target.value)}
-              className="h-7 rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="h-7 w-full min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-0.5 text-xs text-foreground shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:[color-scheme:dark]"
             />
             {deadlineVal && (
               <Button
@@ -181,7 +181,7 @@ export function ApplicationDatePickers({
                 variant="ghost"
                 size="icon"
                 onClick={handleClearDeadline}
-                className="h-6 w-6 ml-1 text-muted-foreground hover:text-foreground"
+                className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
                 aria-label="Clear deadline"
                 title="Clear deadline"
               >
@@ -192,7 +192,10 @@ export function ApplicationDatePickers({
         </div>
 
         {updateDates.isPending && (
-          <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Loader2 className="size-3.5 animate-spin" />
+            <span>Saving...</span>
+          </div>
         )}
       </div>
     </div>
