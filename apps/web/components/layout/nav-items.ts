@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/saved', label: 'Saved', icon: Bookmark, primary: true },
   { href: '/applications', label: 'Applications', icon: Send, primary: true },
   { href: '/skill-gaps', label: 'Skill gaps', icon: GraduationCap },
-  { href: '/notifications', label: 'Inbox', icon: Bell, primary: true },
+  { href: '/notifications', label: 'Inbox', icon: Bell },
   { href: '/resume', label: 'Resume', icon: FileText },
   { href: '/preferences', label: 'Preferences', icon: SlidersHorizontal },
   { href: '/system', label: 'System', icon: Activity },
@@ -35,6 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const PRIMARY_NAV = NAV_ITEMS.filter((i) => i.primary);
+export const SECONDARY_NAV = NAV_ITEMS.filter((i) => !i.primary);
 
 export function titleForPath(pathname: string): string {
   const match = NAV_ITEMS.filter((i) => pathname.startsWith(i.href)).sort(

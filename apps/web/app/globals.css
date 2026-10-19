@@ -160,6 +160,13 @@
       scroll-behavior: auto !important;
     }
   }
+
+  /* Defect 13: ensure date and time picker icons remain legible in dark mode */
+  .dark input[type='date'],
+  .dark input[type='datetime-local'],
+  .dark input[type='time'] {
+    color-scheme: dark;
+  }
 }
 
 @layer components {

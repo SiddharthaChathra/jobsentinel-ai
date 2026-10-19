@@ -175,5 +175,46 @@ describe('Phase 13 F7 /skill-gaps Page (D120)', () => {
 
       expect(screen.queryByTestId('skill-gap-SQL')).not.toBeInTheDocument();
     });
+
+    it('renders SkillGapsPage: soft-skills note shows with items and is hidden when empty or absent (F7, D120)', async () => {
+      // 1. When present with items
+      mockGet.mockResolvedValueOnce({
+        data: {
+          ...MOCK_REPORT,
+          softSkills: [
+            { skill: 'Communication', missingIn: 11, of: 15 },
+            { skill: 'Teamwork', missingIn: 8, of: 15 },
+          ],
+        },
+      });
+
+      const { unmount } = render(<SkillGapsPage />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('soft-skills-note')).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('heading', { name: 'Soft skills' })).toBeInTheDocument();
+      expect(screen.getByText('Communication — mentioned in 11 of 15')).toBeInTheDocument();
+      expect(screen.getByText('Teamwork — mentioned in 8 of 15')).toBeInTheDocument();
+
+      unmount();
+
+      // 2. When empty or absent
+      mockGet.mockResolvedValueOnce({
+        data: {
+          ...MOCK_REPORT,
+          softSkills: [],
+        },
+      });
+
+      render(<SkillGapsPage />, { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('skill-gap-SQL')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('soft-skills-note')).not.toBeInTheDocument();
+    });
   });
 });

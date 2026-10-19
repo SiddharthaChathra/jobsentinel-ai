@@ -19,3 +19,10 @@ test-results/
 apps/api/src/**/*.js
 apps/*/test-*.ts
 apps/*/test-*.js
+
+# Backup keys and dumps (F10, D123): never in the repository, even by accident.
+*.key
+*-key.txt
+*.age
+*.sql.gz
+backups/

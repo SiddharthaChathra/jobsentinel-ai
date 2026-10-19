@@ -84,11 +84,7 @@ export function PreferencesStep({
   );
   const [newLocation, setNewLocation] = useState('');
   const [remote, setRemote] = useState<RemotePreference>('ANY');
-  const [employment, setEmployment] = useState<EmploymentType[]>([
-    'FULL_TIME',
-    'INTERNSHIP',
-    'TRAINEE',
-  ]);
+  const [employment, setEmployment] = useState<EmploymentType[]>(['FULL_TIME', 'TRAINEE']);
   const [categories, setCategories] = useState<JobCategory[]>([
     'SOFTWARE',
     'IT_SUPPORT',
