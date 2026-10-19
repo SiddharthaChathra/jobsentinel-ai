@@ -5,12 +5,20 @@
     "Go": {
       "approved": false,
       "links": [
-        { "title": "A Tour of Go", "url": "https://go.dev/tour/", "publisher": "go.dev" },
-        { "title": "Go documentation", "url": "https://go.dev/doc/", "publisher": "go.dev" }
+        {
+          "title": "A Tour of Go",
+          "url": "https://go.dev/tour/",
+          "publisher": "go.dev"
+        },
+        {
+          "title": "Go documentation",
+          "url": "https://go.dev/doc/",
+          "publisher": "go.dev"
+        }
       ]
     },
     "Kubernetes": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Learn Kubernetes Basics",
@@ -20,7 +28,7 @@
       ]
     },
     "Google Cloud": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Get started with Google Cloud",
@@ -30,7 +38,7 @@
       ]
     },
     "Terraform": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Terraform tutorials",
@@ -120,7 +128,7 @@
       ]
     },
     "Ansible": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Getting started with Ansible",
@@ -142,7 +150,11 @@
     "Vue": {
       "approved": false,
       "links": [
-        { "title": "Vue tutorial", "url": "https://vuejs.org/tutorial/", "publisher": "vuejs.org" }
+        {
+          "title": "Vue tutorial",
+          "url": "https://vuejs.org/tutorial/",
+          "publisher": "vuejs.org"
+        }
       ]
     },
     "Apache Spark": {
@@ -156,7 +168,7 @@
       ]
     },
     "SQL": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "PostgreSQL tutorial: the SQL language",
@@ -166,7 +178,7 @@
       ]
     },
     "PostgreSQL": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "PostgreSQL tutorial",
@@ -176,7 +188,7 @@
       ]
     },
     "Python": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "The Python Tutorial",
@@ -186,7 +198,7 @@
       ]
     },
     "Java": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Learn Java",
@@ -196,7 +208,7 @@
       ]
     },
     "JavaScript": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "JavaScript Guide",
@@ -206,7 +218,7 @@
       ]
     },
     "TypeScript": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "The TypeScript Handbook",
@@ -218,11 +230,15 @@
     "React": {
       "approved": false,
       "links": [
-        { "title": "Learn React", "url": "https://react.dev/learn", "publisher": "react.dev" }
+        {
+          "title": "Learn React",
+          "url": "https://react.dev/learn",
+          "publisher": "react.dev"
+        }
       ]
     },
     "Node.js": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Introduction to Node.js",
@@ -232,9 +248,13 @@
       ]
     },
     "Next.js": {
-      "approved": false,
+      "approved": true,
       "links": [
-        { "title": "Learn Next.js", "url": "https://nextjs.org/learn", "publisher": "nextjs.org" }
+        {
+          "title": "Learn Next.js",
+          "url": "https://nextjs.org/learn",
+          "publisher": "nextjs.org"
+        }
       ]
     },
     "Angular": {
@@ -268,7 +288,7 @@
       ]
     },
     "Docker": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Docker: get started",
@@ -278,7 +298,7 @@
       ]
     },
     "AWS": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Getting started with AWS",
@@ -288,7 +308,7 @@
       ]
     },
     "Azure": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Azure training",
@@ -298,7 +318,7 @@
       ]
     },
     "Git": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "Pro Git (book)",
@@ -308,12 +328,52 @@
       ]
     },
     "Linux": {
-      "approved": false,
+      "approved": true,
       "links": [
         {
           "title": "The Linux command line for beginners",
           "url": "https://ubuntu.com/tutorials/command-line-for-beginners",
           "publisher": "Canonical (Ubuntu)"
+        }
+      ]
+    },
+    "TCP/IP": {
+      "approved": false,
+      "links": [
+        {
+          "title": "RFC 1180: A TCP/IP Tutorial",
+          "url": "https://www.rfc-editor.org/rfc/rfc1180.html",
+          "publisher": "IETF (RFC Editor)"
+        }
+      ]
+    },
+    "Networking": {
+      "approved": false,
+      "links": [
+        {
+          "title": "TCP/IP addressing and subnetting basics",
+          "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-client/networking/tcpip-addressing-and-subnetting",
+          "publisher": "Microsoft Learn"
+        }
+      ]
+    },
+    "DNS": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Domain Name System (DNS) overview",
+          "url": "https://learn.microsoft.com/en-us/windows-server/networking/dns/dns-overview",
+          "publisher": "Microsoft Learn"
+        }
+      ]
+    },
+    "Routing & Switching": {
+      "approved": false,
+      "links": [
+        {
+          "title": "Networking Basics (free course)",
+          "url": "https://www.netacad.com/courses/networking-basics",
+          "publisher": "Cisco Networking Academy"
         }
       ]
     }
