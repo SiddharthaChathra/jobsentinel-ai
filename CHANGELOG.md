@@ -9,7 +9,7 @@ All notable changes, grouped by roadmap phase (docs/architecture/16-roadmap.md).
 - **F4 (owner):** the badge also needs 3 fresher-eligible postings.
 - **Docs/config (LOW):** `AI_MIN_REQUEST_GAP_MS` and `AI_REQUEST_TIMEOUT_MS` documented, with a test that every env variable is in `.env.example` and docs 12; README covers the fresh-clone build and local test ports (`TEST_STACK_PORT_BASE`, 44320-44329).
 - **Learning links (owner):** 17 approved; TCP/IP, subnetting, DNS and routing links proposed, unapproved.
-- Tests: validation 469, config 36, API e2e + alert-parity and audit-regressions (5 tests).
+- Tests: validation 463, config 36, API e2e 158 (+ alert-parity, audit-regressions), browser 7 ×3.
 - **D127 (MEDIUM):** Telegram (instant, digest) and the weekly summary use the dashboard's eligibility rule; a parity test enforces it. New users default to FULL_TIME + TRAINEE (migration 0014).
 - **D126 (HIGH):** "Freshers welcome, 3+ years preferred" is EXPERIENCED again: N+ years / ranges / minimums are experience unless implausible or plainly about something else. Accuracy 72/72 before and after; 2 production jobs change eligibility, both already filtered.
 
