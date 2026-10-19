@@ -85,7 +85,7 @@ describe('company fresher score (F4, D118)', () => {
     );
     expect(agg.weightedAll).toBeCloseTo(3.375);
     expect(agg.weightedFresher).toBeCloseTo(1.5);
-    expect(fresherScore(agg)).toEqual({ score: 44, band: 'HIGH' });
+    expect(fresherScore(agg)).toEqual({ score: 44, band: 'MEDIUM' }); // 2 fresher postings: under the 3 HIGH needs;
   });
 
   it('decays with time since the last fresher posting: same share, 90 days later, halves', () => {
@@ -115,8 +115,8 @@ describe('company fresher score (F4, D118)', () => {
     );
     expect(fresh.score).toBe(20);
     expect(stale.score).toBe(10);
-    expect(fresh.band).toBe('HIGH');
-    expect(stale.band).toBe('HIGH');
+    expect(fresh.band).toBe('MEDIUM');
+    expect(stale.band).toBe('MEDIUM');
   });
 
   it('a recent fresher posting outweighs old non-fresher ones', () => {
@@ -133,14 +133,14 @@ describe('company fresher score (F4, D118)', () => {
       ),
     );
     // S = 1 / (1 + 4 × 0.0625) = 0.8 → 80
-    expect(recent).toEqual({ score: 80, band: 'HIGH' });
+    expect(recent).toEqual({ score: 80, band: 'MEDIUM' }); // 1 fresher posting;
   });
 
   it('band edges: 10 is HIGH, 9 MEDIUM, 5 MEDIUM, 4 LOW', () => {
     const at = (share: number) =>
       fresherScore({
         postingsSeen: 10,
-        fresherCount: 1,
+        fresherCount: 3,
         weightedAll: 1,
         weightedFresher: share,
         daysSinceLastFresher: 0,
@@ -149,6 +149,26 @@ describe('company fresher score (F4, D118)', () => {
     expect(at(0.09).band).toBe('MEDIUM');
     expect(at(0.05).band).toBe('MEDIUM');
     expect(at(0.04).band).toBe('LOW');
+  });
+});
+
+describe('the badge needs 5 postings and 3 fresher-eligible (owner, D118 amended 2026-10-19)', () => {
+  const agg = (fresherCount: number, postingsSeen = 10) => ({
+    postingsSeen,
+    fresherCount,
+    weightedAll: 1,
+    weightedFresher: 0.5,
+    daysSinceLastFresher: 0,
+  });
+
+  it('a high score from 1 or 2 fresher postings is MEDIUM, not HIGH', () => {
+    expect(fresherScore(agg(1))).toEqual({ score: 50, band: 'MEDIUM' });
+    expect(fresherScore(agg(2))).toEqual({ score: 50, band: 'MEDIUM' });
+  });
+
+  it('3 fresher postings in 5+ earn HIGH; under 5 postings stays UNKNOWN', () => {
+    expect(fresherScore(agg(3)).band).toBe('HIGH');
+    expect(fresherScore(agg(3, 4))).toEqual({ score: null, band: 'UNKNOWN' });
   });
 });
 

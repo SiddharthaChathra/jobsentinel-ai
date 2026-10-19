@@ -18,6 +18,7 @@ import {
   telegramLinks,
   users,
 } from '../common/db/schema';
+import { JobsQueryService } from '../jobs/jobs-query.service';
 import type { JobAlertData } from './format';
 
 export interface EnqueueResult {
@@ -49,7 +50,10 @@ export interface UserNotifyContext {
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(@Inject(DB) private readonly db: Db) {}
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    private readonly jobsQuery: JobsQueryService,
+  ) {}
 
   async enqueuePending(opts: { batch?: number; userIds?: string[] } = {}): Promise<EnqueueResult> {
     const batch = opts.batch ?? 100;
@@ -58,6 +62,8 @@ export class NotificationsService {
     const freshCutoff = new Date(now.getTime() - INSTANT_FRESHNESS_HOURS * 3_600_000);
 
     for (const ctx of await this.contexts(opts.userIds)) {
+      // The dashboard's own eligibility (D127): a job the list would not show is never alerted.
+      const eligible = this.jobsQuery.eligibleWhere(await this.jobsQuery.viewer(ctx.userId));
       // Only jobs new enough to still qualify as a discovery, and not already alerted.
       // This bounds the scan: an older job can never become an instant alert (docs 10 §2).
       const rows = await this.db
@@ -83,7 +89,7 @@ export class NotificationsService {
             inArray(jobs.status, [...ALERTABLE]),
             gte(jobs.firstSeenAt, freshCutoff),
             sql`${jobs.closedAt} is null`,
-            ctx.fresherOnly ? eq(jobs.fresherEligible, true) : undefined,
+            ...eligible,
             sql`not exists (select 1 from ${notifications} n
                  where n.user_id = ${ctx.userId} and n.job_id = ${jobs.id} and n.type = 'INSTANT')`,
           ),

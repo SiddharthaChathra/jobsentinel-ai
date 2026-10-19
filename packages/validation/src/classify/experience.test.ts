@@ -84,3 +84,33 @@ describe('classifyExperience — entry level and ambiguity', () => {
     expect(r.evidence.map((e) => e.code)).toContain('YEARS_PARSED');
   });
 });
+
+describe('classifyExperience — fresher wording beside a real requirement (D126, audit defects 1 and 5)', () => {
+  it.each([
+    ['Freshers welcome, 3+ years preferred. Java.', null],
+    ['Freshers welcome, 3+ years preferred. Java.', '3+ years'],
+    ['Freshers welcome. 3+ years desirable.', null],
+  ])(
+    '"%s" (experience field %s) is EXPERIENCED, never a fresher role',
+    (description, experienceText) => {
+      const r = classifyExperience({ title: 'Software Engineer', description, experienceText });
+      expect(r).toMatchObject({ level: 'EXPERIENCED', fresherEligible: false, minYears: 3 });
+    },
+  );
+
+  it('a stored "fresher" field does not hide a "3+ years" in the description', () => {
+    const r = classifyExperience({
+      title: 'Software Engineer',
+      description: 'Freshers welcome, 3+ years preferred.',
+      experienceText: 'fresher',
+    });
+    expect(r.level).toBe('EXPERIENCED');
+  });
+
+  it('plain fresher wording with no figure stays FRESHER', () => {
+    expect(
+      classifyExperience({ title: 'Software Engineer', description: 'Freshers welcome. Java.' })
+        .level,
+    ).toBe('FRESHER');
+  });
+});

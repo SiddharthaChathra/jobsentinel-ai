@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, gte, inArray, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
-import type {
-  ApplicationStatus,
-  EmploymentType,
-  JobCard,
+import {
   JobsQuery,
-  JobSort,
-  TrackerState,
-  HeldInfo,
+  type ApplicationStatus,
+  type EmploymentType,
+  type JobCard,
+  type JobSort,
+  type TrackerState,
+  type HeldInfo,
 } from '@jobsentinel/types';
 import { adzunaAttribution, heldInfo, MAX_FRESHER_MIN_YEARS } from '@jobsentinel/validation';
 import { DB, type Db } from '../common/db/db.module';
@@ -277,6 +277,21 @@ export class JobsQueryService {
         sql`, `,
       )})`);
     return new Map(rows.map((r) => [r.id, heldInfo(r.reason, r.final_url)]));
+  }
+
+  /**
+   * THE eligibility rule (D127): what the dashboard's default list shows a user. Telegram's instant
+   * alerts, the digest and the weekly summary add these exact conditions to their own (freshness,
+   * score), so no channel can pick a job the dashboard would not list — the parity test in
+   * `alert-parity.e2e-spec.ts` fails the moment they diverge.
+   */
+  eligibleWhere(viewer: Viewer): SQL[] {
+    return this.buildWhere(
+      JobsQuery.parse({}),
+      viewer.locations,
+      viewer.employmentTypes,
+      false,
+    ).filter((c): c is SQL => c !== undefined);
   }
 
   /**

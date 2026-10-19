@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { assertEnv, loadEnv, parseEmailList, toOrigin } from './env';
 
 describe('loadEnv', () => {
@@ -133,4 +135,22 @@ describe('auto-pause thresholds (D104)', () => {
     expect(() => loadEnv({ AUTO_PAUSE_WINDOW_DAYS: '3' })).toThrow(/AUTO_PAUSE_WINDOW_DAYS/);
     expect(() => loadEnv({ AUTO_PAUSE_MIN_COLLECTED: '0' })).toThrow(/AUTO_PAUSE_MIN_COLLECTED/);
   });
+});
+
+describe('every variable is documented (AGENTS.md §15; audit defect 10)', () => {
+  const root = resolve(__dirname, '../../..');
+  const schema = readFileSync(resolve(root, 'packages/config/src/env.ts'), 'utf8');
+  const keys = [...schema.matchAll(/^\s{4}([A-Z][A-Z0-9_]+):/gm)].map((m) => m[1]!);
+
+  it('finds the schema keys', () => {
+    expect(keys.length).toBeGreaterThan(50);
+  });
+
+  it.each(['.env.example', 'docs/architecture/12-folder-structure-and-env.md'])(
+    'each one appears in %s',
+    (file) => {
+      const text = readFileSync(resolve(root, file), 'utf8');
+      expect(keys.filter((k) => !text.includes(k))).toEqual([]);
+    },
+  );
 });

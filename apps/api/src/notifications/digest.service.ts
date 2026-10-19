@@ -11,6 +11,7 @@ import {
   telegramLinks,
 } from '../common/db/schema';
 import { DIGEST_MAX_JOBS, type DigestData } from './format';
+import { JobsQueryService } from '../jobs/jobs-query.service';
 import { ADZUNA_COUNTRY, NotificationsService, toAlertData } from './notifications.service';
 
 export interface DigestResult {
@@ -32,6 +33,7 @@ export class DigestService {
   constructor(
     @Inject(DB) private readonly db: Db,
     private readonly notifications: NotificationsService,
+    private readonly jobsQuery: JobsQueryService,
   ) {}
 
   async sendDue(opts: { userIds?: string[]; force?: boolean } = {}): Promise<DigestResult> {
@@ -120,7 +122,10 @@ export class DigestService {
     now: Date,
   ): Promise<DigestData> {
     const since = new Date(now.getTime() - 24 * 3_600_000);
-    const profileVersion = await this.profileVersion(userId);
+    const viewer = await this.jobsQuery.viewer(userId);
+    const profileVersion = viewer.profileVersion;
+    // The dashboard's own eligibility (D127), on top of "new today" and "has a match".
+    const eligible = this.jobsQuery.eligibleWhere(viewer);
     // VALID only, whatever `includeNeedsReview` says: a held job is never sent to Telegram (D106).
     // The setting is kept for API compatibility; held jobs live in the Needs review view.
     void includeNeedsReview;
@@ -151,6 +156,7 @@ export class DigestService {
           inArray(jobs.validationStatus, allowed as 'VALID'[]),
           // A job held at classification (status NEEDS_REVIEW) never qualifies either.
           sql`${jobs.status} <> 'NEEDS_REVIEW'`,
+          ...eligible,
         ),
       )
       .orderBy(sql`${jobMatches.overallScore} desc`)

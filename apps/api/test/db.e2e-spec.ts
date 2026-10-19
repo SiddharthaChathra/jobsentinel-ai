@@ -219,6 +219,17 @@ describeIf('database guarantees (integration)', () => {
     expect(new Set([...firstIds, ...secondIds]).size).toBe(3);
   }, 20_000);
 
+  it("a new user's job types default to FULL_TIME and TRAINEE (owner, migration 0014)", async () => {
+    await db.execute(
+      sql`insert into preferences (user_id) values (${userId}::uuid) on conflict do nothing`,
+    );
+    const [row] = await db.execute<{ types: string[] }>(
+      sql`select employment_types::text[] as types from preferences where user_id = ${userId}::uuid`,
+    );
+    expect(row!.types).toEqual(['FULL_TIME', 'TRAINEE']);
+    await db.execute(sql`delete from preferences where user_id = ${userId}::uuid`);
+  });
+
   it('maintains updated_at through the trigger', async () => {
     const before = await db.query.companies.findFirst({ where: eq(companies.id, companyId) });
     await new Promise((r) => setTimeout(r, 50));

@@ -93,9 +93,11 @@ describeIf('company fresher score (F4, D118)', () => {
         .returning({ id: companies.id });
       companyIds[key] = c!.id;
     }
-    // Worked example from docs/sources.md: 2 fresher (0, 30 days) + 4 others (0, 30, 60, 90) → 44.
+    // 3 fresher (0, 0, 30 days) + 4 others (0, 30, 60, 90): Σall 4.375, Σfresher 2.5 → 57, HIGH
+    // (HIGH needs 3 fresher postings, D118 amended).
     // Plus a fresher role abroad that was filtered for location: a posting, not fresher-eligible.
     await seedJobs(companyIds.hires, [
+      { daysAgo: 0, fresher: true },
       { daysAgo: 0, fresher: true },
       { daysAgo: 30, fresher: true },
       { daysAgo: 0, fresher: false, status: 'FILTERED_OUT' },
@@ -143,7 +145,7 @@ describeIf('company fresher score (F4, D118)', () => {
   const statsOf = async (id: string) =>
     (await db.select().from(companyFresherStats).where(eq(companyFresherStats.companyId, id)))[0];
 
-  it('stores what the documented formula gives: 44 HIGH, 0 LOW, UNKNOWN under 5 postings', async () => {
+  it('stores what the documented formula gives: 57 HIGH, 0 LOW, UNKNOWN under 5 postings', async () => {
     const statusesBefore = await db
       .select({ id: jobs.id, status: jobs.status })
       .from(jobs)
@@ -152,11 +154,11 @@ describeIf('company fresher score (F4, D118)', () => {
     await svc.recompute(Object.values(companyIds));
 
     const hires = await statsOf(companyIds.hires);
-    expect(hires).toMatchObject({ postingsSeen: 6, fresherCount: 2, score: 44, band: 'HIGH' });
+    expect(hires).toMatchObject({ postingsSeen: 7, fresherCount: 3, score: 57, band: 'HIGH' });
     // SQL and the pure formula agree on the same postings.
     const expected = fresherScore(
       aggregatePostings(
-        [0, 30]
+        [0, 0, 30]
           .map((d) => ({ at: new Date(Date.now() - d * DAY), fresher: true }))
           .concat(
             [0, 30, 60, 90].map((d) => ({ at: new Date(Date.now() - d * DAY), fresher: false })),
@@ -165,7 +167,7 @@ describeIf('company fresher score (F4, D118)', () => {
       ),
     );
     expect(hires!.score).toBe(expected.score);
-    expect(hires!.weightedAll).toBeCloseTo(3.375, 2);
+    expect(hires!.weightedAll).toBeCloseTo(4.375, 2);
 
     // A fresher role abroad, filtered for location, is a posting but not fresher-eligible.
     expect(await statsOf(companyIds.never)).toMatchObject({

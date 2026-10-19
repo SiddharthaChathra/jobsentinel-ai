@@ -11,7 +11,7 @@ import {
   notifications,
   reminders,
 } from '../common/db/schema';
-import { fresherRoleSql } from '../jobs/jobs-query.service';
+import { JobsQueryService } from '../jobs/jobs-query.service';
 import { SkillGapsService } from '../jobs/skill-gaps.service';
 import type { WeeklyData } from './format';
 import { formatWeekly } from './format';
@@ -22,8 +22,6 @@ export interface WeeklyResult {
   queued: number;
   notDue: number;
 }
-
-const LISTABLE = ['VALID', 'MATCHED', 'NOTIFY_PENDING', 'NOTIFIED'] as const;
 
 /**
  * Weekly Telegram summary (F6, D121): Sunday 09:00 in the user's timezone, opt-in
@@ -39,6 +37,7 @@ export class WeeklySummaryService {
     @Inject(DB) private readonly db: Db,
     private readonly notificationsSvc: NotificationsService,
     private readonly skillGaps: SkillGapsService,
+    private readonly jobsQuery: JobsQueryService,
   ) {}
 
   async sendDue(opts: { now?: Date; userIds?: string[] } = {}): Promise<WeeklyResult> {
@@ -148,11 +147,8 @@ export class WeeklySummaryService {
         and(
           eq(jobMatches.userId, userId),
           eq(jobMatches.profileVersion, profileVersion),
-          inArray(jobs.status, [...LISTABLE]),
-          eq(jobs.validationStatus, 'VALID'),
-          sql`${jobs.holdReason} is null`,
-          sql`${jobs.closedAt} is null`,
-          fresherRoleSql('jobs'),
+          // The dashboard's own eligibility (D127): only what the list would show is counted.
+          ...this.jobsQuery.eligibleWhere(await this.jobsQuery.viewer(userId)),
           gte(jobs.firstSeenAt, window.from),
           lt(jobs.firstSeenAt, window.to),
         ),

@@ -135,11 +135,11 @@ export const preferences = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     locations: text('locations').array().notNull().default(['India']),
     remotePreference: remotePreferenceEnum('remote_preference').notNull().default('ANY'),
-    // The user explicitly requested to only see FULL_TIME jobs by default.
+    // New users see full-time and trainee (graduate trainee) roles by default (owner, 2026-10-18).
     employmentTypes: employmentTypeEnum('employment_types')
       .array()
       .notNull()
-      .default(['FULL_TIME']),
+      .default(['FULL_TIME', 'TRAINEE']),
     categories: jobCategoryEnum('categories')
       .array()
       .notNull()

@@ -76,8 +76,10 @@ export function fresherScore(agg: FresherAggregate): FresherScore {
   const recency =
     0.5 ** (Math.max(0, agg.daysSinceLastFresher) / FRESHER_SCORE.recencyHalfLifeDays);
   const score = Math.round(100 * share * recency);
-  const band: FresherBand =
-    score >= FRESHER_SCORE.highMin ? 'HIGH' : score >= FRESHER_SCORE.mediumMin ? 'MEDIUM' : 'LOW';
+  // One fresher posting in five can score 20; the badge needs a pattern, not a single posting.
+  const high =
+    score >= FRESHER_SCORE.highMin && agg.fresherCount >= FRESHER_SCORE.minFresherForHigh;
+  const band: FresherBand = high ? 'HIGH' : score >= FRESHER_SCORE.mediumMin ? 'MEDIUM' : 'LOW';
   return { score, band };
 }
 

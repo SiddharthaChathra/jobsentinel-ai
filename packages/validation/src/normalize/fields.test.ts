@@ -103,6 +103,40 @@ describe('parseExperience', () => {
     expect(fromBody('At least 5 years of hands-on work.')).toMatchObject({ minYears: 5 });
   });
 
+  // D126 (audit defect 1): "N+ years", ranges and "minimum N years" are experience on their own;
+  // only an implausible figure or a non-experience context rejects them.
+  it.each([
+    ['Freshers welcome, 3+ years preferred. Java.', 3, null],
+    ['3+ years desirable.', 3, null],
+    ['Ideally 4+ yrs with Go.', 4, null],
+    ['minimum 2 years', 2, null],
+    ['0-1 years', 0, 1],
+    // A degree mentioned just before a real requirement does not hide it (production postings).
+    [
+      "You hold a Bachelor's degree and have 2-4 years of relevant accounts payable experience",
+      2,
+      4,
+    ],
+    ["Bachelor's degree and 3-5 years of experience in Sales Operations", 3, 5],
+  ])(
+    'a figure reads as experience without the words "experience" or "required": %s',
+    (body, min, max) => {
+      expect(fromBody(body)).toMatchObject({ minYears: min, maxYears: max });
+    },
+  );
+
+  it.each([
+    'We operate in 80+ countries.',
+    'This role is 80% remote.',
+    'A 4+ year degree in Computer Science (B.Tech) is required.',
+    'Pursuing a B.Tech, 4+ years programme.',
+    'Founded 10+ years ago in Pune.',
+    'We have grown 5x over the past 3+ years.',
+    'The product carries a 2+ year warranty.',
+  ])('a figure about something other than experience is not a requirement: %s', (body) => {
+    expect(fromBody(body).minYears).toBeNull();
+  });
+
   it("trusts the source's own experience field without extra wording", () => {
     expect(parseExperience('2-4 years', 'Engineer', '')).toMatchObject({
       minYears: 2,

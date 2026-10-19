@@ -38,6 +38,17 @@ const REQUIREMENT_WORDS =
 const COMPANY_HISTORY_AFTER =
   /^[^.\n]{0,40}?\b(we(['’](ve|re)| have| are)|helping|serving|delivering|since|as an? (\w+ ){0,3}(leader|company|provider|partner)|in business|of excellence|of innovation|of (our )?(history|heritage|legacy))\b/;
 
+/**
+ * Right after the figure, words that make it something other than experience (D126): a degree or
+ * course length, an age, a contract, a warranty, "ago".
+ */
+const NOT_EXPERIENCE_AFTER =
+  /^[\s,)-]*(ago|old|of age|age\b|warranty|guarantee|(long )?(contract|tenure|bond|lease)|(full[- ]time )?(degree|course|program(me)?|curriculum|diploma)|of (study|studies|schooling|college|education|operations?|existence|growth|service to))\b/;
+
+/** Right before the figure: a sentence about the company, a degree or growth, not a requirement. */
+const NOT_EXPERIENCE_BEFORE =
+  /\b(founded|established|incorporated|celebrat\w*|anniversary|grown|grew|growth|in the (past|last)|over the (past|last)|for the (past|last)|within|degree|course|programme|program|b\.?\s?tech|b\.?e\.?|bachelor'?s?|master'?s?|aged?|contract|bond|warranty)[^.\n]{0,12}$/;
+
 type ExperienceCandidate = { min: number; max: number | null; text: string; index: number };
 
 /** Every match of one pattern, in text order. */
@@ -68,11 +79,20 @@ export function parseExperience(...hints: (string | null | undefined)[]): Parsed
   // The structured experience field, when the source gave one: it is about experience already.
   const fieldEnd = hints[0] ? hints[0].length : 0;
 
-  const plausible = (c: ExperienceCandidate): boolean => {
+  // `selfEvident`: a range, "N+ years" or "minimum N years" reads as an experience figure on its
+  // own — reject it only when it is implausible or plainly about something else (D126). "Up to N
+  // years" is ambiguous ("contract of up to 2 years"), so it still needs requirement wording.
+  const plausible = (c: ExperienceCandidate, selfEvident: boolean): boolean => {
     if (c.min > MAX_PLAUSIBLE_EXPERIENCE_YEARS) return false;
     const end = c.index + c.text.length;
     if (COMPANY_HISTORY_AFTER.test(t.slice(end, end + 60))) return false;
-    if (c.index < fieldEnd) return true;
+    if (NOT_EXPERIENCE_AFTER.test(t.slice(end, end + 30))) return false;
+    // "…Bachelor's degree and 2-4 years of experience": experience wording after the figure
+    // outweighs a degree or growth word before it.
+    const experienceAfter = /^[^.\n]{0,30}\b(experience|exp)\b/.test(t.slice(end, end + 40));
+    if (!experienceAfter && NOT_EXPERIENCE_BEFORE.test(t.slice(Math.max(0, c.index - 30), c.index)))
+      return false;
+    if (c.index < fieldEnd || selfEvident) return true;
     const around = `${t.slice(Math.max(0, c.index - 40), c.index)} ${c.text} ${t.slice(end, end + 40)}`;
     return REQUIREMENT_WORDS.test(around);
   };
@@ -102,8 +122,11 @@ export function parseExperience(...hints: (string | null | undefined)[]): Parsed
       (m) => ({ min: Number(m[1]), max: Number(m[1]) }),
     ),
   ];
-  for (const list of ordered) {
-    const hit = list.find(plausible);
+  // range, plus and minimum are self-evident; up-to is not; the exact pattern already demands the
+  // word "experience" after the figure.
+  const selfEvident = [true, true, true, false, true];
+  for (const [i, list] of ordered.entries()) {
+    const hit = list.find((c) => plausible(c, selfEvident[i] ?? false));
     if (hit) return { minYears: hit.min, maxYears: hit.max, text: hit.text };
   }
 

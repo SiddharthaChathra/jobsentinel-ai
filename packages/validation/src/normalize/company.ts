@@ -2,8 +2,14 @@
 const LEGAL_SUFFIXES =
   /\b(pvt|private|ltd|limited|inc|incorporated|llc|llp|plc|corp|corporation|co|company|gmbh|sa|ag|bv|technologies|technology|tech|labs|solutions|systems|software|india|group|holdings)\b\.?/g;
 
+/**
+ * How a job board names itself rather than the company: "HackerRank Careers", "Rubrik Job Board".
+ * Trailing words only, so "Careers360" or "Jobs for Her" keep their names (D128).
+ */
+const BOARD_SUFFIX = /\s+(careers?( site| page)?|job board|jobs|hiring|recruiting)$/;
+
 export function normalizeCompanyName(name: string): string {
-  return name
+  const base = name
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '') // diacritics
     .toLowerCase()
@@ -12,6 +18,8 @@ export function normalizeCompanyName(name: string): string {
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
     .replace(/\s+/g, ' ');
+  const stripped = base.replace(BOARD_SUFFIX, '');
+  return stripped || base;
 }
 
 /**
