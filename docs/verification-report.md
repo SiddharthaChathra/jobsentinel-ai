@@ -1,6 +1,79 @@
 # Verification report
 
-Latest run first. **NOT VERIFIED** marks anything that could not be checked, with the reason. Production checks are read-only. No defect below has been fixed yet: fixing waits for the owner's review (audit Part 6).
+Latest run first. **NOT VERIFIED** marks anything that could not be checked, with the reason. Production checks are read-only except the two data fixes named in Part 6, run after dry runs and owner approval.
+
+## Part 6: fixes and full re-run — 2026-10-19
+
+**Target:** `main` at `3f8dfb7`. CI green, including API e2e and the browser suite. Migration 0014 is applied in production, and the two production data fixes ran after dry runs on the test project.
+
+### Exit criteria
+
+| Criterion                                | Result                                                                                                                                                                                                                                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Zero BLOCKER or HIGH                     | **Met.** The one HIGH (defect 1) is fixed (D126).                                                                                                                                                                                                         |
+| R1–R8 all PASS                           | **Met.** R2 and R4 now pass. R7's log-out/log-in leg is still checked only indirectly (see NOT VERIFIED).                                                                                                                                                 |
+| F1–F11 all PASS                          | **Met.** F10 now has a real production backup (run `39154944775`, encrypted, 16 MB). F11's real Telegram alert can only be seen during a real outage.                                                                                                     |
+| X1 end to end                            | **Met.** `audit-regressions.e2e-spec.ts` covers scan → classify → validate → match (RULES_ONLY) → Telegram with the board's link → listed on the dashboard → Applied → follow-up sent → weekly summary (1 new, 1 applied) → skill gaps (based on 1, SQL). |
+| Full suite + Playwright, 3 runs in a row | **Met.** Unit: types 8, config 36, ai 25, validation 463, api 156, web 103. E2E 158 (25 suites). Browser 7/7 ×3 (35.2 s, 33.2 s, 36.2 s), then CI.                                                                                                        |
+| NOT VERIFIED listed with reasons         | Below.                                                                                                                                                                                                                                                    |
+
+### Defects: outcome
+
+| #     | Severity  | Outcome                                                                                                                                                                                                                                                                                                                                                                                                                              | Regression test                                                                                                                                                      |
+| ----- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | HIGH      | **Fixed (D126).** Ranges, "N+ years" and minimums count unless implausible or in a non-experience context; "Freshers welcome, 3+ years preferred" is EXPERIENCED. Accuracy 72/72 before and after. Old and new rules over all 5,247 production jobs: eligibility changes for 2 (both already filtered: a Datadog Amsterdam front-desk role and a Notion recruiter); no listed, held or alerted job changes; no job loses its figure. | `fields.test.ts` (the owner's 6 phrases, 7 non-experience contexts, 2 production texts), `experience.test.ts`, e2e R2 through ingestion                              |
+| 2     | MEDIUM    | **Fixed (D127).** Instant alerts, the digest and the weekly summary use `JobsQueryService.eligibleWhere`, the dashboard's rule.                                                                                                                                                                                                                                                                                                      | `alert-parity.e2e-spec.ts`: fails on the old code (experienced, internship-not-chosen, on-site-abroad and placeholder leaked)                                        |
+| 3     | MEDIUM    | **Fixed (D127, owner).** The `employment_types` default is FULL_TIME + TRAINEE (migration 0014, live); existing rows unchanged. Onboarding still pre-selects Internship (Gemini handoff).                                                                                                                                                                                                                                            | `db.e2e-spec.ts` default test; X1 lists a TRAINEE job                                                                                                                |
+| 4     | LOW       | **Fixed (D129).** `restore-application-order`: 14 of the owner's 15 applications restored to their original times (the 15th was edited later and kept). The trigger was re-enabled. The AGENTS.md §7 rule prevents a repeat.                                                                                                                                                                                                         | Rehearsed on the test project (3, 9 and 20 days restored). The bad migration has already run, so there is no automated test of it; the rule guards future backfills. |
+| 5     | LOW       | **Fixed with 1.** A stored "fresher" field no longer hides a "3+ years" in the description.                                                                                                                                                                                                                                                                                                                                          | `experience.test.ts`                                                                                                                                                 |
+| 6     | MEDIUM    | **Fixed (D128).** Company keys drop a board's own trailing word. Production merge: Rubrik Job Board (188 jobs) → Rubrik, HackerRank Careers (31) → HackerRank; key-only renames for Circor and Seventh Contact. 0 duplicate rows left. Both boards are now scored (HackerRank 11, Rubrik 5; both MEDIUM).                                                                                                                            | `company.test.ts`; e2e "a posting under the board's own name lands on the board's company" (fails on the old code)                                                   |
+| 7     | LOW       | **Fixed (owner).** HIGH also needs 3 fresher-eligible postings. Today no company qualifies: 0 badges, and no board is sped up.                                                                                                                                                                                                                                                                                                       | `fresher-score.test.ts`, `fresher-score.e2e-spec.ts`                                                                                                                 |
+| 8     | LOW       | **Waiting for the owner.** Backlog of 165 held jobs, grouped: unknown experience 132, failed verification 20, missing category 13. Ten samples per group were shown. No rule changed.                                                                                                                                                                                                                                                | n/a                                                                                                                                                                  |
+| 9     | LOW       | **Fixed.** The README covers the fresh-clone build and the local test stack.                                                                                                                                                                                                                                                                                                                                                         | n/a (docs)                                                                                                                                                           |
+| 10    | LOW       | **Fixed.** `AI_MIN_REQUEST_GAP_MS` and `AI_REQUEST_TIMEOUT_MS` documented.                                                                                                                                                                                                                                                                                                                                                           | `env.test.ts`: every schema variable must appear in `.env.example` and docs 12                                                                                       |
+| 11–13 | LOW (web) | **Handed to Gemini** (`docs/handoffs/gemini-audit-ui.md`): mobile navigation to /skill-gaps, date-picker width, dark-mode date icon, onboarding default, soft-skills note.                                                                                                                                                                                                                                                           | Gemini's Vitest tests, on merge                                                                                                                                      |
+
+**Also fixed while doing this:**
+
+- **Local test stack ports.** Windows reserves moving blocks above port 49152; it took 543xx, then 553xx after a reboot. The stack now uses 44320–44329, and `TEST_STACK_PORT_BASE` moves it; proven at 56320.
+- **Learning links.** The owner approved 17. TCP/IP, subnetting, DNS and routing links are proposed, unapproved. The Cloudflare DNS page answered 403 to automated checks and was replaced, not worked around.
+
+### Parts 2–4 re-run
+
+- **R1–R8:** PASS. R1 in production: 15 listable jobs, 0 on-site abroad. R2 and R4 are covered by the new tests above. The rest are covered by the e2e and browser suites, all green.
+- **F1–F11:** PASS.
+  - F1: the guard refuses production.
+  - F4: 0 badges under the new rule.
+  - F10: real encrypted backup.
+  - F11: `/health/worker` 200 (`ageMin` 7), and uptime run `39155533501` was green with "no change".
+- **X1, X6:** PASS (`audit-regressions.e2e-spec.ts`).
+- **X7, 10,000 jobs, after D127:**
+  - list 34 ms (default), 12 ms (category + salary + 7 days), 21 ms (sort by score);
+  - instant-alert selection 150 ms, digest 36 ms, weekly summary 56 ms, skill gaps 24 ms.
+- **X9:** screenshots from 2026-10-18 stand, since `apps/web` is unchanged since then (`git diff f3af4fe..HEAD -- apps/web` is empty). The Gemini handoff will change it.
+- **X10:** a 20-second database freeze mid-tick: exit 0, the tick completed, 0 failed stages.
+- **Owner's re-checks:**
+  - 0 jobs store a minimum above 15;
+  - 15 PLACEHOLDER rows;
+  - Sigmoid not in Needs review;
+  - 0 sources paused;
+  - board list unchanged.
+
+### Still NOT VERIFIED (with reason)
+
+1. **A real Telegram uptime alert:** it fires only during a real outage, and faking one in production is not acceptable. Rehearsed against a stub.
+2. **R7 log-out/log-in:** the browser test reloads within one session; the data is server-side, so a new session reads the same row. Not driven through a second sign-in.
+3. **The live pages:** reminders, skill gaps, settings, the badge (now 0 companies) and the Adzuna card, on https://jobsentinel-ai.vercel.app. Owner task 5. No Adzuna job is listed right now.
+4. **A hard database kill mid-transaction:** only a freeze was injected. Orphaned work is covered by the recovery-sweep e2e.
+5. **The /applications loading and error states:** the capture script failed in the audit. They will be re-captured after Gemini's UI change.
+
+### Open items
+
+- Defect 8 (the review backlog): the owner's decision.
+- Gemini: `docs/handoffs/gemini-audit-ui.md` (includes the soft-skills note).
+- Owner task 5 (look at the live pages) and task 6 (re-check the F4 thresholds around 2026-11-18).
+
+---
 
 ## Full audit, Parts 1–5 — 2026-10-18
 
