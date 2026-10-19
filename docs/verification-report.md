@@ -54,7 +54,7 @@ Latest run first. **NOT VERIFIED** marks anything that could not be checked, wit
   - Fixed: the mobile More menu reaches /skill-gaps and highlights on secondary pages (defect 11); the date pickers stack inside the column (12); the calendar icon is legible in dark mode (13); onboarding pre-selects Full-time + Trainee; the soft-skills note shows.
   - **New, defect 14 (MEDIUM):** when `GET /applications` fails, /applications shows its empty state, "No applications tracked yet", instead of an error. The loading skeleton is correct.
   - **Defect 12, partly open:** at 1280 px the interview date-time is still cut off ("21-10-2026 14…").
-  - Both are handed to Gemini in `docs/handoffs/gemini-audit-ui-2.md`.
+  - Both are handed to Gemini in `docs/handoffs/gemini-audit-ui-2.md`. **Fixed** in `phase-13-audit-ui-2` and confirmed in screenshots: an API failure shows "Could not load applications" with Retry, and at 1280 px the interview field shows "21-10-2026 15:33" in full. Web tests 112.
 - **X10:** a 20-second database freeze mid-tick: exit 0, the tick completed, 0 failed stages.
 - **Owner's re-checks:**
   - 0 jobs store a minimum above 15;
@@ -73,7 +73,7 @@ Latest run first. **NOT VERIFIED** marks anything that could not be checked, wit
 ### Open items
 
 - Defect 8 (the review backlog): the owner's decision.
-- Gemini: `docs/handoffs/gemini-audit-ui-2.md` (defect 14, and the rest of 12). `gemini-audit-ui.md` was merged on 2026-10-19.
+- Gemini: none open. `gemini-audit-ui.md` and `gemini-audit-ui-2.md` were merged on 2026-10-19 (defects 11-14 fixed).
 - Owner task 5 (look at the live pages) and task 6 (re-check the F4 thresholds around 2026-11-18).
 
 ---
