@@ -1,0 +1,1 @@
+ALTER TABLE "preferences" ALTER COLUMN "employment_types" SET DEFAULT '{"FULL_TIME","TRAINEE"}';
